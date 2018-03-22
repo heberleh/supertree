@@ -8,26 +8,16 @@ class SuperGraph{
     constructor() {
         this._hashNodes = {}; // {node1.id: node1, node1.id: node2}
         this._hashEdges = {}; // {edge.src+edge.trg: edge}
-
-        this._nodes = []; // [node1, node2]
-        this._edges = [];
         this._g = new jsnx.DiGraph();
+        this._nodeIndex = 0;
     }
 
     get nNodes(){
-        return this._nodes.length;
+        return this._g.number_of_nodes();
     }
 
     get nEdges(){
-        return this._edges.length;
-    }
-
-    edge(i){
-        return this._edges[i];
-    }
-
-    node(i){
-        return this._nodes[i];
+        return this._g.number_of_edges();
     }
 
     nodeByID(id){
@@ -35,25 +25,30 @@ class SuperGraph{
     }
 
     addNode(node_id, type) {
-        if(node_id in this._hashNodes){
-            this._hashNodes[node_id].incrementWeight();
+        // add a node to the graph
+        // if it exists, attach the tree (tree id) to it
+        if(node_id in this._hashNodes){            
+            this._hashNodes[node_id].addTree(tree);
             return this._hashNodes[node_id];
         }else{
-            this._g.addNode(this._nodes.length);
-            var node = new Node(this._nodes.length, node_id);           
-            this._nodes.push(node);
-            this._hashNodes[node_id] = node;            
+            this._g.addNode(this._nodeIndex);
+            var node = new Node(this._nodeIndex, node_id);
+            node.attachTree(tree);            
+            this._hashNodes[node_id] = node; 
+            this._nodeIndex += 1;           
         }
     }
 
-    addEdge(src_index, trg_index, reference){
+    addEdge(src_index, trg_index, tree){
         var strID = src_index.toString() +'_'+ trg_index.toString();
 
         if(strID in this._hashEdges){
-            this._hashEdges[strID].incrementWeight();
+            this._hashEdges[strID].attachTree(tree);
         }else{
             this._g.addEdge(src_index, trg_index);
             var edge = new Edge(this._edges.length, src_index, trg_index);
+        }
+        if(this._hashEdges[strID]){
 
         }
     }
