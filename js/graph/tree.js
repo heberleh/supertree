@@ -1,6 +1,5 @@
 
 
-
 class Tree{
 
     constructor(newick_string){
