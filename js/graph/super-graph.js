@@ -5,11 +5,13 @@
 class SuperGraph{
     // directed graph
 
-    constructor() {
+    constructor(supertree) {
         this._hashNodes = {}; // {node1.id: node1, node1.id: node2}
         this._hashEdges = {}; // {edge.src+edge.trg: edge}
         this._g = new jsnx.DiGraph();
-        this._nodeIndex = 0;
+        this._createGraph(supertree);  
+        this._supertree = supertree;
+        this._leaves = this._supertree.referenceTree.leaves;
     }
 
     get nNodes(){
@@ -24,43 +26,99 @@ class SuperGraph{
         return this._hashNodes[id];
     }
 
-    addNode(node_id, type) {
+    addNode(node_id, reference, tree) {
         // add a node to the graph
         // if it exists, attach the tree (tree id) to it
-        if(node_id in this._hashNodes){            
-            this._hashNodes[node_id].addTree(tree);
-            return this._hashNodes[node_id];
+        if(this._hashNodes[node_id] === undefined){            
+            var node = new Node(this._g.numberOfNodes(), node_id);
+            this._g.addNode(this._g.numberOfNodes());
+            node.attachTree(tree);
+            if(reference){
+                node.reference = reference;
+            } 
+            this._hashNodes[node_id] = node;
         }else{
-            this._g.addNode(this._nodeIndex);
-            var node = new Node(this._nodeIndex, node_id);
-            node.attachTree(tree);            
-            this._hashNodes[node_id] = node; 
-            this._nodeIndex += 1;           
+            this._hashNodes[node_id].attachTree(tree);
+            if(reference){
+                this._hashNodes[node_id].reference = reference;
+            }            
         }
     }
 
-    addEdge(src_index, trg_index, tree){
+    addEdge(edge, ref, tree){
+
+
+        try {
+            var src_index = this._hashNodes[edge[0]].index;
+            var trg_index = this._hashNodes[edge[1]].index;
+        }catch(error) {
+            console.log(error);
+            console.log(edge);        
+            console.log("Source:");
+            console.log(this._hashNodes[edge[0]]);
+            console.log("Target:");
+            console.log(this._hashNodes[edge[1]]);
+        }
+
         var strID = src_index.toString() +'_'+ trg_index.toString();
 
         if(strID in this._hashEdges){
             this._hashEdges[strID].attachTree(tree);
+            if(ref){
+                this._hashEdges[strID].reference = ref;
+            }
         }else{
             this._g.addEdge(src_index, trg_index);
-            var edge = new Edge(this._edges.length, src_index, trg_index);
-        }
-        if(this._hashEdges[strID]){
-
+            var edge = new Edge(this._g.numberOfEdges(), strID, src_index, trg_index);
+            if(ref){
+                edge.reference = ref;
+            }
+            edge.attachTree(tree);
+            this._hashEdges[strID] = edge;
         }
     }
 
-    attachTree(tree){
-        // navigate throgh it and add the nodes and edges to this supergraph
+    _createGraph(supertree){
+        var referenceTree = supertree.referenceTree;
+        var trees = supertree.trees;
 
-    }
-
-    attachSupertree(supertree){
         //navigate through supertree adding remaining nodes/edges (are there?)
+        var referenceNodes = referenceTree.nodes;
+        for(let i = 0; i < referenceNodes.length; i++){
+            this.addNode(referenceNodes[i],true,referenceTree);
+        }
+        
+        var referenceEdges = referenceTree.edges;
+        for(let i = 0; i < referenceEdges.length; i++){
+            this.addEdge(referenceEdges[i],true,referenceTree);
+        }
+
+        for(let i = 0; i < trees.length; i++){
+            console.log('tree'+i);
+            var tNodes = trees[i].nodes;
+            for(let j = 0; j < tNodes.length; j++){
+                this.addNode(tNodes[j],true,trees[i]);
+            }
+            
+            var tEdges = trees[i].edges;
+            for(let j = 0; j < tEdges.length; j++){
+                this.addEdge(tEdges[j],true,trees[i]);
+            }
+        }
+
+
         // mark nodes and edges from supergraph that are in the supertree as Reference=True
+    }
+
+    print(){
+        console.log("Super-graph nodes:");
+        console.log(this._hashNodes);
+        console.log("Super-graph edges:");
+        console.log(this._hashEdges);
+        console.log("Leaves:");
+        for(var i = 0; i < this._leaves.length; i++){
+            console.log(this._hashNodes[this._leaves[i]]);
+        }
     }
 
 

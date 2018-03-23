@@ -10,25 +10,35 @@
 // console.log(tree.edges);
 
 
-var filename = "./dataset/SPR-Aquificae_rooted.trees";
+var filenameTrees = "./dataset/SPR-Aquificae_rooted.trees";
+var filenameSupertree = "./dataset/SPR-Aquificae-Rooting.tre";
 
 
 var trees = [];
-function runSuperTree(file){
-    var rfile = file.replace(/(\r\n\t|\n|\r\t)/gm,""); 
-
-    var sfile = rfile.split(";");
-
-    console.log(sfile.length);
-    for(let i = 0; i < sfile.length; i++){
-        var stree = sfile[i];
-        if(stree.length > 0){            
-            trees.push(new Tree(stree));            
-        }
-    }
-    console.log(trees);
+var supertree = null;
+function runSuperTree(text){
+   supertree = new Supertree(text);
+}
+function attachTrees(text){
+    supertree.attachTrees(text);
 }
 
-fetch(filename)
-  .then(response => response.text())
-  .then(text => {runSuperTree(text)});
+function createGraph(){
+    console.log("Trees was read.");
+    graph = new SuperGraph(supertree);
+    graph.print();
+}
+
+fetch(filenameSupertree)
+    .then(response => response.text())
+    .then(text => {
+                    runSuperTree(text);
+                    fetch(filenameTrees)
+                        .then(response => response.text())
+                        .then(text2 => {attachTrees(text2)})
+                        .then(()=>supertree.print())
+                        .then(()=>{createGraph()});
+                    }
+        );
+
+

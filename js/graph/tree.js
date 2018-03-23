@@ -4,6 +4,8 @@ class Tree{
 
     constructor(newick_string){
         this._data = this._parse(newick_string);
+        this._edges = this._getEdges();
+        this._nodes = this._getNodes();
     }
 
     _find(root){
@@ -63,11 +65,41 @@ class Tree{
 
     }
 
-    get nodes(){
+    _getNodes(){
         // navigate and return list of nodes (leafs and internal nodes)
         var allchildren = [];
         for(let i = 0; i < this._data.children.length; i++){
             var children = this._findNodes(this._data.children[i]);
+            for (let j = 0; j < children.length; j++){
+                allchildren.push(children[j]);
+            }            
+        }
+        allchildren.push(this._data.name);
+        return allchildren;
+    }
+
+    _findLeaves(root){
+        // keep going
+        if('children' in root){ 
+            var allchildren = [];          
+            for(let i = 0; i < root.children.length; i++){  
+                var children = this._findLeaves(root.children[i]);
+                for(let j = 0; j < children.length; j++){                    
+                    allchildren.push(children[j]);
+                }
+            }
+            return allchildren;            
+        // stop condition
+        }else{            
+            return [root.name];
+        }
+    }
+
+    get leaves(){
+        // navigate and return list of nodes (leafs and internal nodes)
+        var allchildren = [];
+        for(let i = 0; i < this._data.children.length; i++){
+            var children = this._findLeaves(this._data.children[i]);
             for (let j = 0; j < children.length; j++){
                 allchildren.push(children[j]);
             }            
@@ -95,7 +127,7 @@ class Tree{
 
     }
 
-    get edges(){
+    _getEdges(){
         //navigate and return list of edges
         var alledges = [];
         for(let i = 0; i < this._data.children.length; i++){
@@ -113,6 +145,14 @@ class Tree{
         this._data;
         
         return null;
+    }
+
+    get edges(){
+        return this._edges;
+    }
+
+    get nodes(){
+        return this._nodes;
     }
 
 }
