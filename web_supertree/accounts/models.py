@@ -16,4 +16,3 @@ class Tree(models.Model):
 
     def __str__(self):
         return self.newick
-

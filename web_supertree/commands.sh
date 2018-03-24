@@ -1,11 +1,15 @@
 
 
 
+django-admin startproject supertree
+python manage.py startapp accounts
+python manage.py createsuperuser
 
  python manage.py sqlmigrate app 0001
  python manage.py makemigrations
  python manage.py migrate
  python manage.py migrate
+ python manage.py shell
 
 
  source ~/.virtualenvs/djangodev/bin/activate
