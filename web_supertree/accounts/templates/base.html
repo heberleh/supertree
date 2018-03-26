@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-    {% block head %}
-    <meta charset="utf-8">
 
+    <meta charset="utf-8"> {% block head %}
     <title>Supertree visualization</title>
+    {% endblock %}
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
         crossorigin="anonymous">
@@ -20,7 +20,7 @@
         crossorigin="anonymous"></script>
 
     {% load static %}
-    <link rel="stylesheet" href="{% static 'accounts/style.css'%}" type="text/css"> {% endblock%}
+    <link rel="stylesheet" href="{% static 'accounts/style.css'%}" type="text/css">
 </head>
 
 <body>
@@ -214,38 +214,42 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="d-flex justify-content-between">
-                    <ul class="navbar-nav navbar-expand-sm col-md-11 row">                        
-                        {% if login %}
-                            <li class="nav-item col-md-6">                                
+                {% comment %}   class="d-flex justify-content-between" {% endcomment %}
+                <div class="">
+                    <ul class="navbar-nav navbar-expand-sm">
+                        {% if user.is_authenticated %}
+                        <div class="col-md-6">
+                            <li class="nav-item">
                                 <a href="{% url 'accounts:profile' %}" class="text-white nav-link">
-                                        <i class="fas fa-user fa-1x"></i> {{"Henry"}}
+                                    <i class="fas fa-user fa-1x"></i> {{user.first_name}}
                                 </a>
                             </li>
-                            <li class="nav-item col-md-6">
+                        </div>
+                        <div class="col-md-6">
+                            <li class="nav-item">
                                 <a href="{% url 'accounts:logout' %}" class="text-white nav-link">
                                     <i class="fas fa-sign-out-alt"></i> Sign out
                                 </a>
                             </li>
-                    
+                        </div>
+
                         {% else %}
                         <li class="nav-item col-md-6">
                             <a href="{% url 'accounts:login' %}" class="text-white nav-link">
-                                    <i class="fas fa-sign-in-alt fa-1x"></i> Login
-                                </a>
-                            </li>
-                            <li class="nav-item col-md-6">
-                                <a href="{% url 'accounts:register' %}" class="text-white nav-link">
-                                    <i class="fas fa-user-plus fa-1x"></i> Sign Up
+                                <i class="fas fa-sign-in-alt fa-1x"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item col-md-6">
+                            <a href="{% url 'accounts:register' %}" class="text-white nav-link">
+                                <i class="fas fa-user-plus fa-1x"></i> Sign Up
                             </a>
                         </li>
 
                         {% endif %}
-                      
+
                     </ul>
                 </div>
             </div>
-
         </div>
     </header>
 

@@ -1,9 +1,15 @@
+ {% extends "base.html" %} {%block head %}
 
-{% extends "base.html" %}
+<title>Profile</title>
 
-{%block body%}
-    <div class="container">
-        <h2>Logout</h2>
-       <p>You have logged out.</p>       
-    </div>
-{% endblock %}  
+{% endblock %} {%block body%}
+<h2>Profile</h2>
+<div class="container">
+
+    <p>{{ user }}</p>
+    <p>{{ user.email }}</p>
+    <p>{{ user.first_name }}</p>
+    <p>{{ user.last_name }}</p>
+
+</div>
+{% endblock %}

@@ -2,6 +2,9 @@
   --jumbotron-padding-y: 3rem;
 }
 
+.login-item{
+  padding: 10px 0px!;
+}
 .jumbotron {
   padding-top: var(--jumbotron-padding-y);
   padding-bottom: var(--jumbotron-padding-y);

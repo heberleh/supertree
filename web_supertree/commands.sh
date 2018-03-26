@@ -5,14 +5,14 @@ django-admin startproject supertree
 python manage.py startapp accounts
 python manage.py createsuperuser
 
- python manage.py sqlmigrate app 0001
- python manage.py makemigrations
- python manage.py migrate
- python manage.py migrate
- python manage.py shell
+python manage.py sqlmigrate app 0001
+python manage.py makemigrations
+python manage.py migrate
+python manage.py migrate
+python manage.py shell
 
 
- source ~/.virtualenvs/djangodev/bin/activate
+source ~/.virtualenvs/djangodev/bin/activate
 # alterar eviroment para virtualenvs.... 
 # adicionar essa path pra virtualenvs na config... como mostra abaixo
 

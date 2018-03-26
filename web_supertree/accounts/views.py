@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 # from django.views import generic
 
 from django.shortcuts import get_list_or_404
@@ -8,7 +8,18 @@ from django.shortcuts import get_list_or_404
 
 from .models import Tree
 # import sys
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import (
+                            UserCreationForm, 
+                            PasswordChangeForm
+                            ) 
+
+from accounts.forms import (
+                            RegistrationForm, 
+                            EditProfileForm
+                            )
+
+from django.contrib.auth import update_session_auth_hash
+
 
 
 def home(request):
@@ -17,17 +28,57 @@ def home(request):
     page = 'accounts/home.html'
     return render(request, page, context)
 
+
+
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('/account')
     
     else: #if GET
-        form = UserCreationForm()
+        form = RegistrationForm()
         args = {'form': form}
         return render(request, 'accounts/reg_form.html', args)
+
+
+def profile(request):
+    args = {'user': request.user}
+    return render(request, 'accounts/profile.html')
+
+
+
+def edit_profile(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+            return redirect('/account/profile')
+
+    else:
+        form = EditProfileForm(instance=request.user)
+        args = {'form': form}
+        return render(request,'accounts/edit_profile.html', args)
+
+
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(data=request.POST, user=request.user)
+
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)
+            return redirect('/account/profile')
+        else:
+            return redirect('/account/change-password')
+
+    else:
+        form = PasswordChangeForm(user=request.user)
+        args = {'form': form}
+        return render(request,'accounts/change_password.html', args)
+
 
 # class IndexView(generic.ListView):
 #     template_name = 

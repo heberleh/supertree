@@ -18,8 +18,9 @@ from django.urls import include, path
 from django.conf.urls import url
 from . import views
 
-urlpatterns = [
+urlpatterns = [    
     url(r'^$', views.login_redirect, name='login_redirect'),
+    path('', include('django.contrib.auth.urls')),
     path('account/', include('accounts.urls')),
     path('admin/', admin.site.urls),    
 ]
