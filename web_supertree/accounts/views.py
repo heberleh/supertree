@@ -8,6 +8,8 @@ from django.shortcuts import get_list_or_404
 
 from .models import Tree
 # import sys
+from django.contrib.auth.forms import UserCreationForm
+
 
 def home(request):
     trees =  get_list_or_404(Tree.objects.order_by('-pub_date')[:5])
@@ -15,6 +17,17 @@ def home(request):
     page = 'accounts/home.html'
     return render(request, page, context)
 
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/account')
+    
+    else: #if GET
+        form = UserCreationForm()
+        args = {'form': form}
+        return render(request, 'accounts/reg_form.html', args)
 
 # class IndexView(generic.ListView):
 #     template_name = 
