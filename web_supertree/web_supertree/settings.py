@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'web_supertree.middleware.LoginRequiredMiddleware'
 ]
 
 ROOT_URLCONF = 'web_supertree.urls'
@@ -121,3 +122,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = '/account/'
+
+LOGIN_URL = '/account/login/'
+
+LOGIN_EXEMPT_URLS = {
+     r'^account/login',
+    #  r'^account/logout',
+     r'^account/register'
+}

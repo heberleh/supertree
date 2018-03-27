@@ -36,3 +36,6 @@ source ~/.virtualenvs/djangodev/bin/activate
 }
 
 pip install pylint..... etc
+
+install this font for fix bad font-rendering on visual code
+libfreetype6_2.8-0.2ubuntu2_amd64.deb
