@@ -20,7 +20,7 @@ from . import views
 
 urlpatterns = [    
     url(r'^$', views.login_redirect, name='login_redirect'),
-    path('', include('django.contrib.auth.urls')),
-    path('account/', include('accounts.urls')),
+    # path('', include('django.contrib.auth.urls')),
+    path('account/', include('accounts.urls', namespace='accounts')),
     path('admin/', admin.site.urls),    
 ]
