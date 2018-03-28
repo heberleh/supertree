@@ -121,12 +121,23 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = '/account/'
+LOGIN_REDIRECT_URL = '/account/home'
 
 LOGIN_URL = '/account/login/'
 
+INDEX_URL = '/account/index'
+
 LOGIN_EXEMPT_URLS = {
-     r'^account/login',
-     r'^account/register',
-     r'^account/password-reset',
+    r'^account/$',
+    r'^account/index/$',
+    r'^account/login/$',
+    r'^account/register/$',
+    r'^account/password-reset/$',
+    r'^account/password-reset/done/$',
+    r'^account/password-reset/confirm/$',
+    r'^account/password-reset/complete/$',
+    r'^account/password-reset/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$'    
 }
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = '1025'

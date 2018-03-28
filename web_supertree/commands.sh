@@ -13,6 +13,11 @@ python manage.py shell
 
 
 source ~/.virtualenvs/djangodev/bin/activate
+
+#activate debug email
+python -m smtpd -n -c DebuggingServer localhost:1025
+
+
 # alterar eviroment para virtualenvs.... 
 # adicionar essa path pra virtualenvs na config... como mostra abaixo
 

@@ -23,6 +23,12 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 
 
+def index(request):
+    trees =  get_list_or_404(Tree.objects.order_by('-pub_date')[:5])
+    context = {'trees': trees,}
+    page = 'accounts/index.html'
+    return render(request, page, context)
+
 def home(request):
     trees =  get_list_or_404(Tree.objects.order_by('-pub_date')[:5])
     context = {'trees': trees,}
