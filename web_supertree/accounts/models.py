@@ -10,26 +10,14 @@ class UserProfile(models.Model):
     state = models.CharField(max_length=100,default='')
     city = models.CharField(max_length=100,default='')
     website = models.URLField(default='')
+    image = models.ImageField(upload_to='profile_image', blank=True)
 
+    def __str__(self):
+        return self.user.username
 
 def create_profile(sender, **kwargs):
+    print(kwargs)
     if kwargs['created']:
         user_profile= UserProfile.objects.create(user=kwargs['instance'])
 
 post_save.connect(create_profile, sender=User)
-
-
-class Supertree(models.Model):
-    newick = models.CharField(max_length=100000000)
-    pub_date = models.DateTimeField('date published')
-
-    def __str__(self):
-        return self.newick
-
-class Tree(models.Model):
-    newick = models.CharField(max_length=1000000)
-    supertree = models.ForeignKey(Supertree, on_delete=models.CASCADE, blank=True, null=True)
-    pub_date = models.DateTimeField('date published')
-
-    def __str__(self):
-        return self.newick

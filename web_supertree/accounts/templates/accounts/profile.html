@@ -10,6 +10,12 @@
     <p>{{ user.email }}</p>
     <p>{{ user.first_name }}</p>
     <p>{{ user.last_name }}</p>
+    <p>{{ user.userprofile.description }}</p>
+    <p>{{ user.userprofile.country }}</p>
+    <p>{{ user.userprofile.state }}</p>
+    <p>{{ user.userprofile.city }}</p>
+    <p>{{ user.userprofile.website }}</p> 
+    <img src="{{ user.userprofile.image.url }}" width="248">  
 
 </div>
 {% endblock %}

@@ -1,9 +1,8 @@
 from django.contrib import admin
 
-from .models import Tree, Supertree, UserProfile
+from .models import UserProfile
 
 # Register your models here.
 
 admin.site.register(UserProfile)
-admin.site.register(Supertree)
-admin.site.register(Tree)
+admin.site.site_header = "Administration"

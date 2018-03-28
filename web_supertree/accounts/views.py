@@ -6,7 +6,6 @@ from django.shortcuts import get_list_or_404
 # from django.http import HttpResponse # remove if not used.
 # from django.template import loader   # remove if not used.
 
-from .models import Tree
 # import sys
 from django.contrib.auth.forms import (
                             UserCreationForm, 
@@ -21,20 +20,6 @@ from accounts.forms import (
 from django.contrib.auth import update_session_auth_hash
 
 from django.contrib.auth.decorators import login_required
-
-
-def index(request):
-    trees =  get_list_or_404(Tree.objects.order_by('-pub_date')[:5])
-    context = {'trees': trees,}
-    page = 'accounts/index.html'
-    return render(request, page, context)
-
-def home(request):
-    trees =  get_list_or_404(Tree.objects.order_by('-pub_date')[:5])
-    context = {'trees': trees,}
-    page = 'accounts/home.html'
-    return render(request, page, context)
-
 
 
 def register(request):

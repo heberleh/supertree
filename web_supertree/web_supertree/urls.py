@@ -17,10 +17,16 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls import url
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [    
     url(r'^$', views.login_redirect, name='login_redirect'),
     # path('', include('django.contrib.auth.urls')),
-    path('account/', include('accounts.urls', namespace='accounts')),
-    path('admin/', admin.site.urls),    
-]
+    path('account/', include(('accounts.urls','accounts'), namespace='accounts')),
+    path('home/', include(('home.urls','home'), namespace='home')),
+    path('admin/', admin.site.urls),
+
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+

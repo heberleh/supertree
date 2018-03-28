@@ -18,6 +18,11 @@ source ~/.virtualenvs/djangodev/bin/activate
 python -m smtpd -n -c DebuggingServer localhost:1025
 
 
+#Image
+sudo apt install linuxbrew-wrapper
+brew install libtiff libjpeg webp little-cms2
+pip install Pillow
+
 # alterar eviroment para virtualenvs.... 
 # adicionar essa path pra virtualenvs na config... como mostra abaixo
 

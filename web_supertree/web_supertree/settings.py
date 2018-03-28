@@ -31,7 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [    
-    'accounts.apps.AccountsConfig',
+    'accounts',
+    'home',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -121,15 +122,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = '/account/home'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'web_supertree/media')
+
+
+LOGIN_REDIRECT_URL = '/home'
 
 LOGIN_URL = '/account/login/'
 
 INDEX_URL = '/account/index'
 
 LOGIN_EXEMPT_URLS = {
-    r'^account/$',
-    r'^account/index/$',
     r'^account/login/$',
     r'^account/register/$',
     r'^account/password-reset/$',
