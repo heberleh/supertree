@@ -21,6 +21,8 @@ from django.contrib.auth import update_session_auth_hash
 
 from django.contrib.auth.decorators import login_required
 
+from django.contrib.auth.models import User
+
 
 def register(request):
     if request.method == 'POST':
@@ -35,8 +37,12 @@ def register(request):
         return render(request, 'accounts/reg_form.html', args)
 
 
-def profile(request):
-    args = {'user': request.user}
+def profile(request, pk):
+    if pk:
+        user = User.objects.get(pk=pk)
+    else:
+        user = request.user
+    args = {'user': user}
     return render(request, 'accounts/profile.html')
 
 
@@ -70,6 +76,9 @@ def change_password(request):
         form = PasswordChangeForm(user=request.user)
         args = {'form': form}
         return render(request,'accounts/change_password.html', args)
+
+
+
 
 
 # class IndexView(generic.ListView):

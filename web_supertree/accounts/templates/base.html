@@ -220,7 +220,7 @@
                         {% if user.is_authenticated %}
                         <div class="col-md-6">
                             <li class="nav-item">
-                                <a href="{% url 'accounts:profile' %}" class="text-white nav-link">
+                                <a href="{% url 'accounts:profile_with_pk' pk=user.pk%}" class="text-white nav-link">
                                     <i class="fas fa-user fa-1x"></i> {{user.first_name}}
                                 </a>
                             </li>

@@ -4,15 +4,16 @@ from django.urls import reverse
 from home.forms import (
                         HomeForm
                         )
-from home.models import Post
+from home.models import Post, User, Supertree, Tree
 
 class HomeView(TemplateView):
     template_name = 'home/home.html'
     
     def get(self, request):
         form = HomeForm()
-        posts = Post.objects.all()#.order_by('created')
-        args = {'form': form, 'posts': posts}
+        posts = Post.objects.all().order_by('created')
+        users = User.objects.all()
+        args = {'form': form, 'posts': posts, 'users': users}
         return render(request, self.template_name, args)
 
     def post(self, request):
@@ -26,3 +27,31 @@ class HomeView(TemplateView):
             return redirect(reverse('home:home'))
         args = {'form': form, 'text': text}
         return render(request, self.template_name, args)
+
+
+class UploadTreesView(TemplateView):
+    template_name = 'home/upload_trees.html'
+
+    def get(self, request):
+        form = UploadTreesView()
+        args = {
+            'form': form
+        }
+        return render(request, self.template_name, args)
+    
+    def post(self, request):
+        form = UploadTreesForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            forest_file, forest_filename = request.FILES['forest'], str(request.FILES['forest'])
+            supertree_file, supertree_filename = request.FILES['supertree'], str(request.FILES['supertree'])
+
+            # IF SUPERTREE IS VALID
+            supertree = SuperTree(newick=supertree_file)
+
+
+            for t in file.read().split(';'):
+                if ete.validate(t):
+                    tree = Tree(newick=t)
+                    tree.save()
+

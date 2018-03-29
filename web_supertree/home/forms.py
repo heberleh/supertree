@@ -14,3 +14,7 @@ class HomeForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ('post',)
+
+class UploadTreesForm(forms.Form):
+    forest = forms.FileField()
+    supertree = forms.FileField()
