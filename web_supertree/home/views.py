@@ -2,7 +2,8 @@ from django.views.generic import TemplateView
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from home.forms import (
-                        HomeForm
+                        HomeForm,
+                        UploadTreesForm
                         )
 from home.models import Post, User, Supertree, Tree
 
@@ -33,7 +34,7 @@ class UploadTreesView(TemplateView):
     template_name = 'home/upload_trees.html'
 
     def get(self, request):
-        form = UploadTreesView()
+        form = UploadTreesForm()
         args = {
             'form': form
         }
@@ -42,16 +43,20 @@ class UploadTreesView(TemplateView):
     def post(self, request):
         form = UploadTreesForm(request.POST, request.FILES)
         
-        if form.is_valid():
+        if form.is_valid() and request.user.is_authenticated:
             forest_file, forest_filename = request.FILES['forest'], str(request.FILES['forest'])
             supertree_file, supertree_filename = request.FILES['supertree'], str(request.FILES['supertree'])
-
-            # IF SUPERTREE IS VALID
-            supertree = SuperTree(newick=supertree_file)
-
-
-            for t in file.read().split(';'):
-                if ete.validate(t):
-                    tree = Tree(newick=t)
-                    tree.save()
+            
+            supertree_newick = str(supertree_file.read(),'utf-8').replace('\n','')
+            supertree = Supertree(newick=supertree_newick)  
+            supertree.save()
+          
+            # for t in forest_file.read().split(';'):
+            #     tree = Tree(newick=t)
+            #     tree.save()
+            args = {
+                'form' : form,
+                'supertree' : supertree
+            }
+            return render(request, self.template_name, args)
 

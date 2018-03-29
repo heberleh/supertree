@@ -5,6 +5,6 @@ from home.views import (
                         UploadTreesView
                         )
 urlpatterns = [
-    url(r'^$', HomeView.as_view() ,name = 'home')
-    url(r'/trees/upload/$', UploadTreesView.as_view(), name = 'upload_trees')
+    url(r'^$', HomeView.as_view() ,name = 'home'),
+    url(r'^trees/upload/$', UploadTreesView.as_view(), name = 'upload_trees')
 ]

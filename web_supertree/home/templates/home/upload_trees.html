@@ -9,9 +9,11 @@
         <h1>Upload trees</h1>
     </div>
         
-    <form enctype="multipart/form-data" method="post" action="/foo/">
+    <form enctype="multipart/form-data" method="post">
         {% csrf_token %}
-        <div>
+        {{ form.as_p }}
+
+        {% comment %} <div>
         Supertree:<br>
             {{ form.supertree }}
         </div>                  
@@ -20,7 +22,7 @@
         Smaller trees:
             {{ form.forest }}
         </div>
-        
+         {% endcomment %}
         <br>
         <button type="submit">Submit</button>
     </form>
