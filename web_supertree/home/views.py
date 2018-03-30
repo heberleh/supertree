@@ -61,5 +61,5 @@ class UploadTreesView(TemplateView):
                 # 'form' : form,
                 'supertree' : supertree
             }
-            return redirect('home/')
+            return redirect('/home/')
 
