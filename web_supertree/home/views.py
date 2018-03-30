@@ -41,22 +41,25 @@ class UploadTreesView(TemplateView):
         return render(request, self.template_name, args)
     
     def post(self, request):
-        form = UploadTreesForm(request.POST, request.FILES)
+        # form = UploadTreesForm(request.POST, request.FILES)
         
-        if form.is_valid() and request.user.is_authenticated:
+        if request.user.is_authenticated:
             forest_file, forest_filename = request.FILES['forest'], str(request.FILES['forest'])
             supertree_file, supertree_filename = request.FILES['supertree'], str(request.FILES['supertree'])
             
             supertree_newick = str(supertree_file.read(),'utf-8').replace('\n','')
-            supertree = Supertree(newick=supertree_newick)  
+
+            supertree = Supertree(newick=supertree_newick, user=request.user)
+            print(supertree)
+            print(request.user)            
             supertree.save()
           
             # for t in forest_file.read().split(';'):
             #     tree = Tree(newick=t)
             #     tree.save()
             args = {
-                'form' : form,
+                # 'form' : form,
                 'supertree' : supertree
             }
-            return render(request, self.template_name, args)
+            return redirect('home/')
 

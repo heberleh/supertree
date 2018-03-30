@@ -10,6 +10,7 @@ class Post(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+
 class Supertree(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     newick = models.CharField(max_length=100000000)
@@ -17,18 +18,6 @@ class Supertree(models.Model):
     
     def __str__(self):
         return self.newick
-
-    def save(self, *args, **kwargs):
-        # check if newick 
-        print("** Supertree file: ", self.newick)
-
-        if ete.Tree(newick=self.newick, format=9):
-
-            super(Supertree, self).save(*args, **kwargs)
-
-        else:
-            raise Exception("Wrong Newick file format")
-
 
 class Tree(models.Model):
     newick = models.CharField(max_length=1000000)
