@@ -11,24 +11,11 @@ class Post(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
 
-class Supertree(models.Model):
+class SupertreeModel(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    newick = models.CharField(max_length=100000000)
+    reference_newick = models.CharField(max_length=100000000)
+    forest_newicks = models.CharField(max_length=10000000000)
     pub_date = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return self.newick
-
-class Tree(models.Model):
-    newick = models.CharField(max_length=1000000)
-    supertree = models.ForeignKey(Supertree, on_delete=models.CASCADE, blank=True, null=True)    
-
-    def __str__(self):
-        return self.newick
-
-    # def save(self, *args, **kwargs):
-    #    # check if newick 
-    #    Tree(self.newick)
-
-
-    #    super(Tree, self).save(*args, **kwargs)
+        return self.reference_newick

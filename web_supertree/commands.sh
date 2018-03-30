@@ -14,6 +14,10 @@ python manage.py flush
 
 source ~/.virtualenvs/djangodev/bin/activate
 
+pip install pylint
+-> select python enviroment with cntrl + shift + p
+install python set of tools in the extentions menu from visual code...
+
 #activate debug email
 python -m smtpd -n -c DebuggingServer localhost:1025
 
@@ -45,7 +49,7 @@ pip install Pillow
     ],
 }
 
-pip install pylint..... etc
+
 
 install this font for fix bad font-rendering on visual code
 libfreetype6_2.8-0.2ubuntu2_amd64.deb

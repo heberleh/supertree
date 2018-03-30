@@ -1,27 +1,16 @@
-from django.shortcuts import render, redirect
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+from django.contrib.auth.models import User
+from django.shortcuts import get_list_or_404, redirect, render
+
+from accounts.forms import EditProfileForm, RegistrationForm
+
 # from django.views import generic
 
-from django.shortcuts import get_list_or_404
 # from django.shortcuts import get_object_or_404
 # from django.http import HttpResponse # remove if not used.
 # from django.template import loader   # remove if not used.
-
-# import sys
-from django.contrib.auth.forms import (
-                            UserCreationForm, 
-                            PasswordChangeForm
-                            ) 
-
-from accounts.forms import (
-                            RegistrationForm, 
-                            EditProfileForm
-                            )
-
-from django.contrib.auth import update_session_auth_hash
-
-from django.contrib.auth.decorators import login_required
-
-from django.contrib.auth.models import User
 
 
 def register(request):

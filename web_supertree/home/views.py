@@ -1,11 +1,10 @@
-from django.views.generic import TemplateView
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
-from home.forms import (
-                        HomeForm,
-                        UploadTreesForm
-                        )
-from home.models import Post, User, Supertree, Tree
+from django.views.generic import TemplateView
+
+from home.forms import HomeForm, UploadTreesForm
+from home.models import Post, SupertreeModel, User
+
 
 class HomeView(TemplateView):
     template_name = 'home/home.html'
@@ -48,18 +47,12 @@ class UploadTreesView(TemplateView):
             supertree_file, supertree_filename = request.FILES['supertree'], str(request.FILES['supertree'])
             
             supertree_newick = str(supertree_file.read(),'utf-8').replace('\n','')
+            forest_newicks = str(forest_file.read(),'utf-8').replace('\n','')
+            supertree = SupertreeModel(
+                            reference_newick=supertree_newick,
+                            forest_newicks=forest_newicks,
+                            user=request.user
+                        )        
 
-            supertree = Supertree(newick=supertree_newick, user=request.user)
-            print(supertree)
-            print(request.user)            
             supertree.save()
-          
-            # for t in forest_file.read().split(';'):
-            #     tree = Tree(newick=t)
-            #     tree.save()
-            args = {
-                # 'form' : form,
-                'supertree' : supertree
-            }
             return redirect('/home/')
-
