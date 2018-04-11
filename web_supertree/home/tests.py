@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from django.contrib.auth.models import User
@@ -6,7 +5,11 @@ from django.test import TestCase
 from ete3 import Tree
 from scipy.sparse import csr_matrix
 
+import matplotlib.pyplot as plt
 from home.test_data import TestData
+
+from skbio import DistanceMatrix
+from skbio.tree import nj
 
 from .models import SupertreeModel
 
@@ -316,3 +319,13 @@ class SupertreeAppTest(TestCase):
         # for e in g.edges(data=True):
         #     if e[2]['w'] >= second_max:
         #         print(e)
+
+
+    def testPeptidesTrees(self):
+        
+        
+        dm = DistanceMatrix(data, ids)
+        newick = nj(dm, result_constructor=str)
+
+
+        pass
