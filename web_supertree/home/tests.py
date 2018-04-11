@@ -70,23 +70,26 @@ class SupertreeAppTest(TestCase):
             self.supertree)
         print("Distance between Tree1 and Reference:", rf, max_rf, rf/max_rf)
 
-        lgt = parts_t1 - parts_t2
-        print("Partitions in Reference that were not found in tree1:", lgt)
+        dif = parts_t1 - parts_t2
+        print("Partitions in Reference that were not found in tree1:", dif)
         print("\n\n\n")
-        print(tree1)
-        for bag in lgt:
-            for node in tree1.get_monophyletic(values=bag, target_attr='name'):
+        # print(tree1)
+        for bag in dif:
+            for node in self.supertree.get_monophyletic(values=bag, target_attr='name'):
                 print(node)
 
-        lgt = parts_t2 - parts_t1
-        print("Partitions in tree1 that were not found in Reference:", lgt)
+        dif = parts_t2 - parts_t1
+        print("Partitions in tree1 that were not found in Reference:", dif)
         print("\n\n\n")
-        print(tree1)
-        for bag in lgt:
-            for node in tree1.get_monophyletic(values=bag, target_attr='name'):
-                print(node)
+        # print(tree1)
+        for bag in dif:
+            for node in self.supertree.get_monophyletic(values=bag, target_attr='name'):
+                print(node.get_ascii(attributes=["name"], show_internal=False))
 
-        self.supertree.show()
+        
+
+
+        # self.supertree.show()
 
     def testRFDistanceMatrix(self):
         size = 10  # len(self.forest)
@@ -207,9 +210,11 @@ class SupertreeAppTest(TestCase):
         g2 = nx.DiGraph()
         for node in self.supertree.traverse("preorder"):
             if not node.is_root():
-                if node.is_leaf():
+                type = "internal"
+                if node.is_leaf():                    
                     trg = node.name
-                else:
+                    type = "leaf"
+                else:                    
                     names = node.get_leaf_names()
                     names.sort()
                     trg = ','.join(names)
@@ -220,20 +225,24 @@ class SupertreeAppTest(TestCase):
 
                 src_idx, trg_idx = 0, 0
                 if not trg in vertex_hash:
-                    vertex_hash[trg] = i
-                    g2.add_node(i, n=trg)
                     trg_idx = i
-                    i += 1
+                    vertex_hash[trg] = trg_idx
+                    g2.add_node(trg_idx, n=trg, type=type)                    
+                    i += 1                    
                 else:
                     trg_idx = vertex_hash[trg]
+                    if not g2.has_node(trg_idx):
+                        g2.add_node(trg_idx, n=trg, type=type)                    
                 
                 if not src in vertex_hash:
-                    vertex_hash[src] = i
-                    g2.add_node(i, n=src)
                     src_idx = i
+                    vertex_hash[src] = src_idx                    
+                    g2.add_node(src_idx, n=src, type=type)                    
                     i += 1
                 else:
                     src_idx = vertex_hash[src]
+                    if not g2.has_node(src_idx):
+                        g2.add_node(src_idx, n=src, type=type)
                 
                 if g2.has_edge(src_idx,trg_idx):
                     g2[src_idx][trg_idx]['w']  += 1
@@ -244,19 +253,63 @@ class SupertreeAppTest(TestCase):
         second_max = 0
         w = []
 
-        print("Number of edges in Supertree",len(g2.edges))
-        for e in g2.edges():
-            src = e[0]
-            trg = e[1]
-            if g.has_edge(src,trg):
-                ew = g[src][trg]['w']
-                w.append(ew)
-                
+        edges_filtered = []
+        # print("Number of edges in Supertree",len(g2.edges))
+        # for edges in supertree
+        # for e in g2.edges():
+        #     src = e[0]
+        #     trg = e[1]
+        #     # if the smaller trees has this edge
+        #     if g.has_edge(src,trg):            
+        #         #get the number of times it appears in the smaller trees
+        #         ew = g[src][trg]['w']
+        #         print(g[src][trg])
+        #         # w.append(ew)
+        #         if ew > 100:
+        #             edges_filtered.append([src,trg])
+
+        w = []
+        # get edges that are not in the supertree
+        filtered_edges = []
+        for e in g.edges():
+            if not g2.has_edge(e[0], e[1]):
+                src = e[0]
+                trg = e[1]
+                # if the smaller trees has this edge                
+                weight = g[src][trg]['w']
+                if weight < 2:
+                    w.append(weight)
+                    filtered_edges.append([src,trg])
+        
+        print("Number of confliction edges:", len(filtered_edges))
+
         plt.hist(w)
         plt.title("Weights Histogram")
         plt.xlabel("Value")
         plt.ylabel("Frequency")
         plt.show()
+        
+        g3 = nx.DiGraph()
+        g3.add_nodes_from(g2)
+        types = nx.get_node_attributes(g2,'type')
+        for node in g3.nodes:
+            g3.node[node]['type'] = types[node]
+
+        for e in g2.edges:
+            g3.add_edge(e[0], e[1], type="reference")
+        for e in filtered_edges:            
+            g3.add_edge(e[0], e[1], type="conflict")
+
+        for node in g3.nodes:           
+            if not g2.has_node(node):               
+                g3.node[node]['type'] = 'internal_conflict'            
+
+        # nx.draw_spring(g3)
+        # plt.show()
+
+
+        nx.write_gml(g3, "test.gml")
+
         
 
 
