@@ -82,7 +82,6 @@ class SupertreeAppTest(TestCase):
         print("Partitions in tree2 that were not found in tree1:", parts_t1 - parts_t2)
         print("Partitions in tree1 that were not found in tree2:", parts_t2 - parts_t1)
 
-
     def testRFDistance(self):
         tree1 = self.supertree
         tree2 = self.forest[2]
@@ -354,15 +353,16 @@ class SupertreeAppTest(TestCase):
         #     if e[2]['w'] >= second_max:
         #         print(e)
 
-
-    # def testPeptidesTrees(self):
-        
-        
+    # def testPeptidesTrees(self):                
     #     dm = DistanceMatrix(data, ids)
     #     newick = nj(dm, result_constructor=str)
-
-
     #     pass
+
+    def get_name(self,tree):
+        names = tree.get_leaf_names()
+        names.sort()
+        return ','.join(names)
+
     def testSetGraphLGT(self):
         g = nx.DiGraph()
         vertex_hash = {}
@@ -383,25 +383,29 @@ class SupertreeAppTest(TestCase):
                 names = node.up.get_leaf_names()
                 src_names_set = set(names)
                 names.sort()
-                src = ','.join(names)    
-                src_idx, trg_idx = 0, 0
+                src = ','.join(names) 
                 if not trg in vertex_hash:
                     vertex_hash[trg] = i
-                    g.add_node(i, n=trg, set=trg_names_set)
-                    trg_idx = i
+                    g.add_node(i, n=trg, set=trg_names_set, genes=set())
                     i += 1
-                else:
-                    trg_idx = vertex_hash[trg]
                 
                 if not src in vertex_hash:
                     vertex_hash[src] = i
-                    g.add_node(i, n=src, set=src_names_set)
-                    src_idx = i
+                    g.add_node(i, n=src, set=src_names_set, genes=set())
                     i += 1
-                else:
-                    src_idx = vertex_hash[src]        
+            else:
+                root_name = self.get_name(node)
+                vertex_hash[root_name] = i
+                names = node.get_leaf_names()
+                names_set = set(names)
+                g.add_node(i, n=root_name, set=names_set, genes=set())               
+                i += 1
 
-        for tree in self.forest[1:10000]:
+
+        number_of_trees = len(self.forest)
+        # number_of_trees = 10000
+        for tree_index in range(number_of_trees):
+            tree = self.forest[tree_index]            
             for node in tree.traverse("preorder"):
                 if not node.is_root():
                     names_set = None
@@ -421,26 +425,30 @@ class SupertreeAppTest(TestCase):
 
                     src_idx, trg_idx = 0, 0
                     if not trg in vertex_hash:
-                        vertex_hash[trg] = i
-                        g.add_node(i, n=trg, set=trg_names_set)
                         trg_idx = i
+                        vertex_hash[trg] = trg_idx
+                        g.add_node(trg_idx, n=trg, set=trg_names_set, genes=set([tree_index]))           
                         i += 1
                     else:
                         trg_idx = vertex_hash[trg]
+                        g.node[trg_idx]['genes'].add(tree_index)
                     
                     if not src in vertex_hash:
-                        vertex_hash[src] = i
-                        g.add_node(i, n=src, set=src_names_set)
                         src_idx = i
+                        vertex_hash[src] = src_idx
+                        g.add_node(src_idx, n=src, set=src_names_set, genes=set([tree_index]))          
                         i += 1
                     else:
                         src_idx = vertex_hash[src]
+                        g.node[src_idx]['genes'].add(tree_index)
+
                     
                     if g.has_edge(src_idx,trg_idx):
                         g[src_idx][trg_idx]['w']  += 1
+                        g[src_idx][trg_idx]['genes'].add(tree_index)
                         # g[src_idx][trg_idx]['trees'].append()
                     else:                        
-                        g.add_edge(src_idx,trg_idx,w=1)
+                        g.add_edge(src_idx,trg_idx,w=1,genes=set([tree_index]))
 
     
         g2 = nx.DiGraph()
@@ -488,33 +496,34 @@ class SupertreeAppTest(TestCase):
                 names = node.get_leaf_names()
                 names.sort()
                 root = ','.join(names)
+                print("Root name", root)
                 root_idx = i
                 vertex_hash[root] = root_idx                    
-                g2.add_node(root_idx, n=root, type=type, tree=node)                    
+                g2.add_node(root_idx, n=root, type='internal', tree=node)                    
                 i += 1
                 
             
-        print(g2.nodes(data=True))
-        w = []
+        # print(g2.nodes(data=True))
+        
         # get edges that are not in the supertree
         filtered_edges = []
-        dist = 17
+        
+        dist_min = 10
+        dist_max = 30
+        weight_min = 1
+        weight_max = 1
         distances = []
+        weights = []
         for e in g.edges():
             src = e[0]
-            trg = e[1]         
-            if not g2.has_edge(src,trg):
+            trg = e[1]
+            weight = g[src][trg]['w']
+            if weight >= weight_min and weight <= weight_max and not g2.has_edge(src,trg):
                 if g2.has_node(trg):
                     tree_trg = g2.node[trg]['tree']
-                    if not tree_trg.is_leaf():                    
-
-                        weight = g[src][trg]['w']
-
-                        src_node = g.node[src]
-                        trg_node = g.node[trg]
-
-                        src_set = src_node['set']
-                        trg_set = trg_node['set']
+                    if not tree_trg.is_leaf():                                            
+                        src_set = g.node[src]['set']
+                        trg_set = g.node[trg]['set']
 
                         dif_set = src_set - trg_set     
 
@@ -531,21 +540,47 @@ class SupertreeAppTest(TestCase):
                             if new_name in vertex_hash:
                                 new_src = vertex_hash[new_name]
                                 if g2.has_node(new_src):  
-                                    d = tree_trg.get_distance(g2.nodes[new_src]['tree'],topology_only=True)
-                                    distances.append(d)                      
-                                    if d < dist-2 and d > dist:
-                                        filtered_edges.append([trg,new_src])  
+                                    d = tree_trg.get_distance(g2.node[new_src]['tree'],topology_only=True)                                    
+                                    if d >= dist_min and d <= dist_max:
+                                        ancestor = tree_trg.get_common_ancestor(g2.node[new_src]['tree'])                                        
+                                        ancestor_name = self.get_name(ancestor)
+                                        if not ancestor.is_root():
+                                            edge_genes = g[src][trg]['genes']
+                                            ancestor_inter = edge_genes.intersection(g.nodes[vertex_hash[ancestor_name]]['genes'])
+                                            if len(ancestor_inter) > 0:
+                                                print("ancestor inter edge",ancestor_inter)
+                                            else:
+                                                filtered_edges.append([trg,new_src])
+                                                distances.append(d)
+                                                weights.append(weight)
+                                                # print("--------- GENES ----------")                                                
+                                                # print("trg inter edge",edge_genes.intersection(g.nodes[new_src]['genes']))
+                                                # print("src inter edge",edge_genes.intersection(g.nodes[trg]['genes']))
+                                                # print("src genes: ", len(g.nodes[trg]['genes']))
+                                                # print("trg genes: ", len(g.nodes[new_src]['genes']))
+                                                # print("src inter trg", len(g.nodes[new_src]['genes'].intersection(g.nodes[trg]['genes'])))                                       
                             else:
-                                anscestor = self.supertree.get_common_ancestor(l_names)             
-                                d = tree_trg.get_distance(anscestor,topology_only=True)
-                                if d > dist-3 and d < dist:
-                                    filtered_edges.append([trg,vertex_hash[anscestor.name]])       
-                                distances.append(d)                                               
+                                continue
+                                ancestor = self.supertree.get_common_ancestor(l_names)
+                                ancestor_name = self.get_name(ancestor)
+                                if ancestor_name in vertex_hash:            
+                                    d = tree_trg.get_distance(ancestor,topology_only=True)
+                                    if d >= dist_min and d <= dist_max:
+                                        filtered_edges.append([trg,vertex_hash[ancestor_name]])
+                                        distances.append(d)
+                                        weights.append(weight)
+                                else:
+                                    print("Error - ancestor name is not indexed: ", ancestor_name)                                             
                 
         print("Number of confliction edges:", len(filtered_edges))
 
         plt.hist(distances)
         plt.title("Dists Histogram")
+        plt.xlabel("Value")
+        plt.ylabel("Frequency")
+        plt.show()
+        plt.hist(weights)
+        plt.title("Weights Histogram")
         plt.xlabel("Value")
         plt.ylabel("Frequency")
         plt.show()
@@ -578,7 +613,7 @@ class SupertreeAppTest(TestCase):
         pos=graphviz_layout(g2,prog='twopi',args='')
         plt.figure(figsize=(8,8))             
         nx.draw(g2,pos,node_size=20,alpha=0.5,node_color="blue", with_labels=False)
-        nx.draw_networkx_edges(g2, pos=pos, edgelist=filtered_edges, edge_color="red", style="dashed", alpha=0.4)
+        nx.draw_networkx_edges(g2, pos=pos, edgelist=filtered_edges, edge_color="red", style="dashed", alpha=0.07)
 
         nx.draw_networkx_labels(g2,pos,labels,font_size=8, alpha=0.7)
         plt.axis('equal')
