@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 from django.contrib.auth.models import User
 from django.test import TestCase
-from ete3 import Tree
+from ete3 import Tree, TreeStyle
 from networkx.drawing.nx_agraph import graphviz_layout
 from scipy.sparse import csr_matrix
 
@@ -637,31 +637,73 @@ class SupertreeAppTest(TestCase):
 
     def cluster_tree(self, tree, level_cut_off):
         # create node attribute class=cluster based on level of tree
+        pass
 
+    def jaccard(self, s1, s2):
+        n = len(s1.intersection(s2))
+        return n / float(len(s1) + len(s2) - n)
 
-
-    def testSetGraphLGT2(self):
-        g = nx.DiGraph()
+    def testSetGraphLGTClustering(self):
+        # parameters
+        number_of_trees = len(self.forest)
+        number_of_trees = 10000
+        
         vertex_hash = {}
         i = 0
 
-        # cluster super tree
 
-        # identify genes of each leaf of the supertree
-        # while creating a hash group-genes:
-            # for each leaf of each gene: 
-                # tree.hash[supertree[leaf].group].add(leaf)
-            # if len(tree.hash.keys()) > 1:
-                # has LGT = true
-            # increment LGT for each pair of idenfitied groups
-        
+        # self.forest.sort(key=lambda x: len(x.get_leaf_names()), reverse=True)
 
-        # 
-        
-        super_tree_root = self.supertree.get_root()
+        # setup genes attribue in the supertree
         for node in self.supertree.traverse("preorder"):
-                    
-            if not node.is_root():
+            node.add_features(inter_genes = set(), union_genes=set())
+        
+        # store gene set
+        for tree_index in range(number_of_trees):
+            for name in self.forest[tree_index].get_leaf_names():
+                for leaf in self.supertree.get_leaves_by_name(name):
+                    leaf.union_genes.add(tree_index)            
+        
+        # for leaf in self.supertree:
+        #     leaf.union_genes = leaf.inter_genes
+
+        for node in self.supertree.iter_descendants("postorder"):                        
+            node.up.union_genes.update(node.union_genes) 
+
+        # build gene sets for ancestors in the supertree
+        for node in self.supertree.iter_descendants("postorder"):            
+            if node.up.inter_genes:
+                node.up.inter_genes &= node.union_genes               
+            else: #if first visit
+                node.up.inter_genes.update(node.union_genes)                        
+               
+
+        # compute groups weights
+        for node in self.supertree.iter_descendants("preorder"):
+            try:
+                node.dist = len(node.inter_genes) / float(len(node.union_genes))    
+                node.support = len(node.inter_genes)            
+            except:
+                pass                
+
+
+        ts = TreeStyle()
+        ts.show_leaf_name = True
+        ts.show_branch_length = True
+        ts.show_branch_support = True
+        self.supertree.show(tree_style=ts)
+
+        exit()
+        # super_tree_root = self.supertree.get_root()
+        # root_name = self.get_name(super_tree_root)
+        # vertex_hash[root_name] = i
+        # names = super_tree_root.get_leaf_names()
+        # names_set = set(names)
+        # g = nx.DiGraph()
+        # g.add_node(i, n=root_name, set=names_set, genes=set())
+        for tree_index in range(number_of_trees):
+            tree = self.forest[tree_index]
+            for node in tree.traverse("preorder"):               
                 names_set = None
                 if node.is_leaf():
                     trg = node.name
@@ -671,76 +713,80 @@ class SupertreeAppTest(TestCase):
                     trg_names_set = set(names)
                     names.sort()
                     trg = ','.join(names)
-
                 names = node.up.get_leaf_names()
                 src_names_set = set(names)
                 names.sort()
-                src = ','.join(names) 
+                src = ','.join(names)
+
+                src_idx, trg_idx = 0, 0
                 if not trg in vertex_hash:
-                    vertex_hash[trg] = i
-                    g.add_node(i, n=trg, set=trg_names_set, genes=set())
+                    trg_idx = i
+                    vertex_hash[trg] = trg_idx
+                    g.add_node(trg_idx, n=trg, set=trg_names_set, genes=set([tree_index])) 
                     i += 1
+                else:
+                    trg_idx = vertex_hash[trg]
+                    g.node[trg_idx]['genes'].add(tree_index)
                 
                 if not src in vertex_hash:
-                    vertex_hash[src] = i
-                    g.add_node(i, n=src, set=src_names_set, genes=set())
+                    src_idx = i
+                    vertex_hash[src] = src_idx
+                    g.add_node(src_idx, n=src, set=src_names_set, genes=set([tree_index]))          
                     i += 1
+                else:
+                    src_idx = vertex_hash[src]
+                    g.node[src_idx]['genes'].add(tree_index)
+                
+                if g.has_edge(src_idx,trg_idx):
+                    g[src_idx][trg_idx]['w']  += 1
+                    g[src_idx][trg_idx]['genes'].add(tree_index)
+                    # g[src_idx][trg_idx]['trees'].append()
+                else:                        
+                    g.add_edge(src_idx,trg_idx,w=1,genes=set([tree_index]))
+
+
+        for node in self.supertree.iter_descendants("preorder"):                            
+            names_set = None
+            if node.is_leaf():
+                trg = node.name
+                trg_names_set = set([node.name])
             else:
-                root_name = self.get_name(node)
-                vertex_hash[root_name] = i
                 names = node.get_leaf_names()
-                names_set = set(names)
-                g.add_node(i, n=root_name, set=names_set, genes=set())               
+                trg_names_set = set(names)
+                names.sort()
+                trg = ','.join(names)
+
+            names = node.up.get_leaf_names()
+            src_names_set = set(names)
+            names.sort()
+            src = ','.join(names) 
+            if not trg in vertex_hash:
+                vertex_hash[trg] = i
+                g.add_node(i, n=trg, set=trg_names_set, genes=set())
+                i += 1
+            
+            if not src in vertex_hash:
+                vertex_hash[src] = i
+                g.add_node(i, n=src, set=src_names_set, genes=set())
                 i += 1
 
+        
+        # identify genes of each leaf of the supertree
+        # while creating a hash group-genes:
+            # for each leaf of each gene: 
+                # tree.hash[supertree[leaf].group].add(leaf)
+            # if len(tree.hash.keys()) > 1:
+                # has LGT = true
+            # increment LGT for each pair of idenfitied groups
+        
 
-        number_of_trees = len(self.forest)
-        number_of_trees = 10000
-        for tree_index in range(number_of_trees):
-            tree = self.forest[tree_index]
-            for node in tree.traverse("preorder"):
-                if not node.is_root():
-                    names_set = None
-                    if node.is_leaf():
-                        trg = node.name
-                        trg_names_set = set([node.name])
-                    else:
-                        names = node.get_leaf_names()
-                        trg_names_set = set(names)
-                        names.sort()
-                        trg = ','.join(names)
+        # cluster super tree
 
-                    names = node.up.get_leaf_names()
-                    src_names_set = set(names)
-                    names.sort()
-                    src = ','.join(names)
+        
 
-                    src_idx, trg_idx = 0, 0
-                    if not trg in vertex_hash:
-                        trg_idx = i
-                        vertex_hash[trg] = trg_idx
-                        g.add_node(trg_idx, n=trg, set=trg_names_set, genes=set([tree_index]))           
-                        i += 1
-                    else:
-                        trg_idx = vertex_hash[trg]
-                        g.node[trg_idx]['genes'].add(tree_index)
-                    
-                    if not src in vertex_hash:
-                        src_idx = i
-                        vertex_hash[src] = src_idx
-                        g.add_node(src_idx, n=src, set=src_names_set, genes=set([tree_index]))          
-                        i += 1
-                    else:
-                        src_idx = vertex_hash[src]
-                        g.node[src_idx]['genes'].add(tree_index)
 
-                    
-                    if g.has_edge(src_idx,trg_idx):
-                        g[src_idx][trg_idx]['w']  += 1
-                        g[src_idx][trg_idx]['genes'].add(tree_index)
-                        # g[src_idx][trg_idx]['trees'].append()
-                    else:                        
-                        g.add_edge(src_idx,trg_idx,w=1,genes=set([tree_index]))
+
+
 
     
         g2 = nx.DiGraph()
