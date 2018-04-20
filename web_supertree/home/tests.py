@@ -8,6 +8,7 @@ from ete3 import Tree, TreeStyle, NodeStyle
 from networkx.drawing.nx_agraph import graphviz_layout
 from scipy.sparse import csr_matrix
 import itertools
+import json
 
 from home.test_data import TestData
 
@@ -673,7 +674,7 @@ class SupertreeAppTest(TestCase):
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        # number_of_trees = 5000             
+        number_of_trees = 2000             
         
         vertex_hash = {}
         i = 0
@@ -721,45 +722,26 @@ class SupertreeAppTest(TestCase):
             nstyle['bgcolor'] = matplotlib.colors.to_hex(cmap(norm(node.g)))
             node.set_style(nstyle)
 
-        self.supertree.write(format=1, outfile="./accounts/static/accounts/new_tree.nw")
-
-        json = "{"
-        for node in self.supertree.traverse("postorder"):
-            json+="\""+node.name.replace(',','_')+"\":"
-            json+="{\"genes\":["
-            for gene in node.union_genes:
-                json+=str(gene)+","
-            if len(node.union_genes) > 0:
-                json = json[:-1]
-            json+="],\"g\":"+str(node.g)
-            json+="},"
-        json = json[:-1]
-        json+="}"
-        with open("./accounts/static/accounts/data.json","w") as f:
-            f.write(json)
-            f.close()        
-
-        ts = TreeStyle()
-        ts.show_leaf_name = True
-        ts.show_branch_length = True
-        # ts.show_branch_support = True
-        self.supertree.show(tree_style=ts)
-
-        return None
-
         print("Computing LGT candidates...")
 
         # how to use t.get_cached_content() to get it faster?
-        potential_lgts = nx.Graph()
+        potential_lgts = nx.Graph()        
         for tree_index in range(number_of_trees):
             species = self.forest[tree_index].get_leaf_names()
             clusters = {}
+            clusters_dist = {}
             for name in species:
                 for leaf in self.supertree.get_leaves_by_name(name):
                     if leaf.g in clusters:
                         clusters[leaf.g].append(leaf)
                     else:
-                        clusters[leaf.g] = [leaf]
+                        clusters[leaf.g] = [leaf]            
+            for c in clusters:
+                clusters_dist[c] = len(clusters[c])
+
+            self.forest[tree_index].add_features(clusters_dist = clusters_dist)
+
+            # cluster_lgts_dist = {} # for now it does not make sense to store this
             for c1, c2 in itertools.combinations(clusters, 2):
                 n1 = self.supertree.get_common_ancestor(clusters[c1])
                 n2 = self.supertree.get_common_ancestor(clusters[c2])
@@ -769,5 +751,58 @@ class SupertreeAppTest(TestCase):
         nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
         plt.show()
 
+        self.supertree.write(format=1, outfile="./accounts/static/accounts/new_tree.nw")
+        
+        # write data associated with each tree from the florest
+        json_txt = "{\"forest\":{"        
+        for tree_index in range(number_of_trees):
+            tree = self.forest[tree_index]
+            json_txt += str(tree_index) +":{"
+            
+            # write the species
+            json_txt += "\"species\":["
+            for leaf in tree:
+                json_txt += leaf.name + ","
+            json_txt = json_txt[:-1]
 
-        exit()
+            # write the tree in newick format
+            json_txt += "],\"newick\": "
+            json_txt += "\"(A,B);\""
+
+            # write the distribution of species in each group, for this gene
+            json_txt += ",\"group_sp_distribution\":"
+            json_txt += json.dumps(tree.clusters_dist)
+
+            # write how many edges have src/trg in each group
+            json_txt += ",\"group_lgt_distribution\":{"            
+
+            json_txt += "},"
+        json_txt = json_txt[:-1]
+        
+        # write lgts edges
+        json_txt += "},\"lgts\":["
+        
+        # write genes and group of each node from supertree
+        json_txt += "],\"supertree\":{"
+        for node in self.supertree.traverse("postorder"):
+            json_txt += "\"" + node.name.replace(',', '_') + "\":"
+        json_txt += "{\"genes\":["
+        for gene in node.union_genes:
+            json_txt += str(gene) + ","
+        if len(node.union_genes) > 0:
+            json_txt = json_txt[: -1]
+        json_txt += "],\"g\":" + str(node.g)
+        json_txt += "},"
+        json_txt = json_txt[: -1]
+        json_txt += "}}"
+        
+        with open("./accounts/static/accounts/data.json_txt","w") as f:
+            f.write(json_txt)
+            f.close()        
+
+        ts = TreeStyle()
+        ts.show_leaf_name = True
+        ts.show_branch_length = True
+        # ts.show_branch_support = True
+        self.supertree.show(tree_style=ts)
+
