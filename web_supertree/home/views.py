@@ -6,6 +6,12 @@ from home.forms import HomeForm, UploadTreesForm
 from home.models import Post, SupertreeModel, User
 
 
+class AppView(TemplateView):
+    template_name = 'home/app.html'
+    
+    def get(self, request):        
+        return render(request, self.template_name, {})
+
 class HomeView(TemplateView):
     template_name = 'home/home.html'
     

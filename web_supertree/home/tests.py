@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import networkx as nx
 import numpy as np
 from django.contrib.auth.models import User
 from django.test import TestCase
-from ete3 import Tree, TreeStyle
+from ete3 import Tree, TreeStyle, NodeStyle
 from networkx.drawing.nx_agraph import graphviz_layout
 from scipy.sparse import csr_matrix
+import itertools
 
 from home.test_data import TestData
 
@@ -30,8 +32,6 @@ class SupertreeAppTest(TestCase):
         print("Partitions in tree1 that were not found in tree2:", parts_t2 - parts_t1)
         print("Partitions in tree1:", parts_t1)
         print("Partitions in tree2:", parts_t2)
-
-
 
     def setUp(self):
 
@@ -634,29 +634,54 @@ class SupertreeAppTest(TestCase):
         plt.savefig('circular_tree.png')
         plt.show()
 
+    def cluster_tree(self, tree, cut_off):
+        g = 0
+        s = -1
+        for node in tree.traverse("preorder"):
+            node.add_features(g=g)        
+        g += 1
 
-    def cluster_tree(self, tree, level_cut_off):
-        # create node attribute class=cluster based on level of tree
-        pass
+        def cluster_root(node):
+            if node.dist > 0 and node.dist < cut_off:
+                return True
+            else:
+                if len(node) == 1:
+                    return True
+                else:
+                    return False
 
+        for root in tree.iter_leaves(is_leaf_fn=cluster_root):
+            if len(root) == 1:
+                cluster = s
+                s -= 1
+            else:
+                cluster = g
+                g += 1
+
+            for node in root.traverse("postorder"):
+                    node.g = cluster
+        
+        print("Number of groups: ", g)
+        print("Number of singles; ", s)
+        return (s,g)
+        
     def jaccard(self, s1, s2):
         n = len(s1.intersection(s2))
         return n / float(len(s1) + len(s2) - n)
 
+
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        number_of_trees = 10000
+        # number_of_trees = 5000             
         
         vertex_hash = {}
         i = 0
 
-
         # self.forest.sort(key=lambda x: len(x.get_leaf_names()), reverse=True)
-
         # setup genes attribue in the supertree
         for node in self.supertree.traverse("preorder"):
-            node.add_features(inter_genes = set(), union_genes=set())
+            node.add_features(inter_genes = set(), union_genes=set(), name=self.get_name(node))
         
         # store gene set
         for tree_index in range(number_of_trees):
@@ -666,7 +691,6 @@ class SupertreeAppTest(TestCase):
         
         # for leaf in self.supertree:
         #     leaf.union_genes = leaf.inter_genes
-
         for node in self.supertree.iter_descendants("postorder"):                        
             node.up.union_genes.update(node.union_genes) 
 
@@ -677,283 +701,73 @@ class SupertreeAppTest(TestCase):
             else: #if first visit
                 node.up.inter_genes.update(node.union_genes)                        
                
-
         # compute groups weights
-        for node in self.supertree.iter_descendants("preorder"):
+        for node in self.supertree.iter_descendants("preorder"):        
             try:
-                node.dist = len(node.inter_genes) / float(len(node.union_genes))    
-                node.support = len(node.inter_genes)            
+                d = (len(node.up.inter_genes) / float(len(node.union_genes)))
+                if d == 1:
+                    d = 0.95
+                node.dist = 1 - d    
+                # node.support = len(node.inter_genes)            
             except:
                 pass                
 
+        min_g, max_g = self.cluster_tree(self.supertree, cut_off=0.5)
+        cmap = plt.get_cmap("tab20c")   
+        norm = matplotlib.colors.Normalize(vmin=min_g, vmax=max_g)
+        
+        for node in self.supertree.traverse("postorder"):                         
+            nstyle = NodeStyle()
+            nstyle['bgcolor'] = matplotlib.colors.to_hex(cmap(norm(node.g)))
+            node.set_style(nstyle)
+
+        self.supertree.write(format=1, outfile="./accounts/static/accounts/new_tree.nw")
+
+        json = "{"
+        for node in self.supertree.traverse("postorder"):
+            json+="\""+node.name.replace(',','_')+"\":"
+            json+="{\"genes\":["
+            for gene in node.union_genes:
+                json+=str(gene)+","
+            if len(node.union_genes) > 0:
+                json = json[:-1]
+            json+="],\"g\":"+str(node.g)
+            json+="},"
+        json = json[:-1]
+        json+="}"
+        with open("./accounts/static/accounts/data.json","w") as f:
+            f.write(json)
+            f.close()        
 
         ts = TreeStyle()
         ts.show_leaf_name = True
         ts.show_branch_length = True
-        ts.show_branch_support = True
+        # ts.show_branch_support = True
         self.supertree.show(tree_style=ts)
 
-        exit()
-        # super_tree_root = self.supertree.get_root()
-        # root_name = self.get_name(super_tree_root)
-        # vertex_hash[root_name] = i
-        # names = super_tree_root.get_leaf_names()
-        # names_set = set(names)
-        # g = nx.DiGraph()
-        # g.add_node(i, n=root_name, set=names_set, genes=set())
+        return None
+
+        print("Computing LGT candidates...")
+
+        # how to use t.get_cached_content() to get it faster?
+        potential_lgts = nx.Graph()
         for tree_index in range(number_of_trees):
-            tree = self.forest[tree_index]
-            for node in tree.traverse("preorder"):               
-                names_set = None
-                if node.is_leaf():
-                    trg = node.name
-                    trg_names_set = set([node.name])
-                else:
-                    names = node.get_leaf_names()
-                    trg_names_set = set(names)
-                    names.sort()
-                    trg = ','.join(names)
-                names = node.up.get_leaf_names()
-                src_names_set = set(names)
-                names.sort()
-                src = ','.join(names)
-
-                src_idx, trg_idx = 0, 0
-                if not trg in vertex_hash:
-                    trg_idx = i
-                    vertex_hash[trg] = trg_idx
-                    g.add_node(trg_idx, n=trg, set=trg_names_set, genes=set([tree_index])) 
-                    i += 1
-                else:
-                    trg_idx = vertex_hash[trg]
-                    g.node[trg_idx]['genes'].add(tree_index)
-                
-                if not src in vertex_hash:
-                    src_idx = i
-                    vertex_hash[src] = src_idx
-                    g.add_node(src_idx, n=src, set=src_names_set, genes=set([tree_index]))          
-                    i += 1
-                else:
-                    src_idx = vertex_hash[src]
-                    g.node[src_idx]['genes'].add(tree_index)
-                
-                if g.has_edge(src_idx,trg_idx):
-                    g[src_idx][trg_idx]['w']  += 1
-                    g[src_idx][trg_idx]['genes'].add(tree_index)
-                    # g[src_idx][trg_idx]['trees'].append()
-                else:                        
-                    g.add_edge(src_idx,trg_idx,w=1,genes=set([tree_index]))
-
-
-        for node in self.supertree.iter_descendants("preorder"):                            
-            names_set = None
-            if node.is_leaf():
-                trg = node.name
-                trg_names_set = set([node.name])
-            else:
-                names = node.get_leaf_names()
-                trg_names_set = set(names)
-                names.sort()
-                trg = ','.join(names)
-
-            names = node.up.get_leaf_names()
-            src_names_set = set(names)
-            names.sort()
-            src = ','.join(names) 
-            if not trg in vertex_hash:
-                vertex_hash[trg] = i
-                g.add_node(i, n=trg, set=trg_names_set, genes=set())
-                i += 1
-            
-            if not src in vertex_hash:
-                vertex_hash[src] = i
-                g.add_node(i, n=src, set=src_names_set, genes=set())
-                i += 1
-
+            species = self.forest[tree_index].get_leaf_names()
+            clusters = {}
+            for name in species:
+                for leaf in self.supertree.get_leaves_by_name(name):
+                    if leaf.g in clusters:
+                        clusters[leaf.g].append(leaf)
+                    else:
+                        clusters[leaf.g] = [leaf]
+            for c1, c2 in itertools.combinations(clusters, 2):
+                n1 = self.supertree.get_common_ancestor(clusters[c1])
+                n2 = self.supertree.get_common_ancestor(clusters[c2])
+                potential_lgts.add_edge(n1.name,n2.name)
         
-        # identify genes of each leaf of the supertree
-        # while creating a hash group-genes:
-            # for each leaf of each gene: 
-                # tree.hash[supertree[leaf].group].add(leaf)
-            # if len(tree.hash.keys()) > 1:
-                # has LGT = true
-            # increment LGT for each pair of idenfitied groups
-        
-
-        # cluster super tree
-
-        
-
-
-
-
-
-    
-        g2 = nx.DiGraph()
-        for node in self.supertree.traverse("preorder"):
-            if not node.is_root():
-                type = "internal"
-                if node.is_leaf():                    
-                    trg = node.name
-                    type = "leaf"
-                else:                    
-                    names = node.get_leaf_names()
-                    names.sort()
-                    trg = ','.join(names)
-
-                names = node.up.get_leaf_names()
-                names.sort()
-                src = ','.join(names)
-
-                src_idx, trg_idx = 0, 0
-                if not trg in vertex_hash:
-                    trg_idx = i
-                    vertex_hash[trg] = trg_idx
-                    g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
-                    i += 1                    
-                else:
-                    trg_idx = vertex_hash[trg]
-                    if not g2.has_node(trg_idx):
-                        g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
-                
-                if not src in vertex_hash:
-                    src_idx = i
-                    vertex_hash[src] = src_idx                    
-                    g2.add_node(src_idx, n=src, type=type, tree=node.up)                    
-                    i += 1
-                else:
-                    src_idx = vertex_hash[src]
-                    if not g2.has_node(src_idx):
-                        g2.add_node(src_idx, n=src, type=type, tree=node.up)
-                
-                if g2.has_edge(src_idx,trg_idx):
-                    g2[src_idx][trg_idx]['w']  += 1
-                else:                        
-                    g2.add_edge(src_idx,trg_idx,w=1)
-            else:
-                names = node.get_leaf_names()
-                names.sort()
-                root = ','.join(names)
-                print("Root name", root)
-                root_idx = i
-                vertex_hash[root] = root_idx                    
-                g2.add_node(root_idx, n=root, type='internal', tree=node)                    
-                i += 1
-                
-            
-        # print(g2.nodes(data=True))
-        
-        # get edges that are not in the supertree
-        filtered_edges = []
-        
-        dist_min = 10
-        dist_max = 30
-        weight_min = 1
-        weight_max = 1
-        distances = []
-        weights = []
-        for e in g.edges():
-            src = e[0]
-            trg = e[1]
-            weight = g[src][trg]['w']
-            if weight >= weight_min and weight <= weight_max and not g2.has_edge(src,trg):
-                if g2.has_node(trg):
-                    tree_trg = g2.node[trg]['tree']
-                    if not tree_trg.is_leaf():                                            
-                        src_set = g.node[src]['set']
-                        trg_set = g.node[trg]['set']
-
-                        dif_set = src_set - trg_set     
-
-                        if len(dif_set)>0:
-                            l_names = list(dif_set)
-                            
-                            new_name = None
-                            if len(l_names) > 1:
-                                l_names.sort()
-                                new_name = ','.join(l_names)
-                            else:
-                                new_name = l_names[0]
-                                                                                
-                            if new_name in vertex_hash:
-                                new_src = vertex_hash[new_name]
-                                if g2.has_node(new_src):  
-                                    d = tree_trg.get_distance(g2.node[new_src]['tree'],topology_only=True)                                    
-                                    if d >= dist_min and d <= dist_max:
-                                        ancestor = tree_trg.get_common_ancestor(g2.node[new_src]['tree'])                                        
-                                        ancestor_name = self.get_name(ancestor)
-                                        if not ancestor.is_root():
-                                            edge_genes = g[src][trg]['genes']
-                                            ancestor_inter = edge_genes.intersection(g.nodes[vertex_hash[ancestor_name]]['genes'])
-                                            if len(ancestor_inter) > 0:
-                                                print("ancestor inter edge",ancestor_inter)
-                                            else:
-                                                filtered_edges.append([trg,new_src])
-                                                distances.append(d)
-                                                weights.append(weight)
-                                                # print("--------- GENES ----------")                                                
-                                                # print("trg inter edge",edge_genes.intersection(g.nodes[new_src]['genes']))
-                                                # print("src inter edge",edge_genes.intersection(g.nodes[trg]['genes']))
-                                                # print("src genes: ", len(g.nodes[trg]['genes']))
-                                                # print("trg genes: ", len(g.nodes[new_src]['genes']))
-                                                # print("src inter trg", len(g.nodes[new_src]['genes'].intersection(g.nodes[trg]['genes'])))                                       
-                            else:
-                                continue
-                                ancestor = self.supertree.get_common_ancestor(l_names)
-                                ancestor_name = self.get_name(ancestor)
-                                if ancestor_name in vertex_hash:            
-                                    d = tree_trg.get_distance(ancestor,topology_only=True)
-                                    if d >= dist_min and d <= dist_max:
-                                        filtered_edges.append([trg,vertex_hash[ancestor_name]])
-                                        distances.append(d)
-                                        weights.append(weight)
-                                else:
-                                    print("Error - ancestor name is not indexed: ", ancestor_name)                                             
-                
-        print("Number of confliction edges:", len(filtered_edges))
-
-        plt.hist(distances)
-        plt.title("Dists Histogram")
-        plt.xlabel("Value")
-        plt.ylabel("Frequency")
+        print("Number of LGT candidates: ",len(potential_lgts.edges))
+        nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
         plt.show()
-        plt.hist(weights)
-        plt.title("Weights Histogram")
-        plt.xlabel("Value")
-        plt.ylabel("Frequency")
-        plt.show()
-        
-        g3 = nx.DiGraph()
-        g3.add_nodes_from(g2)
-        types = nx.get_node_attributes(g2,'type')
-        for node in g3.nodes:
-            g3.node[node]['type'] = types[node]
 
-        for e in g2.edges:
-            g3.add_edge(e[0], e[1], type="reference")
-        for e in filtered_edges:            
-            g3.add_edge(e[0], e[1], type="conflict")
 
-        for node in g3.nodes:           
-            if not g2.has_node(node):               
-                g3.node[node]['type'] = 'internal_conflict'            
-
-        # nx.draw_spring(g3)
-        # plt.show()
-
-        nx.write_gml(g3, "test.gml")
-
-        labels = {}
-        for (i,data) in g2.nodes(data=True):
-            if data['type'] == 'leaf':
-                labels[i]=data['n'].split('_')[0]
-            
-        pos=graphviz_layout(g2,prog='twopi',args='')
-        plt.figure(figsize=(8,8))             
-        nx.draw(g2,pos,node_size=20,alpha=0.5,node_color="blue", with_labels=False)
-        nx.draw_networkx_edges(g2, pos=pos, edgelist=filtered_edges, edge_color="red", style="dashed", alpha=0.07)
-
-        nx.draw_networkx_labels(g2,pos,labels,font_size=8, alpha=0.7)
-        plt.axis('equal')
-        plt.savefig('circular_tree.png')
-        plt.show()
+        exit()
