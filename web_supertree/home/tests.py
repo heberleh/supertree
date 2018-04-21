@@ -62,9 +62,11 @@ class SupertreeAppTest(TestCase):
                 format=self.format
             )
             self.forest = []
-            for tree_nw in forest_newicks.split(';'):
+            for tree_nw in sorted(forest_newicks.split(';'), key=len, reverse=True):
                 self.forest.append(
                     Tree(newick=tree_nw+';', format=self.format))
+        self.forest = sorted(self.forest, key=len, reverse=True)
+
 
     def testPrinting(self):
         print(self.supertree)
