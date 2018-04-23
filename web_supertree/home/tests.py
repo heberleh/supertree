@@ -753,18 +753,18 @@ class SupertreeAppTest(TestCase):
         nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
         plt.show()
 
-        self.supertree.write(format=1, outfile="./accounts/static/accounts/new_tree.nw")
+        self.supertree.write(format=1, outfile="./home/static/home/new_tree.nw")
         
         # write data associated with each tree from the florest
         json_txt = "{\"forest\":{"        
         for tree_index in range(number_of_trees):
             tree = self.forest[tree_index]
-            json_txt += str(tree_index) +":{"
+            json_txt += "\""+str(tree_index) +"\":{"
             
             # write the species
             json_txt += "\"species\":["
             for leaf in tree:
-                json_txt += leaf.name + ","
+                json_txt +=  "\""+ leaf.name + "\","
             json_txt = json_txt[:-1]
 
             # write the tree in newick format
@@ -777,7 +777,7 @@ class SupertreeAppTest(TestCase):
 
             # write how many edges have src/trg in each group
             json_txt += ",\"group_lgt_distribution\":{"            
-
+            json_txt += "}"
             json_txt += "},"
         json_txt = json_txt[:-1]
         
@@ -788,17 +788,17 @@ class SupertreeAppTest(TestCase):
         json_txt += "],\"supertree\":{"
         for node in self.supertree.traverse("postorder"):
             json_txt += "\"" + node.name.replace(',', '_') + "\":"
-        json_txt += "{\"genes\":["
-        for gene in node.union_genes:
-            json_txt += str(gene) + ","
-        if len(node.union_genes) > 0:
-            json_txt = json_txt[: -1]
-        json_txt += "],\"g\":" + str(node.g)
-        json_txt += "},"
+            json_txt += "{\"genes\":["
+            for gene in node.union_genes:
+                json_txt += "\""+str(gene) + "\","
+            if len(node.union_genes) > 0:
+                json_txt = json_txt[: -1]
+            json_txt += "],\"g\":\"" + str(node.g)
+            json_txt += "\"},"
         json_txt = json_txt[: -1]
         json_txt += "}}"
         
-        with open("./accounts/static/accounts/data.json_txt","w") as f:
+        with open("./home/static/home/data.json","w") as f:
             f.write(json_txt)
             f.close()        
 

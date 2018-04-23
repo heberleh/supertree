@@ -7,8 +7,9 @@ class Supertree{
         this._supertree = null; // hierarchy... or another Tree structure in Javascript. 
         this._simple_hierarchy = parseNewick(supertree_newick)
 
+        this._nodes_data = nodes_data;
         // set up groups -> original groups
-        this._setUpTreeGroupsLabels(nodes_data.supertree_nodes);
+        this._groupsLabels = this._setUpTreeGroupsLabels(nodes_data.supertree);
         //////////////////////////////
         
         // set up forest
@@ -18,20 +19,29 @@ class Supertree{
 
     }
 
+    // given a ROOT d... of a tree.. store the date in this tree
+    storeData(d) {        
+        if (d.data.name == "") {
+            d.data.c = 0;
+            d.data.genes = [];
+        } else {            
+            var node = this._nodes_data.supertree[d.data.name];
+            d.data.c = node.g;            
+            d.data.genes = node.genes;
+        }
+        if (d.children) d.children.forEach((d) => this.storeData(d));
+    }
+
     _setUpTreeGroupsLabels(nodes){
-        gs = new Set();
+        var gs = new Set();
         for (let key in nodes){
             gs.add(nodes[key].g);
         }
-        this._groupsIndexes = [...gs];
+        return [...gs].sort();
     }
 
-    get minGroup(){
-        return Math.min(this._groupsIndexes);
-    }    
-
-    get maxGroup(){
-        return Math.max(this._groupsIndexes);
+    get groupsLabels(){
+        return this._groupsLabels;
     }
     
     get hierarchy(){

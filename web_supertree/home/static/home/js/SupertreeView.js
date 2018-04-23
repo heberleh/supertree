@@ -8,24 +8,32 @@ class SupertreeView {
         this._svg = this._setUpSVG(diagram_div);
         this._diagram = this._setUpDiagram(this._svg);
 
-        // D3 Radial Tree Layout Diagram
+        // hierarchy
         this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
+
+        // DATA
+        supertree.storeData(this._supertree_d3_hiearchy);
+
+        // Colors        
+        this._treeGroupColor = this._updateTreeGroupColors(supertree.groupsLabels);
+        this._setColor(this._supertree_d3_hiearchy);
+
+        // D3 Radial Tree Layout Diagram        
         this._treeLayoutCluster = this._setUpTreeLayoutCluster();
         this._treeLayoutCluster(this._supertree_d3_hiearchy);
         this._linkExtension = this._setUpLinkExtension();
         this._link = this._setUpLinks();
         this._labels = this._setUpLabels();
-
+        
         // Extensions
         this._tooltip = this._setUpToolTip();
 
-        // Colors
-        this._treeGroupColor = this._updateTreeGroupColors(supertree.getMinGroup(), supertree.getMaxGroup());
-
-        // Diagram Interaction
-        setUpData(root, nodes_data);
-        setRadius(root, root.data.length = 0, innerRadius / maxLength(root));
-        setColor(root);
+        // Diagram Interaction        
+        this._setRadius(this._supertree_d3_hiearchy, 
+                this._supertree_d3_hiearchy.data.length = 0, 
+                this._innerRadius / this._maxLength(this._supertree_d3_hiearchy)
+            );
+        
 
         // TODO should this be out of this class? YES -> AND OUT OF THE DIAGRAM
         this._clusterCheckbox = this._setUpCheckBoxClusterOnOff();
@@ -42,9 +50,9 @@ class SupertreeView {
             .append("g")
             .attr("transform", "translate(" + this._outerRadius + "," + this._outerRadius + ")");
     }
-    _updateTreeGroupColors(min_value, max_value, color_scheme = d3.schemeCategory10) {
+    _updateTreeGroupColors(labels, color_scheme = d3.schemeCategory10) {
         return d3.scaleOrdinal()
-            .domain([min_value, max_value])
+            .domain(labels)
             .range(color_scheme);
     }
 
@@ -71,15 +79,14 @@ class SupertreeView {
     _setUpCheckBoxClusterOnOff() {
         this._checkBoxLayoutCluster = 
             d3.select("#show-length input")
-            .on("change", this._clusterCheckboxChanged),
+            .on("change", (d)=>this._clusterCheckboxChanged(d)),
 
             this._timeout = setTimeout(() => {
-                input.property("checked", true).each(this._clusterCheckboxChanged);
+                this._checkBoxLayoutCluster.property("checked", true).each((d)=>this._clusterCheckboxChanged(d));
             }, 2000);
     }
 
-    _setUpLinkExtension() {
-        var linkExtensionConstant =  this._linkExtensionConstant;
+    _setUpLinkExtension() {    
         return this._diagram.append("g")
             .attr("class", "link-extensions")
             .selectAll("path")
@@ -90,7 +97,7 @@ class SupertreeView {
             .each(function (d) {
                 d.target.linkExtensionNode = this;
             })
-            .attr("d", linkExtensionConstant);
+            .attr("d",(d)=>this._linkExtensionConstant(d));
     }
 
     _setUpToolTip() {
@@ -162,21 +169,16 @@ class SupertreeView {
             .on("mouseout", mouseovered(false));
     }
 
-    _clusterCheckboxChanged() {
-        var linkExtensionVariable = this._linkExtensionVariable;
-        var linkExtensionConstant = this._linkExtensionConstant;
-        var linkVariable = this._linkVariable;
-        var linkConstant = this._linkConstant;        
-
+    _clusterCheckboxChanged() {        
         clearTimeout(this._timeout);
         var t = d3.transition().duration(750);
-        this._linkExtension.transition(t).attr("d", this.checked ? linkExtensionVariable : linkExtensionConstant);
-        this._link.transition(t).attr("d", this.checked ? linkVariable : linkConstant);
+        this._linkExtension.transition(t).attr("d", this.checked ? (d)=>this._linkExtensionVariable(d) : (d)=>this._linkExtensionConstant(d));
+        this._link.transition(t).attr("d", this.checked ? (d)=>this._linkVariable(d) : (d)=> this._linkConstant(d));
     }
 
     // Compute the maximum cumulative length of any node in the tree.
     _maxLength(d) {
-        return d.data.length + (d.children ? d3.max(d.children, this._maxLength) : 0);
+        return d.data.length + (d.children ? d3.max(d.children, ()=>this._maxLength) : 0);
     }
 
     // Set the radius of each node by recursively summing and scaling the distance from the root.
@@ -187,41 +189,26 @@ class SupertreeView {
         });
     }
 
-    // get data from a data file and store in the tree structure
-    _setUpData(d, nodes_data) {
-        if (d.data.name == "") {
-            d.data.c = 0;
-            d.data.genes = [];
-        } else {
-            var node = nodes_data[d.data.name];
-            d.data.c = node.g;
-            d.data.genes = node.genes;
-        }
-        if (d.children) d.children.forEach((d) => {
-            this._setUpData(d, nodes_data);
-        });
-    }
-
     // Set the color of each node by recursively inheriting.
     _setColor(d) {
-        d.color = color(d.data.c);
-        if (d.children) d.children.forEach(this._setColor);
+        d.color = this._treeGroupColor(d.data.c);        
+        if (d.children) d.children.forEach((d)=>this._setColor(d));
     }
 
     _linkVariable(d) {
-        return linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius);
+        return this._linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius);
     }
 
     _linkConstant(d) {
-        return linkStep(d.source.x, d.source.y, d.target.x, d.target.y);
+        return this._linkStep(d.source.x, d.source.y, d.target.x, d.target.y);
     }
 
     _linkExtensionVariable(d) {
-        return linkStep(d.target.x, d.target.radius, d.target.x, innerRadius);
+        return this._linkStep(d.target.x, d.target.radius, d.target.x, this._innerRadius);
     }
 
     _linkExtensionConstant(d) {
-        return linkStep(d.target.x, d.target.y, d.target.x, innerRadius);
+        return this._linkStep(d.target.x, d.target.y, d.target.x, this._innerRadius);
     }
 
     // Like d3.svg.diagonal.radial, but with square corners.
@@ -236,9 +223,6 @@ class SupertreeView {
             "L" + endRadius * c1 + "," + endRadius * s1;
     }
 } 
-
-
-
 
 
 // {% comment %}
