@@ -2,6 +2,7 @@ class SupertreeView {
 
     constructor(diagram_div, supertree) {
         this._diagram_div = diagram_div;
+        this.supertree = supertree;
 
         this._outerRadius = 902 / 2;
         this._innerRadius = this._outerRadius - 170;
@@ -221,6 +222,11 @@ class SupertreeView {
             (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ?
                 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1) +
             "L" + endRadius * c1 + "," + endRadius * s1;
+    }
+
+    // TODO: if groups changed by user interaction, return custom groups
+    getCurrentGroups(){
+        return this._supertree.groupsLabels;  
     }
 } 
 

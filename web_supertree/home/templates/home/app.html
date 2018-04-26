@@ -50,12 +50,27 @@
 {%block body%}
 
 <div class="container">
-    <div id="diagrams" class="col-md-11">
-        <label id="show-length">
-            <input type="checkbox"> Show branch length
-        </label>
-    </div>
+
 </div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div id="diagrams" class="col-md-11">      
+                <label id="show-length">
+                    <input type="checkbox"> Show branch length
+                </label>
+            </div>
+        </div>
+        <div class="row">
+                <div id=container>
+                        <center>
+                          <svg id=plotSvg></svg>
+                        </center>
+                      </div>
+        </div>
+    </div>
+  </div>
 
 
 <script src="https://d3js.org/d3.v4.min.js"></script>

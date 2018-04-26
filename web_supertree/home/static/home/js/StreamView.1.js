@@ -293,4 +293,8 @@ class StreamView {
                 .attr('transform', 'translate(' + width + ', 0)');
         });
     }
+
+    getCurrentGroups(){
+        
+    }
 }

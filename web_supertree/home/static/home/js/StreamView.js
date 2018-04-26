@@ -1,296 +1,167 @@
 class StreamView {
 
-    constructor() {
-        // get the various arguments from the chart div attributes
-        // if you're making one chart, this approach is unnecessary
-        // however, for several stream graphs on one page, this approach is useful
-        // it allows you to decide how to query the data in the html by assigning various
-        // attributes to the chart div.
-        var column = $('.chart').attr("column");
-        var groupBy = $('.chart').attr("groupBy");
-        var filterBy = $('.chart').attr("filterBy");
-        $('.chart').addClass(groupBy).addClass(filterBy);
-        this._chart(column, filterBy, groupBy);
+    constructor(stream) {
+        this._stream = stream;
+        this._setUpDiagram();
+        
+        var maxValue = 0;
+        this._selectedLabel = null;
+        for (let label in stream.max_values){
+            if (maxValue < stream.max_values[label]){
+                maxValue = stream.max_values[label];
+                this._selectedLabel = label;
+            }
+        }
+
+        //this._sortByLabel(this._stream.data, this._selectedLabel);
+        this._setUpStack(this._stream.data);
+        this._chart(this._stream.data);
     }
 
-    // function to create the chart
-    _chart(column, filterBy, groupBy) {
 
-        // basic chart dimensions
-        var margin = {
-            top: 20,
-            right: 1,
-            bottom: 30,
-            left: 0
-        };
-        
-        var width = $('.chart-wrapper').width() - margin.left - margin.right;
-        var height = breakHeight(breakpoint) - margin.top - margin.bottom;
+    _sortByLabel(data, attr){             
+        data.sort(function(a,b){
+            return ((a[attr] > b[attr]) ? -1 : ((a[attr] == b[attr]) ? 0 : 1));
+        });        
+    }
 
-        // chart top used for placing the tooltip
-        var chartTop = $('.chart.' + groupBy + '.' + filterBy).offset().top;
+    _setUpStack(data){        
+        var keys = this._stream.groupsLabels;
+        var stack = d3.stack()
+                    .keys(keys)
+                    .order(d3.stackOrderInsideOut);
+                    //.offset(d3.stackOffsetSilhouette);
+        this._series = stack(data);        
+    }
 
-        // tooltip
-        var tooltip = d3.select("body")
-            .append("div")
-            .attr("class", "tip")
-            .style("position", "absolute")
-            .style("z-index", "20")
-            .style("visibility", "hidden")
-            .style("top", 40 + chartTop + "px");
+    _filterByLabel(data, attr){
+        var new_data = [];
+        for (let i in data){        
+            if(data[i][attr] > 1){
+                new_data.push(data[i]);            
+            }                
+        }
+        return new_data;
+    }
 
-        // scales:
-        // x is a time scale, for the horizontal axis
-        // y is a linear (quantitative) scale, for the vertical axis
-        // z is in ordinal scale, to determine the colors (see var colorrange, below)
-        var x = d3.time.scale()
+    _setUpDiagram(){
+
+        var width = document.getElementById('container').offsetWidth;
+        width = width * .9;
+        var plotSvg = document.getElementById('plotSvg');
+        plotSvg.setAttribute("width", width);
+        var height = Math.round(width / 2);
+        plotSvg.setAttribute("height", height);
+
+        this._svg = d3.select("#plotSvg");
+        this._margin = {
+                top: 100,
+                right: 80,
+                bottom: 200,
+                left: 0
+            };
+        this._width = width - this._margin.left - this._margin.right,
+        this._height = height - this._margin.top - this._margin.bottom;
+    }
+
+    _chart(data) {
+        var keys = this._stream.groupsLabels;
+        var max_values = this._stream.max_values;
+        var svg = this._svg;
+        var height = this._height;
+        var width = this._width;
+        var series = this._series;
+        var margin = this._margin;
+
+        svg.selectAll("*").remove();
+        this._g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var x = d3.scaleLinear()
+            .domain(d3.extent(data, function (d,i) {
+                return i;
+            }))
             .range([0, width]);
 
-        var y = d3.scale.linear()
-            .range([height - 10, 0]);
+        var xAxis = d3.axisBottom(x);
 
-        // color range provided by colorbrewer
-        // i just added a bunch of grays at the end so that the categories grouped as other all appear gray.
-        // there's definitely a better way to do this
 
-        var colorrange = ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3', '#b3b3b3'];
-
-        var z = d3.scale.ordinal()
-            .range(colorrange);
-
-        // the x-axis. note that the ticks are years, and we'll show every 5 years
-        var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom")
-            .ticks(d3.timeYears, 5);
-
-        // stacked layout. the order is reversed to get the largest value on top
-        // if you change the order to inside-out, the streams get all mixed up and look cool
-        // but the graph is harder to read. reversed order ensures that the streams are in the
-        // same order as the legend, which improves readability in lieu of directly labelling
-        // the streams (which is another programming challenge entirely)
-        var stack = d3.layout.stack()
-            .offset("silhouette")
-            .order("reverse")
-            .values(function (d) {
-                return d.values;
-            })
-            .x(function (d) {
-                return d.date;
-            })
-            .y(function (d) {
-                return d.value;
+        var min_y = d3.min(series, function (layer) {
+            return d3.min(layer, function (d) {
+                return d[0];
             });
-
-        var nest = d3.nest()
-            .key(function (d) {
-                return d.key;
+        });
+        var max_y = d3.max(series, function (layer) {
+            return d3.max(layer, function (d) {
+                return d[1];
             });
+        });
+        var y = d3.scaleLinear().domain([min_y,max_y]).range([height, 0]);;
 
-        // there are some ways other than "basis" to interpolate the area between data points
-        // for example, you can use "cardinal", which makes the streams a little more wiggly.
-        // the drawback with that approach is that if you have years where there is no data,
-        // you won't see a flat line across the center of the chart. instead, it will look all bumpy.
-        // ultimately, "cardinal" interpolation is more likely to give an inaccurate represenation of the data,
-        // which is anyway a danger with any type of interpolation, including "basis"
-        var area = d3.svg.area()
-            .interpolate("basis")
-            .x(function (d) {
-                return x(d.date);
+
+        var z = d3.scaleOrdinal()
+            .range(d3.schemeCategory10);
+
+        var area = d3.area()
+            .x(function (d,i) {                
+                return x(i);
             })
             .y0(function (d) {
-                return y(d.y0) - .2;
-            }) // -.2 to create a little space between the layers
+                return y(d[0]);
+            })
             .y1(function (d) {
-                return y(d.y0 + d.y) + .2;
-            }); // +.2, likewise
+                return y(d[1]);
+            })
+            .curve(d3.curveBasis);
 
-        var svg = d3.select(".chart." + groupBy + '.' + filterBy).append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        // generate a legend
-        function legend(layers) {
-
-            // generate the legend title
-            function titler(filter, group) {
-                if (group == 'place') {
-                    if (filter == 'india') {
-                        return "State";
-                    } else {
-                        return "Country";
-                    }
-                }
-            }
-
-            $('.chart.' + groupBy + '.' + filterBy).prepend('<div class="legend"><div class="title">' + titler(filterBy, groupBy) + '</div></div>');
-            $('.legend').hide();
-            var legend = []
-            layers.forEach(function (d, i) {
-                var obj = {};
-                if (i < 7) {
-                    obj.key = d.key;
-                    obj.color = colorrange[i];
-                    legend.push(obj);
-                }
+        this._g.selectAll("path")
+            .data(series)
+            .enter().append("path")
+            .attr("d", area)
+            .style("fill", function (d,i) {
+                return z(keys[i]);
             });
 
-            // others
-            if (layers.length > 7) {
-                legend.push({
-                    key: "Other",
-                    color: "#b3b3b3"
-                });
-            }
+        this._g.append("g")
+            .call(xAxis);
 
-            legend.forEach(function (d, i) {
-                $('.chart.' + groupBy + '.' + filterBy + ' .legend').append('<div class="item"><div class="swatch" style="background: ' + d.color + '"></div>' + d.key + '</div>');
+        this._g.append("text")
+            .attr("transform", "translate(" + 0 + "," + (height + margin.bottom / 2) + ")")
+            .attr("font-size", 15)
+            .attr("font-family", "sans-serif")
+            .text("Stream graph of genes distributions.");
+
+        z.domain(keys);
+        var legend = this._g.append("g")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 10)
+            .attr("text-anchor", "end")
+            .selectAll("g")
+            .data(keys.slice().reverse())
+            .enter().append("g")
+            .attr("transform", function (d, i) {
+                return "translate(0," + i * 20 + ")";
             });
 
-            $('.legend').fadeIn();
+        legend.append("rect")
+            .attr("x", width + 55)
+            .attr("width", 19)
+            .attr("height", 19)
+            .attr("fill", z)
+            .on("click", (d)=>{
+                this._selectedLabel = d;
+                var new_data = this._filterByLabel(this._stream.data, d);               
+                this._sortByLabel(new_data, d);
+                this._setUpStack(new_data);
+                this._chart(new_data);
+            });
 
-        } // end legend function
+        legend.append("text")
+            .attr("x", width + 50)
+            .attr("y", 9.5)
+            .attr("dy", "0.32em")
+            .text(function (d) {
+                return d;
+            });
 
-
-        d3.csv("awards.csv", function (data) {
-
-            // parse the data (see parsing function, above)
-            data = parse(data);
-
-            // generate our layers
-            var layers = stack(nest.entries(data));
-
-            // our legend is based on our layers
-            legend(layers);
-
-
-            // DOMAIN... 
-            // set the domains
-            x.domain(d3.extent(data, function (d,i) {
-                return i;
-            }));
-            // ***************************************************************** Y domain
-            y.domain([0, d3.max(data, function (d) {
-                return d.y0 + d.y;
-            })]);
-
-
-
-
-            // and now we're on to the data joins and appending
-            svg.selectAll(".layer")
-                .data(layers)
-                .enter().append("path")
-                .attr("class", "layer")
-                .attr("d", function (d) {
-                    return area(d.values);
-                })
-                .style("fill", function (d, i) {
-                    return z(i);
-                });
-
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
-
-            // abbreviate axis tick text on small screens
-            if (breakpoint == 'xs') {
-                $('.x.axis text').each(function () {
-                    var curTxt = $(this).text();
-                    var newTxt = "'" + curTxt.substr(2);
-                    $(this).text(newTxt);
-                });
-            }
-
-            // user interaction with the layers
-            svg.selectAll(".layer")
-                .attr("opacity", 1)
-                .on("mouseover", function (d, i) {
-                    svg.selectAll(".layer").transition()
-                        .duration(100)
-                        .attr("opacity", function (d, j) {
-                            return j != i ? 0.6 : 1;
-                        })
-                })
-                .on("mousemove", function (d, i) {
-
-                    var color = d3.select(this).style('fill'); // need to know the color in order to generate the swatch
-
-                    mouse = d3.mouse(this);
-                    mousex = mouse[0];
-                    var invertedx = x.invert(mousex);
-                    var xDate = century(invertedx.getYear());
-                    d.values.forEach(function (f) {
-                        var year = (f.date.toString()).split(' ')[3];
-                        if (xDate == year) {
-                            tooltip
-                                .style("left", tipX(mousex) + "px")
-                                .html("<div class='year'>" + year + "</div><div class='key'><div style='background:" + color + "' class='swatch'>&nbsp;</div>" + f.key + "</div><div class='value'>" + f.value + " " + awardPlural((f.value)) + "</div>")
-                                .style("visibility", "visible");
-                        }
-                    });
-                })
-                .on("mouseout", function (d, i) {
-                    svg.selectAll(".layer").transition()
-                        .duration(100)
-                        .attr("opacity", '1');
-                    tooltip.style("visibility", "hidden");
-                });
-
-            // vertical line to help orient the user while exploring the streams
-            var vertical = d3.select(".chart." + groupBy + '.' + filterBy)
-                .append("div")
-                .attr("class", "remove")
-                .style("position", "absolute")
-                .style("z-index", "19")
-                .style("width", "2px")
-                .style("height", "460px")
-                .style("top", "10px")
-                .style("bottom", "30px")
-                .style("left", "0px")
-                .style("background", "#fcfcfc");
-
-            d3.select(".chart." + groupBy + '.' + filterBy)
-                .on("mousemove", function () {
-                    mousex = d3.mouse(this);
-                    mousex = mousex[0] + 5;
-                    vertical.style("left", mousex + "px")
-                })
-                .on("mouseover", function () {
-                    mousex = d3.mouse(this);
-                    mousex = mousex[0] + 5;
-                    vertical.style("left", mousex + "px")
-                });
-
-            // Add 'curtain' rectangle to hide entire graph
-            var curtain = svg.append('rect')
-                .attr('x', -1 * width)
-                .attr('y', -1 * height)
-                .attr('height', height)
-                .attr('width', width)
-                .attr('class', 'curtain')
-                .attr('transform', 'rotate(180)')
-                .style('fill', '#fcfcfc')
-
-            // Create a shared transition for anything we're animating
-            var t = svg.transition()
-                .delay(100)
-                .duration(1500)
-                .ease('exp')
-                .each('end', function () {
-                    d3.select('line.guide')
-                        .transition()
-                        .style('opacity', 0)
-                        .remove()
-                });
-
-            t.select('rect.curtain')
-                .attr('width', 0);
-            t.select('line.guide')
-                .attr('transform', 'translate(' + width + ', 0)');
-        });
     }
 }

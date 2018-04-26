@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 from django.contrib.auth.models import User
 from django.test import TestCase
-from ete3 import Tree, TreeStyle, NodeStyle
+from ete3 import Tree
 from networkx.drawing.nx_agraph import graphviz_layout
 from scipy.sparse import csr_matrix
 import itertools
@@ -639,7 +639,6 @@ class SupertreeAppTest(TestCase):
 
     def cluster_tree(self, tree, cut_off):
         g = 0
-        s = -1
         for node in tree.traverse("preorder"):
             node.add_features(g=g)        
         g += 1
@@ -653,20 +652,13 @@ class SupertreeAppTest(TestCase):
                 else:
                     return False
 
-        for root in tree.iter_leaves(is_leaf_fn=cluster_root):
-            if len(root) == 1:
-                cluster = s
-                s -= 1
-            else:
-                cluster = g
-                g += 1
-
+        for root in tree.iter_leaves(is_leaf_fn=cluster_root):                        
             for node in root.traverse("postorder"):
-                    node.g = cluster
+                    node.g = g
+            g += 1
         
-        print("Number of groups: ", g)
-        print("Number of singles; ", s)
-        return (s,g)
+        print("Number of groups: ", g)       
+        return g
         
     def jaccard(self, s1, s2):
         n = len(s1.intersection(s2))
@@ -676,7 +668,7 @@ class SupertreeAppTest(TestCase):
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        number_of_trees = 2000             
+        # number_of_trees = 2000             
         
         vertex_hash = {}
         i = 0
@@ -715,15 +707,8 @@ class SupertreeAppTest(TestCase):
             except:
                 pass                
 
-        min_g, max_g = self.cluster_tree(self.supertree, cut_off=0.5)
-        cmap = plt.get_cmap("tab20c")   
-        norm = matplotlib.colors.Normalize(vmin=min_g, vmax=max_g)
+        max_g = self.cluster_tree(self.supertree, cut_off=0.83)
         
-        for node in self.supertree.traverse("postorder"):                         
-            nstyle = NodeStyle()
-            nstyle['bgcolor'] = matplotlib.colors.to_hex(cmap(norm(node.g)))
-            node.set_style(nstyle)
-
         print("Computing LGT candidates...")
 
         # how to use t.get_cached_content() to get it faster?
@@ -750,8 +735,8 @@ class SupertreeAppTest(TestCase):
                 potential_lgts.add_edge(n1.name,n2.name)
         
         print("Number of LGT candidates: ",len(potential_lgts.edges))
-        nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
-        plt.show()
+        # nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
+        # plt.show()
 
         self.supertree.write(format=1, outfile="./home/static/home/new_tree.nw")
         
@@ -780,7 +765,15 @@ class SupertreeAppTest(TestCase):
             json_txt += "}"
             json_txt += "},"
         json_txt = json_txt[:-1]
-        
+
+        json_txt += "},\"group_sp_distribution\":{"
+        for tree_index in range(number_of_trees):        
+            tree = self.forest[tree_index]
+            json_txt += "\""+str(tree_index) +"\":"
+            json_txt += json.dumps(tree.clusters_dist)
+            json_txt += ","
+        json_txt = json_txt[:-1]
+
         # write lgts edges
         json_txt += "},\"lgts\":["
         
@@ -802,9 +795,4 @@ class SupertreeAppTest(TestCase):
             f.write(json_txt)
             f.close()        
 
-        ts = TreeStyle()
-        ts.show_leaf_name = True
-        ts.show_branch_length = True
-        # ts.show_branch_support = True
-        self.supertree.show(tree_style=ts)
 
