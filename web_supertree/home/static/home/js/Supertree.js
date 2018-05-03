@@ -16,6 +16,7 @@ class Supertree{
         this._forest = nodes_data.forest;
 
         // set up LGTs edges
+        this._lgts = nodes_data.lgts;
 
     }
 
@@ -25,9 +26,15 @@ class Supertree{
             d.data.c = 0;
             d.data.genes = [];
         } else {            
-            var node = this._nodes_data.supertree[d.data.name];
-            d.data.c = node.g;            
-            d.data.genes = node.genes;
+            try {
+                var node = this._nodes_data.supertree[d.data.name];
+                d.data.c = node.g;            
+                d.data.genes = node.genes;
+            } catch (error) {
+                console.log(d.data.name);
+                return;
+            }
+            
         }
         if (d.children) d.children.forEach((d) => this.storeData(d));
     }
@@ -46,5 +53,9 @@ class Supertree{
     
     get hierarchy(){
         return this._simple_hierarchy;
+    }
+
+    get lgts(){
+        return this._lgts;
     }
 }

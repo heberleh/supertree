@@ -652,13 +652,16 @@ class SupertreeAppTest(TestCase):
                 else:
                     return False
 
-        for root in tree.iter_leaves(is_leaf_fn=cluster_root):                        
+        totals_in_groups = {}
+        for root in tree.iter_leaves(is_leaf_fn=cluster_root):
+            totals_in_groups[str(g)] = len(root)
             for node in root.traverse("postorder"):
                     node.g = g
             g += 1
         
-        print("Number of groups: ", g)       
-        return g
+        print("Number of groups: ", g)      
+        print(totals_in_groups) 
+        return (g, totals_in_groups)
         
     def jaccard(self, s1, s2):
         n = len(s1.intersection(s2))
@@ -668,7 +671,7 @@ class SupertreeAppTest(TestCase):
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        # number_of_trees = 2000             
+        #number_of_trees = 40000             
         
         vertex_hash = {}
         i = 0
@@ -707,12 +710,13 @@ class SupertreeAppTest(TestCase):
             except:
                 pass                
 
-        max_g = self.cluster_tree(self.supertree, cut_off=0.83)
+        max_g, totals_in_groups = self.cluster_tree(self.supertree, cut_off=0.78)
         
         print("Computing LGT candidates...")
 
         # how to use t.get_cached_content() to get it faster?
-        potential_lgts = nx.Graph()        
+        potential_lgts = nx.Graph()       
+        lgts_vector = []         
         for tree_index in range(number_of_trees):
             species = self.forest[tree_index].get_leaf_names()
             clusters = {}
@@ -733,10 +737,13 @@ class SupertreeAppTest(TestCase):
                 n1 = self.supertree.get_common_ancestor(clusters[c1])
                 n2 = self.supertree.get_common_ancestor(clusters[c2])
                 potential_lgts.add_edge(n1.name,n2.name)
+                lgts_vector.append([n1.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n2.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')])
         
         print("Number of LGT candidates: ",len(potential_lgts.edges))
         # nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
         # plt.show()
+        for node in self.supertree.traverse():
+            node.name = node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')
 
         self.supertree.write(format=1, outfile="./home/static/home/new_tree.nw")
         
@@ -749,16 +756,16 @@ class SupertreeAppTest(TestCase):
             # write the species
             json_txt += "\"species\":["
             for leaf in tree:
-                json_txt +=  "\""+ leaf.name + "\","
+                json_txt +=  "\""+ leaf.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_') + "\","
             json_txt = json_txt[:-1]
 
             # write the tree in newick format
             json_txt += "],\"newick\": "
             json_txt += "\"(A,B);\""
 
-            # write the distribution of species in each group, for this gene
-            json_txt += ",\"group_sp_distribution\":"
-            json_txt += json.dumps(tree.clusters_dist)
+            # # write the distribution of species in each group, for this gene
+            # json_txt += ",\"group_sp_distribution\":"
+            # json_txt += json.dumps(tree.clusters_dist)
 
             # write how many edges have src/trg in each group
             json_txt += ",\"group_lgt_distribution\":{"            
@@ -774,13 +781,20 @@ class SupertreeAppTest(TestCase):
             json_txt += ","
         json_txt = json_txt[:-1]
 
+        # total of species in each group
+        json_txt += "},\"totals_in_groups\":"
+        json_txt += json.dumps(totals_in_groups)
+
         # write lgts edges
-        json_txt += "},\"lgts\":["
-        
+        json_txt += ",\"lgts\":["
+        for edge in lgts_vector:
+            json_txt += "[\"" + edge[0] + "\",\"" + edge[1] + "\"],"
+        json_txt = json_txt[:-1]
+
         # write genes and group of each node from supertree
         json_txt += "],\"supertree\":{"
         for node in self.supertree.traverse("postorder"):
-            json_txt += "\"" + node.name.replace(',', '_') + "\":"
+            json_txt += "\"" + node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_') + "\":"
             json_txt += "{\"genes\":["
             for gene in node.union_genes:
                 json_txt += "\""+str(gene) + "\","

@@ -38,6 +38,9 @@ class SupertreeView {
 
         // TODO should this be out of this class? YES -> AND OUT OF THE DIAGRAM
         this._clusterCheckbox = this._setUpCheckBoxClusterOnOff();
+
+        this._lgts = this._setUpLGTs(supertree.lgts);
+        this._updateLGTS(this._lgts);
     }
 
     _setUpSVG(diagram_div) {
@@ -114,6 +117,7 @@ class SupertreeView {
         return this._diagram
             .append("g")
             .attr("class", "links")
+            .attr("id", "links")
             .selectAll("path")
             .data(this._supertree_d3_hiearchy.links())
             .enter().append("path")
@@ -122,8 +126,10 @@ class SupertreeView {
             })
             .attr("d", linkConstant)
             .attr("stroke", function (d) {
-                return d.target.color;
+                return d3.rgb(d.target.color).darker(1);
             })
+            .attr('stroke-width',1.5)
+            .attr("id", function(d){return "lgt_"+d.source.data.name})
             .on("mouseover", (d) => {
                 this._tooltip.text("Length: " + d.target.data.length);
                 return this._tooltip.style("visibility", "visible");
@@ -166,6 +172,7 @@ class SupertreeView {
             .text(function (d) {
                 return d.data.name.replace(/_/g, " ");
             })
+            .style("fill",function(d){return d.color;})
             .on("mouseover", mouseovered(true))
             .on("mouseout", mouseovered(false));
     }
@@ -227,6 +234,67 @@ class SupertreeView {
     // TODO: if groups changed by user interaction, return custom groups
     getCurrentGroups(){
         return this._supertree.groupsLabels;  
+    }
+
+    _setUpLGTs(lgts_simple_vector) {
+        this._diagram.insert("g",":first-child").attr("id","lgts");              
+        
+        //console.log(lgts_simple_vector);
+        var lgts_nodes = [];
+        var links = this._diagram.select("#links");
+        var v = lgts_simple_vector;
+        
+        for (let e in v){                    
+            try {
+                lgts_nodes.push({"source": links.select("#lgt_"+v[e][0]).datum().source, 
+                "target": links.select("#lgt_"+v[e][1]).datum().source
+               });  
+            } catch (error) {
+                //console.log("#lgt_"+v[e][0]);
+            }                     
+        }
+        //console.log("lgts",lgts_nodes);
+        
+        return lgts_nodes;
+        
+    }
+
+
+    _updateLGTS(lgts_data){
+        var lgts = this._diagram.select("#lgts");                
+
+        function mouseovered(active) {
+            return function (d) {
+                if (active){
+                    d3.select(this).attr("stroke", "black").attr('stroke-opacity', 1);
+                }else{
+                    d3.select(this).attr("stroke", "red").attr('stroke-opacity', 0.10);
+                }
+            };
+        }
+
+        lgts = lgts
+            .selectAll(".lgt")
+            .data(lgts_data)
+            .enter()
+            .append('path')
+            .classed('lgt', true)
+
+            .attr('d', (d)=>{
+                return lgtLineC(d.source.x, d.source.y, d.target.x, d.target.y);
+            })
+            .attr('class', 'edgepath')
+            .attr('fill-opacity', 0.3)
+            .attr('stroke-opacity', 0.10)
+            .attr('fill', 'blue')
+            .attr('stroke-width',0.5)
+            .attr('stroke', 'red')
+            .attr('id', function (d, i) {
+                return 'edgepath' + i
+            })
+            //.style("pointer-events", "none")
+            .on("mouseover", mouseovered(true))
+            .on("mouseout", mouseovered(false));        
     }
 } 
 

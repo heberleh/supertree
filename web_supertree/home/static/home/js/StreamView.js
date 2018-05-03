@@ -14,8 +14,9 @@ class StreamView {
         }
 
         //this._sortByLabel(this._stream.data, this._selectedLabel);
-        this._setUpStack(this._stream.data);
-        this._chart(this._stream.data);
+        this._data = this._stream.data;
+        this._setUpStack(this._data);
+        this._chart(this._data);
     }
 
 
@@ -29,15 +30,15 @@ class StreamView {
         var keys = this._stream.groupsLabels;
         var stack = d3.stack()
                     .keys(keys)
-                    .order(d3.stackOrderInsideOut);
-                    //.offset(d3.stackOffsetSilhouette);
+                    .order(d3.stackOrderInsideOut)
+                    .offset(d3.stackOffsetSilhouette);
         this._series = stack(data);        
     }
 
     _filterByLabel(data, attr){
         var new_data = [];
         for (let i in data){        
-            if(data[i][attr] > 1){
+            if(data[i][attr] > 0){
                 new_data.push(data[i]);            
             }                
         }
@@ -148,11 +149,11 @@ class StreamView {
             .attr("height", 19)
             .attr("fill", z)
             .on("click", (d)=>{
-                this._selectedLabel = d;
-                var new_data = this._filterByLabel(this._stream.data, d);               
-                this._sortByLabel(new_data, d);
-                this._setUpStack(new_data);
-                this._chart(new_data);
+                this._selectedLabel = d;                
+                this._data = this._filterByLabel(this._data, d);                
+                this._sortByLabel(this._data, d);
+                this._setUpStack(this._data);
+                this._chart(this._data);
             });
 
         legend.append("text")

@@ -8,6 +8,8 @@ $(document).ready(function() {
         d3.text("/static/home/new_tree.nw", function (error, supertree_nw) {
             if (error) throw error;
             
+            console.log("nodes data", nodes_data);
+            console.log("lgts from file",nodes_data.lgts);
             // create models
             var supertree = new Supertree(supertree_nw, nodes_data);
 
@@ -18,7 +20,8 @@ $(document).ready(function() {
             var streamData = [];
             var labels = supertree.groupsLabels;
             var sizeGroups = labels.length;
-            var groups_dist = nodes_data.group_sp_distribution;       
+            var groups_dist = nodes_data.group_sp_distribution;    
+            var totals_in_groups = nodes_data.totals_in_groups;   
             console.log("test data", groups_dist);
             max_values = {}
             for (let label in labels){
@@ -33,7 +36,7 @@ $(document).ready(function() {
                     g[label] = 0;
                 }
                 for (let label in dist){
-                    g[label] = dist[label];
+                    g[label] = dist[label]/totals_in_groups[label];
                     if (g[label] > max_values[label]){
                         max_values[label] = g[label];
                     }
@@ -46,8 +49,11 @@ $(document).ready(function() {
             stream = {};
             stream["data"] = streamData;
             stream["groupsLabels"] = labels;
+            stream["totals_in_groups"] = totals_in_groups;
+            console.log("total",stream["totals_in_groups"]);
             stream["max_values"] = max_values;
             stream["genes"] = genes;
+            
 
             d3.csv('/static/home/data_stream_test.txt', function(error, data) {
                 if (error) throw error;
