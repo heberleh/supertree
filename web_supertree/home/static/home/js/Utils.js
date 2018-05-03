@@ -26,11 +26,11 @@ function parseNewick(a) {
 }
 
 
-function lgtLine(d){
+function lgtLine(d) {
     return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
 }
 
-function lgtLine(d){
+function lgtLine(d) {
     return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
 }
 
@@ -43,5 +43,5 @@ function lgtLineC(startAngle, startRadius, endAngle, endRadius) {
         c1 = Math.cos(endAngle = (endAngle - 90) / 180 * Math.PI),
         s1 = Math.sin(endAngle);
     return "M" + startRadius * c0 + "," + startRadius * s0 +
-           "L" + endRadius * c1 + "," + endRadius * s1;
+        "L" + endRadius * c1 + "," + endRadius * s1; //"L" + endRadius * c1 + "," + endRadius * s1;
 }

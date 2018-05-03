@@ -13,7 +13,7 @@ $(document).ready(function() {
             // create models
             var supertree = new Supertree(supertree_nw, nodes_data);
 
-            var supertreeView = new SupertreeView(d3.select("#diagrams"), supertree);
+            var supertreeView = new SupertreeView(document.getElementById("diagrams"), supertree);
             // create diagrams
 
             // for each Gene-tree get the leaves distribution over pre-definded groups
