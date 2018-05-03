@@ -63,7 +63,7 @@ $(document).ready(function() {
                 // stream.groupsLabels = ["negative","positive","neutral"]
 
                 // var stream = new Stream();
-                var streamView = new StreamView(stream);
+                //var streamView = new StreamView(stream);
             });
 
             // set up GUI... and diagrams coordination
