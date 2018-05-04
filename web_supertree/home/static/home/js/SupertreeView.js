@@ -1,7 +1,7 @@
 class SupertreeView {
 
     constructor(diagram_div, supertree) {
-        this._outerRadius = 902 / 2;
+        this._outerRadius = 1000 / 2;
         this._innerRadius = this._outerRadius - 170;
 
         this._diagram_div = diagram_div;
@@ -23,7 +23,14 @@ class SupertreeView {
         // /createLine(this._diagram_container, 50,50,200,200);
 
         // setUpLinkExtensions();....
-        this._setUpLinks();
+        //this._setUpLinkExtension();
+
+        this._hash_pos = this._setUpLinks();
+
+        console.log("number of lgts", supertree.lgts.length);
+        this._lgts = this._setUpLGTs(supertree.lgts);
+        console.log("number of lgts", this._lgts.length);
+        this._updateLGTS(this._lgts);
 
 
         ///////////////////////////////////////////////////////////////////////
@@ -91,13 +98,13 @@ class SupertreeView {
 
         // Containers
         this._stage = this._treeapp.stage;
-        this._diagram_container = new PIXI.Container();
+        this._diagram_container = new PIXI.Container();        
         this._stage.addChild(this._diagram_container);
 
         // Move container to the center
         this._diagram_container.x = this._treeapp.screen.width / 2;
         this._diagram_container.y = this._treeapp.screen.height / 2;
-        
+
         this._view = this._diagram_div.append(this._treeapp.view);
     }
 
@@ -139,19 +146,29 @@ class SupertreeView {
             }, 2000);
     }
 
+
     _setUpLinkExtension() {
-        return this._diagram.append("g")
-            .attr("class", "link-extensions")
-            .selectAll("path")
-            .data(this._supertree_d3_hiearchy.links().filter(function (d) {
-                return !d.target.children;
-            }))
-            .enter().append("path")
-            .each(function (d) {
-                d.target.linkExtensionNode = this;
-            })
-            .attr("d", (d) => this._linkExtensionConstant(d));
+        let radius = this._innerRadius;
+        let root = this._diagram_container;
+        this._supertree_d3_hiearchy.links().filter(function (d) {
+            return !d.target.children;
+        }).forEach(function (d) {
+            createTreeEdge(root, d.target.x, d.target.y, d.target.x, radius, 1.5, colorToHex(d.target.color));
+        });
     }
+    // _setUpLinkExtension() {
+    //     return this._diagram.append("g")
+    //         .attr("class", "link-extensions")
+    //         .selectAll("path")
+    //         .data(this._supertree_d3_hiearchy.links().filter(function (d) {
+    //             return !d.target.children;
+    //         }))
+    //         .enter().append("path")
+    //         .each(function (d) {
+    //             d.target.linkExtensionNode = this;
+    //         })
+    //         .attr("d", (d) => this._linkExtensionConstant(d));
+    // }
 
     _setUpToolTip() {
         return this._diagram
@@ -163,15 +180,18 @@ class SupertreeView {
     }
 
 
-    
-    _setUpLinks(){
+
+    _setUpLinks() {
         let root = this._diagram_container;
-        this._supertree_d3_hiearchy.links().forEach(function(d){
-            console.log(d);
-            createTreeEdge(root, d.source.x, d.source.y, d.target.x, d.target.y, 1, 0x9966FF);// colorToHex(d.target.color));              
-        });
+        var hash_pos = {};
+        this._supertree_d3_hiearchy.links().forEach(function (d) {
+            createTreeEdge(root, d.source.x, d.source.y, d.target.x, d.target.y, 1, colorToHex(d.target.color));
+            hash_pos[d.target.data.name] = [d.target.x, d.target.y];
+            hash_pos[d.source.data.name] = [d.source.x, d.source.y];
+        });       
+        return hash_pos;
     }
-    
+
     // _setUpLinks(linkConstant) {
     //     return this._diagram
     //         .append("g")
@@ -244,7 +264,9 @@ class SupertreeView {
         clearTimeout(this._timeout);
         var t = d3.transition().duration(750);
         this._linkExtension.transition(t).attr("d", this.checked ? (d) => this._linkExtensionVariable(d) : (d) => this._linkExtensionConstant(d));
+
         this._link.transition(t).attr("d", this.checked ? (d) => this._linkVariable(d) : (d) => this._linkConstant(d));
+
     }
 
     // Compute the maximum cumulative length of any node in the tree.
@@ -300,65 +322,71 @@ class SupertreeView {
     }
 
     _setUpLGTs(lgts_simple_vector) {
-        this._diagram.insert("g", ":first-child").attr("id", "lgts");
+        // this._diagram.insert("g", ":first-child").attr("id", "lgts");
 
-        //console.log(lgts_simple_vector);
+        // //console.log(lgts_simple_vector);
         var lgts_nodes = [];
-        var links = this._diagram.select("#links");
+        // var links = this._diagram.select("#links");
+
         var v = lgts_simple_vector;
 
         for (let e in v) {
-            try {
+            if(v[e][0] in this._hash_pos && v[e][1] in this._hash_pos){
                 lgts_nodes.push({
-                    "source": links.select("#lgt_" + v[e][0]).datum().source,
-                    "target": links.select("#lgt_" + v[e][1]).datum().source
+                    "source": this._hash_pos[v[e][0]],
+                    "target": this._hash_pos[v[e][1]]
                 });
-            } catch (error) {
-                //console.log("#lgt_"+v[e][0]);
             }
         }
         //console.log("lgts",lgts_nodes);
 
         return lgts_nodes;
-
     }
 
 
     _updateLGTS(lgts_data) {
-        var lgts = this._diagram.select("#lgts");
+        let root = this._diagram_container;
 
-        function mouseovered(active) {
-            return function (d) {
-                if (active) {
-                    d3.select(this).attr("stroke", "black").attr('stroke-opacity', 1);
-                } else {
-                    d3.select(this).attr("stroke", "red").attr('stroke-opacity', 0.10);
-                }
-            };
-        }
+        lgts_data.forEach(function (d) {
+            createLGTEdge(root, d.source[0], d.source[1], d.target[0], d.target[1], 1, 0x9966FF, 0.05);
+        });
 
-        lgts = lgts
-            .selectAll(".lgt")
-            .data(lgts_data)
-            .enter()
-            .append('path')
-            .classed('lgt', true)
+        this._treeapp.start();
 
-            .attr('d', (d) => {
-                return lgtLineC(d.source.x, d.source.y, d.target.x, d.target.y);
-            })
-            .attr('class', 'edgepath')
-            .attr('fill-opacity', 0.3)
-            .attr('stroke-opacity', 0.10)
-            .attr('fill', 'blue')
-            .attr('stroke-width', 0.5)
-            .attr('stroke', 'red')
-            .attr('id', function (d, i) {
-                return 'edgepath' + i
-            })
-            //.style("pointer-events", "none")
-            .on("mouseover", mouseovered(true))
-            .on("mouseout", mouseovered(false));
+        // var lgts = this._diagram.select("#lgts");
+
+        // function mouseovered(active) {
+        //     return function (d) {
+        //         if (active) {
+        //             d3.select(this).attr("stroke", "black").attr('stroke-opacity', 1);
+        //         } else {
+        //             d3.select(this).attr("stroke", "red").attr('stroke-opacity', 0.10);
+        //         }
+        //     };
+        // }
+
+        // lgts = lgts
+        //     .selectAll(".lgt")
+        //     .data(lgts_data)
+        //     .enter()
+        //     .append('path')
+        //     .classed('lgt', true)
+
+        //     .attr('d', (d) => {
+        //         return lgtLineC(d.source.x, d.source.y, d.target.x, d.target.y);
+        //     })
+        //     .attr('class', 'edgepath')
+        //     .attr('fill-opacity', 0.3)
+        //     .attr('stroke-opacity', 0.10)
+        //     .attr('fill', 'blue')
+        //     .attr('stroke-width', 0.5)
+        //     .attr('stroke', 'red')
+        //     .attr('id', function (d, i) {
+        //         return 'edgepath' + i
+        //     })
+        //     //.style("pointer-events", "none")
+        //     .on("mouseover", mouseovered(true))
+        //     .on("mouseout", mouseovered(false));
     }
 }
 

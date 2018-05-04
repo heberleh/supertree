@@ -32,35 +32,55 @@ function createLeafText(root, txt, x, y, style={fontFamily : 'Arial', fontSize: 
 }
 
 // testing https://jsfiddle.net/henryheberle/9cn7s82u/
+function project(x, y) {
+    let angle = (x - 90) / 180 * Math.PI;
+    return [y * Math.cos(angle), y * Math.sin(angle), angle];
+}
 
-function createTreeEdge(root, x0, y0, x1, y1, line_width=1, color = 0x9966FF, alpha=1){
-
-    var c0 = Math.cos(x0 = (x0 - 90) / 180 * Math.PI),
-        s0 = Math.sin(x0),
-        c1 = Math.cos(x1 = (x1 - 90) / 180 * Math.PI),
-        s1 = Math.sin(x1);
-    
+function createLGTEdge(root, x0, y0, x1, y1, line_width=1., color = 0x9966FF, alpha=0.5){
+    let p0 = project(x0, y0);
+    let p1 = project(x1, y1);
     let line = new Graphics();
-    line.lineStyle(line_width, color, alpha);
-    
-    let p0x =  y0 * c0;  // "target" point - start here
-    let p0y =  y0 * s0;
+    line.lineStyle(line_width, color, alpha);  
+    line.moveTo(p0[0], p0[1]);                  
+    line.lineTo(p1[0], p1[1]); // source point    
+    line.endFill();
+    //line.hitArea = line; 
+    line.interactive = true;
+    line.hitArea = line.getBounds();
+    line.on('mouseover', function() {
+        console.log("over");
+        line.lineStyle(line_width, color, 1); 
+    });
 
-    let p1x = y1 * c1;  // "source" point  - goes to
-    let p1y = y1 * s1;
-
-    console.log(p0x,p0y,p1x,p1y);
-    line.moveTo(p0x, p0y);
-    // create an arc
-    // (cx, cy, radius, startAngle, endAngle, anticlockwise)    
-    if (x1 !== x0){
-        line.arc(0, 0, Math.sqrt( Math.pow((p0x-p1x), 2) + Math.pow((p0y-p1y), 2) ), x0, x1);
-    }
+    line.on('mouseout', function() {
+        console.log("out");
+        line.alpha = alpha;
+    });    
     
-    line.lineTo(p1x, p1y); // source point
     root.addChild(line);
     return line;
+}
 
+function createTreeEdge(root, x0, y0, x1, y1, line_width=1.5, color = 0x9966FF, alpha=1){
+    let p0 = project(x0, y0);
+    let p1 = project(x1, y1);
+    let line = new Graphics();
+    line.lineStyle(line_width, color, alpha);  
+    line.moveTo(p0[0], p0[1]);
+    // create an arc
+    // (cx, cy, radius, startAngle, endAngle, anticlockwise)  
+    if (p0[0] !== p1[0]){
+        if(x1 > x0 ) {
+            line.arc(0, 0, y0, p0[2], p1[2]);
+        }else{
+            line.arc(0, 0, y0, p0[2], p1[2], true);
+        }        
+    }                        
+    line.lineTo(p1[0], p1[1]); // source point   
+    line.endFill(); 
+    root.addChild(line);
+    return line;
 }
 
 // return "M" + y0 * c0 + "," + y0 * s0 +
