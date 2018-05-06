@@ -25,7 +25,11 @@ function parseNewick(a) {
     return r
 }
 
-
 function colorToHex(c){    
     return parseInt(c.slice(1), 16);
 };
+
+function project(x, y) {
+    let angle = (x - 90) / 180 * Math.PI;
+    return [y * Math.cos(angle), y * Math.sin(angle), angle]; //new x, new y, angle
+}

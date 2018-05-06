@@ -26,12 +26,12 @@ class SupertreeView {
         //this._setUpLinkExtension();
 
         this._hash_pos = this._setUpLinks();
+        this._setUpLabels();
 
         console.log("number of lgts", supertree.lgts.length);
         this._lgts = this._setUpLGTs(supertree.lgts);
         console.log("number of lgts", this._lgts.length);
-        this._updateLGTS(this._lgts);
-
+        this._updateLGTS(this._lgts);        
 
         ///////////////////////////////////////////////////////////////////////
 
@@ -93,8 +93,11 @@ class SupertreeView {
             backgroundColor: 0xffffff,
             antialias: true, // default: false
             transparent: false, // default: false
-            resolution: 1 // default: 1
+            resolution: 1.2 // default: 1
         });
+        
+        
+        
 
         // Containers
         this._stage = this._treeapp.stage;
@@ -106,6 +109,12 @@ class SupertreeView {
         this._diagram_container.y = this._treeapp.screen.height / 2;
 
         this._view = this._diagram_div.append(this._treeapp.view);
+        
+        this._treeapp.ticker.add(() => {
+            // each frame we spin the bunny around a bit
+           this._diagram_container.rotation += 0.001;
+        });        
+
     }
 
 
@@ -227,40 +236,46 @@ class SupertreeView {
     // }
 
     _setUpLabels() {
-        function moveToFront() {
-            this.parentNode.appendChild(this);
-        }
+        let container = this._diagram_container;
+        console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
+        this._supertree_d3_hiearchy.leaves().forEach(function(d){            
+            new Leaf(container, d);
+        });
 
-        function mouseovered(active) {
-            return function (d) {
-                d3.select(this).classed("label--active", active);
-                d3.select(d.linkExtensionNode).classed("link-extension--active", active).each(moveToFront);
-                do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = d.parent);
-            };
-        }
+        // function moveToFront() {
+        //     this.parentNode.appendChild(this);
+        // }
 
-        return this._diagram
-            .append("g")
-            .attr("class", "labels")
-            .selectAll("text")
-            .data(this._supertree_d3_hiearchy.leaves())
-            .enter().append("text")
-            .attr("dy", ".31em")
-            .attr("transform", (d) => {
-                return "rotate(" + (d.x - 90) + ")translate(" + (this._innerRadius + 4) + ",0)" + (d.x < 180 ? "" :
-                    "rotate(180)");
-            })
-            .attr("text-anchor", function (d) {
-                return d.x < 180 ? "start" : "end";
-            })
-            .text(function (d) {
-                return d.data.name.replace(/_/g, " ");
-            })
-            .style("fill", function (d) {
-                return d.color;
-            })
-            .on("mouseover", mouseovered(true))
-            .on("mouseout", mouseovered(false));
+        // function mouseovered(active) {
+        //     return function (d) {
+        //         d3.select(this).classed("label--active", active);
+        //         d3.select(d.linkExtensionNode).classed("link-extension--active", active).each(moveToFront);
+        //         do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = d.parent);
+        //     };
+        // }
+
+        // return this._diagram
+        //     .append("g")
+        //     .attr("class", "labels")
+        //     .selectAll("text")
+        //     .data(this._supertree_d3_hiearchy.leaves())
+        //     .enter().append("text")
+        //     .attr("dy", ".31em")
+        //     .attr("transform", (d) => {
+        //         return "rotate(" + (d.x - 90) + ")translate(" + (this._innerRadius + 4) + ",0)" + (d.x < 180 ? "" :
+        //             "rotate(180)");
+        //     })
+        //     .attr("text-anchor", function (d) {
+        //         return d.x < 180 ? "start" : "end";
+        //     })
+        //     .text(function (d) {
+        //         return d.data.name.replace(/_/g, " ");
+        //     })
+        //     .style("fill", function (d) {
+        //         return d.color;
+        //     })
+        //     .on("mouseover", mouseovered(true))
+        //     .on("mouseout", mouseovered(false));
     }
 
     _clusterCheckboxChanged() {
@@ -351,7 +366,8 @@ class SupertreeView {
         let root = this._diagram_container;
 
         lgts_data.forEach(function (d) {
-            createLGTEdge(root, d.source[0], d.source[1], d.target[0], d.target[1], 1, 0x9966FF, 0.05);
+            //createLGTEdge(root, d.source[0], d.source[1], d.target[0], d.target[1], 1, 0x9966FF, 0.05);
+            new LEdge(root, d);
         });
 
         this._treeapp.start();
