@@ -2,10 +2,31 @@
 let Text = PIXI.Text;
 let Graphics = PIXI.Graphics;
 
-function colorToHex(c){    
-    return parseInt(c.slice(1), 16);
-};
 
+
+
+
+////////////////////// before OOP
+function createTreeEdge(root, x0, y0, x1, y1, line_width=1.5, color = 0x9966FF, alpha=1){
+    let p0 = project(x0, y0);
+    let p1 = project(x1, y1);
+    let line = new Graphics();
+    line.lineStyle(line_width, color, alpha);  
+    line.moveTo(p0[0], p0[1]);
+    // create an arc
+    // (cx, cy, radius, startAngle, endAngle, anticlockwise)  
+    if (p0[0] !== p1[0]){
+        if(x1 > x0 ) {
+            line.arc(0, 0, y0, p0[2], p1[2]);
+        }else{
+            line.arc(0, 0, y0, p0[2], p1[2], true);
+        }        
+    }                        
+    line.lineTo(p1[0], p1[1]); // source point   
+    line.endFill(); 
+    root.addChild(line);
+    return line;
+}
 
 function createCircle(root, x, y, radius, color = 0x9966FF) {
     let circle = new Graphics();
@@ -25,10 +46,16 @@ function createLine(root, x0, y0, x1, y1, line_width=1, color = 0x9966FF, alpha=
     return line;
 }
 
-function createLeafText(root, txt, x, y, style={fontFamily : 'Arial', fontSize: 10, fill : 0xff1010, align : 'center'}){
+
+//"rotate(" + (d.x - 90) + ")translate(" + (this._innerRadius + 4) + ",0)" +
+//                                            (d.x < 180 ? "" :"rotate(180)");
+function createLeafText(root, txt, x, radius, style={fontFamily : 'Arial', fontSize: 10, fill : 0xff1010, align : 'center'}){
     let message = new Text(txt,style);
     message.position.set(x,y);
     root.addChild(message);
+    // setTransform (x, y, scaleX, scaleY, rotation, skewX, skewY, pivotX, pivotY)
+    message.setTransform (x-90, y, scaleX, scaleY, rotation, skewX, skewY, pivotX, pivotY);
+    return message;
 }
 
 // testing https://jsfiddle.net/henryheberle/9cn7s82u/
@@ -62,26 +89,7 @@ function createLGTEdge(root, x0, y0, x1, y1, line_width=1., color = 0x9966FF, al
     return line;
 }
 
-function createTreeEdge(root, x0, y0, x1, y1, line_width=1.5, color = 0x9966FF, alpha=1){
-    let p0 = project(x0, y0);
-    let p1 = project(x1, y1);
-    let line = new Graphics();
-    line.lineStyle(line_width, color, alpha);  
-    line.moveTo(p0[0], p0[1]);
-    // create an arc
-    // (cx, cy, radius, startAngle, endAngle, anticlockwise)  
-    if (p0[0] !== p1[0]){
-        if(x1 > x0 ) {
-            line.arc(0, 0, y0, p0[2], p1[2]);
-        }else{
-            line.arc(0, 0, y0, p0[2], p1[2], true);
-        }        
-    }                        
-    line.lineTo(p1[0], p1[1]); // source point   
-    line.endFill(); 
-    root.addChild(line);
-    return line;
-}
+
 
 // return "M" + y0 * c0 + "," + y0 * s0 +
 

@@ -185,10 +185,13 @@ class SupertreeView {
         let root = this._diagram_container;
         var hash_pos = {};
         this._supertree_d3_hiearchy.links().forEach(function (d) {
-            createTreeEdge(root, d.source.x, d.source.y, d.target.x, d.target.y, 1, colorToHex(d.target.color));
+
+            // createTreeEdge(root, d.source.x, d.source.y, d.target.x, d.target.y, 1, colorToHex(d.target.color));
+            new TreeEdge(root, d);
             hash_pos[d.target.data.name] = [d.target.x, d.target.y];
             hash_pos[d.source.data.name] = [d.source.x, d.source.y];
-        });       
+        });
+
         return hash_pos;
     }
 
@@ -284,7 +287,7 @@ class SupertreeView {
 
     // Set the color of each node by recursively inheriting.
     _setColor(d) {
-        d.color = this._treeGroupColor(d.data.c);
+        d.color =  colorToHex(this._treeGroupColor(d.data.c));
         if (d.children) d.children.forEach((d) => this._setColor(d));
     }
 

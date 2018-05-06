@@ -26,22 +26,6 @@ function parseNewick(a) {
 }
 
 
-function lgtLine(d) {
-    return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
-}
-
-function lgtLine(d) {
-    return 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y;
-}
-
-//  lgtLineC(d.target.x, d.target.y, d.target.x, this._innerRadius);
-// Like d3.svg.diagonal.radial, but with square corners.
-function lgtLineC(startAngle, startRadius, endAngle, endRadius) {
-    var c0 = Math.cos(startAngle = (startAngle - 90) / 180 * Math.PI),
-        s0 = Math.sin(startAngle),
-
-        c1 = Math.cos(endAngle = (endAngle - 90) / 180 * Math.PI),
-        s1 = Math.sin(endAngle);
-    return "M" + startRadius * c0 + "," + startRadius * s0 +
-        "L" + endRadius * c1 + "," + endRadius * s1; //"L" + endRadius * c1 + "," + endRadius * s1;
-}
+function colorToHex(c){    
+    return parseInt(c.slice(1), 16);
+};
