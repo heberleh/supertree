@@ -2,7 +2,7 @@
 // testing https://jsfiddle.net/henryheberle/9cn7s82u/
 
 class TreeEdge extends Graphics{
-    constructor(container, d){
+    constructor(d){
         super();
         this.data = d;
         let p0 = project(d.source.x, d.source.y);  
@@ -20,7 +20,7 @@ class TreeEdge extends Graphics{
         }                        
         this.lineTo(p1[0], p1[1]);
         this.endFill(); 
-        container.addChild(this);
+        this.data.target.linkGraphics = this;
     }
 
     enableHighlight(){        

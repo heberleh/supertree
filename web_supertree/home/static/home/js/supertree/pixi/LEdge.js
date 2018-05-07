@@ -2,14 +2,14 @@
 
 
 class LEdge extends Graphics {
-    constructor(container, d) {
+    constructor(d) {
         super();
         this.data = d;
         this.color = 0x808080;        
         let p0 = project(d.source.x, d.source.y);
         let p1 = project(d.target.x, d.target.y);
 
-        this.lineStyle(1, this.color, 1); // linewidth, color, alpha
+        this.lineStyle(1, this.color, 0.02); // linewidth, color, alpha
         
         this.moveTo(p0[0], p0[1]);
         this.lineTo(p1[0], p1[1]);
@@ -23,13 +23,13 @@ class LEdge extends Graphics {
        
         this.on('mouseover', function () {
             console.log("over", this);
-            this.lineAlpha = 1;              
+            this.clear();
+            this.lineAlpha = 1;   
+            
         });
 
-        this.on('mouseout', function () {            
-            this.lineAlpha = 1;
-        });
-
-        container.addChild(this);
+        // this.on('mouseout', function () {            
+        //     this.lineAlpha = 0.02;
+        // });       
     }
 }

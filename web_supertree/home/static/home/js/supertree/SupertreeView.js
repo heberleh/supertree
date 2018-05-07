@@ -107,7 +107,7 @@ class SupertreeView {
             backgroundColor: 0xffffff,
             antialias: true, // default: false
             transparent: false, // default: false
-            resolution: 1.2 // default: 1
+            resolution: 1 // default: 1
         });
         
         
@@ -202,12 +202,11 @@ class SupertreeView {
             .text("");
     }
 
-
-
     _setUpLinks() {
-        let root = this._diagram_container;
+        let container = this._diagram_container;
         this._supertree_d3_hiearchy.links().forEach(function (d) {
-            new TreeEdge(root, d);            
+            d.graphics = new TreeEdge(d);            
+            container.addChild(d.graphics);
         });
     }
 
@@ -246,7 +245,8 @@ class SupertreeView {
         let container = this._diagram_container;
         console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
         this._supertree_d3_hiearchy.leaves().forEach(function(d){            
-            new Leaf(container, d);
+            d.graphics = new Leaf(d);
+            container.addChild(d.graphics);
         });
 
         // function moveToFront() {
@@ -257,7 +257,7 @@ class SupertreeView {
         //     return function (d) {
         //         d3.select(this).classed("label--active", active);
         //         d3.select(d.linkExtensionNode).classed("link-extension--active", active).each(moveToFront);
-        //         do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = d.parent);
+        //         do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = droot.parent);
         //     };
         // }
 
@@ -372,13 +372,12 @@ class SupertreeView {
         
         this._lgts_container = new PIXI.Container();        
         
-        this._diagram_container.addChild(this._lgts_container);
-        
-        this._lgts_container.alpha = 0.02;
+        this._diagram_container.addChild(this._lgts_container);                
 
-        let root = this._lgts_container;
+        let container = this._lgts_container;
         lgts_data.forEach(function (d) {
-            new LEdge(root, d);
+            d.graphics = new LEdge(d);
+            container.addChild(d.graphics);
         });
 
         this._treeapp.start();
