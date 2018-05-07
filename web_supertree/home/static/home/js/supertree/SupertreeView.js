@@ -7,7 +7,7 @@ class SupertreeView {
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
-        supertree.storeData(this._supertree_d3_hiearchy);
+        supertree.storeData(this._supertree_d3_hiearchy);        
 
         this._treeGroupColor = this._updateTreeGroupColors(supertree.groupsLabels);
         this._setColor(this._supertree_d3_hiearchy);
@@ -25,14 +25,19 @@ class SupertreeView {
         // setUpLinkExtensions();....
         //this._setUpLinkExtension();
 
-        this._hash_pos = this._setUpLinks();
+        
         this._setUpLabels();
 
+        this._d3_nodes_hash = this._setUpHashOfD3Nodes();
+        console.log("number of nodes in hash", this._d3_nodes_hash.length);
         console.log("number of lgts", supertree.lgts.length);
-        this._lgts = this._setUpLGTs(supertree.lgts);
-        console.log("number of lgts", this._lgts.length);
-        this._updateLGTS(this._lgts);        
 
+        this._lgts = this._setUpLGTs(supertree.lgts);
+        console.log("number of lgts -> nodes", this._lgts.length);
+        this._updateLGTS(this._lgts);    
+
+        
+        this._setUpLinks();
         ///////////////////////////////////////////////////////////////////////
 
         // this._svg = this._setUpSVG(diagram_div);
@@ -84,6 +89,15 @@ class SupertreeView {
     //         .attr("transform", "translate(" + this._outerRadius + "," + this._outerRadius + ")");
     // }
 
+    _setUpHashOfD3Nodes(){
+        let root = this._diagram_container;
+        var d3_nodes_hash = {};
+        this._supertree_d3_hiearchy.descendants().forEach(function (d) {
+            d3_nodes_hash[d.data.name] = d;
+        });
+        return d3_nodes_hash;
+    }
+
     _setUpView() {
         let width = this._outerRadius * 2;
         let height = this._outerRadius * 2;
@@ -110,10 +124,10 @@ class SupertreeView {
 
         this._view = this._diagram_div.append(this._treeapp.view);
         
-        this._treeapp.ticker.add(() => {
-            // each frame we spin the bunny around a bit
-           this._diagram_container.rotation += 0.001;
-        });        
+        // this._treeapp.ticker.add(() => {
+        //     // each frame we spin the bunny around a bit
+        //    this._diagram_container.rotation += 0.001;
+        // });        
 
     }
 
@@ -192,16 +206,9 @@ class SupertreeView {
 
     _setUpLinks() {
         let root = this._diagram_container;
-        var hash_pos = {};
         this._supertree_d3_hiearchy.links().forEach(function (d) {
-
-            // createTreeEdge(root, d.source.x, d.source.y, d.target.x, d.target.y, 1, colorToHex(d.target.color));
-            new TreeEdge(root, d);
-            hash_pos[d.target.data.name] = [d.target.x, d.target.y];
-            hash_pos[d.source.data.name] = [d.source.x, d.source.y];
+            new TreeEdge(root, d);            
         });
-
-        return hash_pos;
     }
 
     // _setUpLinks(linkConstant) {
@@ -339,34 +346,38 @@ class SupertreeView {
         return this._supertree.groupsLabels;
     }
 
-    _setUpLGTs(lgts_simple_vector) {
-        // this._diagram.insert("g", ":first-child").attr("id", "lgts");
-
-        // //console.log(lgts_simple_vector);
-        var lgts_nodes = [];
-        // var links = this._diagram.select("#links");
-
-        var v = lgts_simple_vector;
-
-        for (let e in v) {
-            if(v[e][0] in this._hash_pos && v[e][1] in this._hash_pos){
+    _setUpLGTs(l) {                
+        let lgts_nodes = [];                
+        let hash = this._d3_nodes_hash;
+        var non_tracked_edges = []
+        for (let e in l) {
+            if(l[e][0] in hash && l[e][1] in hash){
+                if (e <10){
+                    console.log(hash[l[e][0]]);
+                }
                 lgts_nodes.push({
-                    "source": this._hash_pos[v[e][0]],
-                    "target": this._hash_pos[v[e][1]]
+                    "source": hash[l[e][0]],
+                    "target": hash[l[e][1]]
                 });
+            }else{
+                non_tracked_edges.push(l[e]);
             }
         }
-        //console.log("lgts",lgts_nodes);
-
+        console.log("what is going on with this edges?",non_tracked_edges);
         return lgts_nodes;
     }
 
 
     _updateLGTS(lgts_data) {
-        let root = this._diagram_container;
+        
+        this._lgts_container = new PIXI.Container();        
+        
+        this._diagram_container.addChild(this._lgts_container);
+        
+        this._lgts_container.alpha = 0.02;
 
+        let root = this._lgts_container;
         lgts_data.forEach(function (d) {
-            //createLGTEdge(root, d.source[0], d.source[1], d.target[0], d.target[1], 1, 0x9966FF, 0.05);
             new LEdge(root, d);
         });
 
