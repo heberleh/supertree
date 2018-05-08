@@ -358,7 +358,7 @@ class SupertreeView {
                 lgts_nodes.push({
                     "source": hash[l[e][0]],
                     "target": hash[l[e][1]],
-                    'weight': l[e][2]
+                    'weight': float(l[e][2])
                 });
             }else{
                 non_tracked_edges.push(l[e]);
