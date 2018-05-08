@@ -19,6 +19,9 @@ class SupertreeView {
             this._innerRadius / this._maxLength(this._supertree_d3_hiearchy)
         );
 
+        this._min_dist = 16;
+        this._max_dist = 20;
+
         this._setUpView();
         // /createLine(this._diagram_container, 50,50,200,200);
 
@@ -32,62 +35,12 @@ class SupertreeView {
         console.log("number of nodes in hash", this._d3_nodes_hash.length);
         console.log("number of lgts", supertree.lgts.length);
 
-        this._lgts = this._setUpLGTs(supertree.lgts);
-        console.log("number of lgts -> nodes", this._lgts.length);
-        this._updateLGTS(this._lgts);    
+        this.lgts = this._setUpLGTs(supertree.lgts);
+        console.log("number of lgts -> nodes", this.lgts.length);
+        this._updateLGTS();    
 
-        
         this._setUpLinks();
-        ///////////////////////////////////////////////////////////////////////
-
-        // this._svg = this._setUpSVG(diagram_div);
-        // this._diagram = this._setUpDiagram(this._svg);
-
-        // // hierarchy
-        // this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
-
-        // // DATA
-        // supertree.storeData(this._supertree_d3_hiearchy);
-
-        // // Colors        
-        // this._treeGroupColor = this._updateTreeGroupColors(supertree.groupsLabels);
-        // this._setColor(this._supertree_d3_hiearchy);
-
-        // // D3 Radial Tree Layout Diagram        
-        // this._treeLayoutCluster = this._setUpTreeLayoutCluster();
-        // this._treeLayoutCluster(this._supertree_d3_hiearchy);
-        // this._linkExtension = this._setUpLinkExtension();
-        // this._link = this._setUpLinks();
-        // this._labels = this._setUpLabels();
-
-        // // Extensions
-        // this._tooltip = this._setUpToolTip();
-
-        // // Diagram Interaction        
-        // this._setRadius(this._supertree_d3_hiearchy,
-        //     this._supertree_d3_hiearchy.data.length = 0,
-        //     this._innerRadius / this._maxLength(this._supertree_d3_hiearchy)
-        // );
-
-
-        // // TODO should this be out of this class? YES -> AND OUT OF THE DIAGRAM
-        // this._clusterCheckbox = this._setUpCheckBoxClusterOnOff();
-
-        // this._lgts = this._setUpLGTs(supertree.lgts);
-        // this._updateLGTS(this._lgts);
     }
-
-    // _setUpSVG(diagram_div) {        
-    //     return diagram_div
-    //         .append("svg")
-    //         .attr("width", this._outerRadius * 2)
-    //         .attr("height", this._outerRadius * 2);
-    // }
-    // _setUpDiagram(svg) {
-    //     return svg
-    //         .append("g")
-    //         .attr("transform", "translate(" + this._outerRadius + "," + this._outerRadius + ")");
-    // }
 
     _setUpHashOfD3Nodes(){
         let root = this._diagram_container;
@@ -107,12 +60,10 @@ class SupertreeView {
             backgroundColor: 0xffffff,
             antialias: true, // default: false
             transparent: false, // default: false
-            resolution: 1 // default: 1
+            resolution: 2 // default: 1
         });
         
-        
-        
-
+    
         // Containers
         this._stage = this._treeapp.stage;
         this._diagram_container = new PIXI.Container();        
@@ -130,8 +81,6 @@ class SupertreeView {
         // });        
 
     }
-
-
 
     _updateTreeGroupColors(labels, color_scheme = d3.schemeCategory10) {
         return d3.scaleOrdinal()
@@ -243,9 +192,12 @@ class SupertreeView {
 
     _setUpLabels() {
         let container = this._diagram_container;
+        let superTreeView = this;
         console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
-        this._supertree_d3_hiearchy.leaves().forEach(function(d){            
+        this._supertree_d3_hiearchy.leaves().forEach(function(d){
+                    
             d.graphics = new Leaf(d);
+            d.graphics.superTreeView = superTreeView;    
             container.addChild(d.graphics);
         });
 
@@ -358,7 +310,8 @@ class SupertreeView {
                 lgts_nodes.push({
                     "source": hash[l[e][0]],
                     "target": hash[l[e][1]],
-                    'weight': float(l[e][2])
+                    'dist': parseFloat(l[e][2]),
+                    "lateralEdgeSprite": null
                 });
             }else{
                 non_tracked_edges.push(l[e]);
@@ -369,7 +322,7 @@ class SupertreeView {
     }
 
 
-    _updateLGTS(lgts_data) {
+    _updateLGTS() {
         
         this._lgts_container = new PIXI.Container();        
         
@@ -383,11 +336,13 @@ class SupertreeView {
         // while (container.firstChild) {
         //     container.removeChild(container.firstChild);
         // }
-                
-        lgts_data.forEach(function (d) {
+
+        this.lgts.forEach((d)=> {
             d.lateralEdgeSprite = new LateralEdgeSprite(d);
-            container.addChild(d.lateralEdgeSprite.sprite);
-        });        
+            container.addChild(d.lateralEdgeSprite.sprite);              
+        });
+        
+        this.updateLGTsFilters();        
 
         // var lgts = this._diagram.select("#lgts");
 
@@ -423,6 +378,24 @@ class SupertreeView {
         //     //.style("pointer-events", "none")
         //     .on("mouseover", mouseovered(true))
         //     .on("mouseout", mouseovered(false));
+    }
+
+    updateLGTsFilters(){
+        this.lgts.forEach((d)=> {
+            let visible = true;
+            if (d.dist < this._min_dist || d.dist > this._max_dist){
+                visible = false;                          
+            }
+
+            d.lateralEdgeSprite.sprite.visible = visible;
+        });
+    }
+
+    updateLGTsDefaultAlpha(alpha){
+        this.lgts.forEach((d)=> {
+            d.lateralEdgeSprite.setDefaultAlpha(alpha);
+            d.lateralEdgeSprite.highlightOff();
+        });
     }
 }
 

@@ -35,7 +35,7 @@ class LEdge extends Graphics {
         //     this.lineAlpha = 0.05;
         // });
     }
-}
+}   
 
 // class LEdge extends Sprite {
 //     constructor(d) {

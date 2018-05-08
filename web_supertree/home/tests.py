@@ -739,7 +739,7 @@ class SupertreeAppTest(TestCase):
                 potential_lgts.add_edge(n1.name,n2.name)
                 lgts_vector.append([n1.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n2.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n1.get_distance(n2, topology_only=True)])
         
-        print("Number of LGT candidates: ",len(potential_lgts.edges))
+        print("Number of LGT candidates: ",len(lgts_vector))
         # nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
         # plt.show()
         for node in self.supertree.traverse():
