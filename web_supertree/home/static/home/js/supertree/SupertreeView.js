@@ -357,13 +357,14 @@ class SupertreeView {
                 }
                 lgts_nodes.push({
                     "source": hash[l[e][0]],
-                    "target": hash[l[e][1]]
+                    "target": hash[l[e][1]],
+                    'weight': l[e][2]
                 });
             }else{
                 non_tracked_edges.push(l[e]);
             }
         }
-        console.log("what is going on with this edges?",non_tracked_edges);
+        console.log("what is going on with these edges?",non_tracked_edges);
         return lgts_nodes;
     }
 
@@ -373,14 +374,20 @@ class SupertreeView {
         this._lgts_container = new PIXI.Container();        
         
         this._diagram_container.addChild(this._lgts_container);                
-
+        
         let container = this._lgts_container;
+        console.log("LGTs container",container);
+        // container.children.forEach(function(node){
+        //     node.destroy();
+        // });
+        // while (container.firstChild) {
+        //     container.removeChild(container.firstChild);
+        // }
+                
         lgts_data.forEach(function (d) {
             d.graphics = new LEdge(d);
             container.addChild(d.graphics);
-        });
-
-        this._treeapp.start();
+        });        
 
         // var lgts = this._diagram.select("#lgts");
 

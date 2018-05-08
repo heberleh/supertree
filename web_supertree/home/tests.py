@@ -671,7 +671,7 @@ class SupertreeAppTest(TestCase):
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        #number_of_trees = 40000             
+        number_of_trees = 600             
         
         vertex_hash = {}
         i = 0
@@ -735,9 +735,9 @@ class SupertreeAppTest(TestCase):
             # cluster_lgts_dist = {} # for now it does not make sense to store this
             for c1, c2 in itertools.combinations(clusters, 2):
                 n1 = self.supertree.get_common_ancestor(clusters[c1])
-                n2 = self.supertree.get_common_ancestor(clusters[c2])
+                n2 = self.supertree.get_common_ancestor(clusters[c2])                
                 potential_lgts.add_edge(n1.name,n2.name)
-                lgts_vector.append([n1.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n2.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')])
+                lgts_vector.append([n1.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n2.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_'), n1.get_distance(n2)])
         
         print("Number of LGT candidates: ",len(potential_lgts.edges))
         # nx.draw(potential_lgts,pos=nx.spring_layout(potential_lgts))
@@ -788,7 +788,7 @@ class SupertreeAppTest(TestCase):
         # write lgts edges
         json_txt += ",\"lgts\":["
         for edge in lgts_vector:
-            json_txt += "[\"" + edge[0] + "\",\"" + edge[1] + "\"],"
+            json_txt += "[\"" + edge[0] + "\",\"" + edge[1] +"\","+ str(edge[2]) +"],"
         json_txt = json_txt[:-1]
 
         # write genes and group of each node from supertree
