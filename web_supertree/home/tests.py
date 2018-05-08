@@ -788,7 +788,7 @@ class SupertreeAppTest(TestCase):
         # write lgts edges
         json_txt += ",\"lgts\":["
         for edge in lgts_vector:
-            json_txt += "[\"" + edge[0] + "\",\"" + edge[1] +"\","+ str(edge[2]) +"],"
+            json_txt += "[\"" + edge[0] + "\",\"" + edge[1] +"\",\""+ str(edge[2]) +"\"],"
         json_txt = json_txt[:-1]
 
         # write genes and group of each node from supertree

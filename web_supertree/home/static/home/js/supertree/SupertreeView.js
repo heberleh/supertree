@@ -385,8 +385,8 @@ class SupertreeView {
         // }
                 
         lgts_data.forEach(function (d) {
-            d.graphics = new LEdge(d);
-            container.addChild(d.graphics);
+            d.lateralEdgeSprite = new LateralEdgeSprite(d);
+            container.addChild(d.lateralEdgeSprite.sprite);
         });        
 
         // var lgts = this._diagram.select("#lgts");
