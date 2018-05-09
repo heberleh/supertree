@@ -40,6 +40,8 @@ class SupertreeView {
         this._updateLGTS();    
 
         this._setUpLinks();
+        
+        this.updateGuiNumericalFilters();
     }
 
     _setUpHashOfD3Nodes(){
@@ -60,7 +62,7 @@ class SupertreeView {
             backgroundColor: 0xffffff,
             antialias: true, // default: false
             transparent: false, // default: false
-            resolution: 2 // default: 1
+            resolution: 1.5 // default: 1
         });
         
     
@@ -142,14 +144,14 @@ class SupertreeView {
     //         .attr("d", (d) => this._linkExtensionConstant(d));
     // }
 
-    _setUpToolTip() {
-        return this._diagram
-            .append("div")
-            .style("position", "absolute")
-            .style("z-index", "10")
-            .style("visibility", "hidden")
-            .text("");
-    }
+    // _setUpToolTip() {
+    //     return this._diagram
+    //         .append("div")
+    //         .style("position", "absolute")
+    //         .style("z-index", "10")
+    //         .style("visibility", "hidden")
+    //         .text("");
+    // }
 
     _setUpLinks() {
         let container = this._diagram_container;
@@ -396,6 +398,45 @@ class SupertreeView {
             d.lateralEdgeSprite.setDefaultAlpha(alpha);
             d.lateralEdgeSprite.highlightOff();
         });
+    }
+
+    updateGuiNumericalFilters(){
+        var numericalAttributes = ["dist"];
+        for (let i in numericalAttributes){
+            let name = numericalAttributes[i];
+            let id = name+"inputNumericFilter";
+
+            let row = d3.select("#numericalFilters")
+                .append("div").classed("row",true);
+
+            row.append("div").classed("col-md-3",true).append("p").text(name+":");
+            
+            // row.append("div")
+            //             .attr("class","col-md-2 text-right")
+            //             .append("label")
+            //             .attr("id",name+"_numericFilter");
+            
+            row.append("div").classed("col-md-8",true)
+                        .append("input")
+                        .attr("id", id)
+                        .attr("type","text")
+                        .style("width", "100%");
+
+            $("#"+id).slider({ id: id+"_slider", min: 0, max: 10, range: true, value: [3, 7] ,tooltip: 'always'});
+        }
+
+        // <div class="row">
+            // <div id="repulsive" class="col-md-4">
+            //     <p>Repulsive:</p>
+            // </div>
+            // <div class="col-md-2 text-right">
+            //     <label id="alphaLabel">0.6</label>
+            // </div>
+            // <div class="col-md-6">
+
+            // <input id="ex12b" type="text"/><br/>
+      
+        
     }
 }
 

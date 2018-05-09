@@ -10,7 +10,7 @@ class Leaf extends Text {
             align: 'center'
         };
         super(d.data.name, style);
-        var p = project(d.x, d.y);
+        var p = project(d.x-1, d.y);
         this.data = d;
         this.rotation += p[2];
         if (p[0] < 0) {

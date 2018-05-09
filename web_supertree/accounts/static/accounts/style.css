@@ -1,3 +1,77 @@
+/* Panel style */
+label, p {
+	font-size: 11px;
+}
+
+.card-body label.label-extra {
+	font-size: 10px;
+}
+
+.subtitle{
+	font-size: 16px;
+}
+
+body {
+	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	color: #676a6c;
+	overflow-x: hidden;
+}
+
+.highlight_cc circle {
+	stroke-width: 2 !important;
+	stroke-opacity: 1 !important;
+	stroke-dasharray: 0 !important;
+}
+
+.highlight_cc rect {
+	stroke-width: 2 !important;
+	stroke-opacity: 1 !important;
+	stroke-dasharray: 0 !important;
+	stroke: #444 !important;
+}
+/* 
+.card-header a:after {
+	font-family: 'Glyphicons Halflings';
+	/* content:"\e114"; 
+	float: right;
+	color: grey;
+} */
+
+/* .panel-heading a.collapsed:after {
+	 content:"\e080"; 
+} */
+
+#table-wrapper {
+	position: relative;
+}
+
+#table-scroll {
+	height: 760px;
+	overflow: auto;
+	margin-top: 20px;
+}
+
+#table-wrapper table {
+	width: 100%;
+}
+
+#table-wrapper table thead th .text {
+	position: absolute;
+	top: -20px;
+	z-index: 2;
+	height: 20px;
+	width: 35%;
+	border: 1px solid red;
+}
+
+html {
+	min-width: 1704px;
+	height: 500px;
+	overflow-x: scroll;
+}
+
+/*
 :root {
   --jumbotron-padding-y: 3rem;
 }
@@ -39,23 +113,10 @@ footer p {
   margin-bottom: .25rem;
 }
 
-.box-shadow { box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05); }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.box-shadow { box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05); } */
 
 /* STREAMGRAPH */
+
 body {
 	font-size: 16px;
 	color: #4a4a4a;
@@ -64,64 +125,76 @@ body {
 }
 
 /*CHART GENERAL*/
-.chart-wrapper{
-	margin-left:-.99%;
+
+.chart-wrapper {
+	margin-left: -.99%;
 	width: 102%;
 }
 
 /*AXES*/
-.axis path, .axis line {
-  fill: none;
-  stroke: #3a403d;
-  stroke-width: 1px;
-  shape-rendering: crispEdges;
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #3a403d;
+	stroke-width: 1px;
+	shape-rendering: crispEdges;
 }
+
 .axis text {
-  font-size: .625em;
+	font-size: .625em;
 }
 
 /*LAYERS*/
+
 .chart .layer {
 	cursor: crosshair;
 }
 
 /*TIP*/
+
 .tip {
-  background-color: hsla(0,0%,100%,.9);
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 1em;
+	background-color: hsla(0, 0%, 100%, .9);
+	padding: 10px;
+	border-radius: 5px;
+	font-size: 1em;
 	width: 180px;
 }
+
 .tip .year {
-  font-weight: 900;
-  font-size: 1.25em;
-  margin-bottom: 2px;
+	font-weight: 900;
+	font-size: 1.25em;
+	margin-bottom: 2px;
 }
+
 .tip .swatch {
-  width: 11px;
-  height: 11px;
-  float: left;
-  margin-top: 6px;
-  margin-right: 4px;
+	width: 11px;
+	height: 11px;
+	float: left;
+	margin-top: 6px;
+	margin-right: 4px;
 }
 
 /*LEGEND*/
+
 .legend {
 	position: absolute;
 	top: 15px;
 	left: 30px;
-	background-color: hsla(0,0%,100%,.9);
+	background-color: hsla(0, 0%, 100%, .9);
 	padding: 5px 10px 5px 10px;
 	border-radius: 5px;
 }
+
 .legend .title {
 	margin-bottom: 2px;
 	font-weight: 900;
 }
+
 .legend .item {
 	font-size: .75em;
 }
+
 .legend .swatch {
 	width: 10px;
 	height: 10px;
@@ -131,18 +204,17 @@ body {
 }
 
 /* Extra Small Devices, Phones */
-@media only screen and (max-width : 480px) {
 
+@media only screen and (max-width: 480px) {
 	/*chart*/
 	.chart-wrapper {
-		margin-left:-15px;
-		margin-right:-15px;
+		margin-left: -15px;
+		margin-right: -15px;
 		width: auto;
 	}
 	.chart-title {
 		font-size: 1.4em;
 	}
-
 	/*tip*/
 	.tip {
 		width: 100px;
@@ -150,7 +222,8 @@ body {
 	.tip .year {
 		font-size: 1em;
 	}
-	.tip .key, .tip .value {
+	.tip .key,
+	.tip .value {
 		font-size: .75em;
 	}
 	.tip .swatch {
@@ -161,7 +234,6 @@ body {
 	.remove {
 		display: none;
 	}
-
 	/*legend*/
 	.legend {
 		position: static;
@@ -171,11 +243,115 @@ body {
 		display: none;
 	}
 	.legend .item {
-		float:left;
-		margin-right:10px;
+		float: left;
+		margin-right: 10px;
 	}
 	.legend .swatch {
 		margin-top: 3.5px;
 	}
+
+.in{
+	opacity: .9;
+	}	
+	
+.slider.slider-horizontal:hover, .slider.slider-vertical:hover {
+	.tooltip.tooltip-main {
+			opacity: 0.7 !important;
+	}
+	.tooltip-inner {
+			font-size: 90%;
+			width: auto;
+	}
+}
+
+	/* https://www.codeply.com/go/GQ1Mz8RqZB/bootstrap-4-sidebar-menu-(toggleable) */
+	#sidebar .list-group-item {
+    border-radius: 0;
+    background-color: #333;
+    color: #ccc;
+    border-left: 0;
+    border-right: 0;
+    border-color: #2c2c2c;
+    white-space: nowrap;
+}
+
+/* highlight active menu */
+#sidebar .list-group-item:not(.collapsed) {
+    background-color: #222;
+}
+
+/* closed state */
+#sidebar .list-group .list-group-item[aria-expanded="false"]::after {
+  content: " \f0d7";
+  font-family: FontAwesome;
+  display: inline;
+  text-align: right;
+  padding-left: 5px;
+}
+
+/* open state */
+#sidebar .list-group .list-group-item[aria-expanded="true"] {
+  background-color: #222;
+}
+#sidebar .list-group .list-group-item[aria-expanded="true"]::after {
+  content: " \f0da";
+  font-family: FontAwesome;
+  display: inline;
+  text-align: right;
+  padding-left: 5px;
+}
+
+/* level 1*/
+#sidebar .list-group .collapse .list-group-item  {
+  padding-left: 20px;
+}
+
+/* level 2*/
+#sidebar .list-group .collapse > .collapse .list-group-item {
+  padding-left: 30px;
+}
+
+/* level 3*/
+#sidebar .list-group .collapse > .collapse > .collapse .list-group-item {
+  padding-left: 40px;
+}
+
+@media (max-width:48em) {
+    /* overlay sub levels on small screens */
+    #sidebar .list-group .collapse.in, #sidebar .list-group .collapsing {
+        position: absolute;
+        z-index: 1;
+        width: 190px;
+    }
+    #sidebar .list-group > .list-group-item {
+        text-align: center;
+        padding: .75rem .5rem;
+    }
+    /* hide caret icons of top level when collapsed */
+    #sidebar .list-group > .list-group-item[aria-expanded="true"]::after,
+    #sidebar .list-group > .list-group-item[aria-expanded="false"]::after {
+        display:none;
+    }
+}
+
+/* change transition animation to width when entire sidebar is toggled */
+#sidebar.collapse {
+  -webkit-transition-timing-function: ease;
+       -o-transition-timing-function: ease;
+          transition-timing-function: ease;
+  -webkit-transition-duration: .2s;
+       -o-transition-duration: .2s;
+          transition-duration: .2s;
+}
+
+#sidebar.collapsing {
+  opacity: 0.8;
+  width: 0;
+  -webkit-transition-timing-function: ease-in;
+       -o-transition-timing-function: ease-in;
+          transition-timing-function: ease-in;
+  -webkit-transition-property: width;
+       -o-transition-property: width;
+          transition-property: width;
 
 }

@@ -7,20 +7,58 @@
     <title>Supertree visualization</title>
     {% endblock %}
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
-        crossorigin="anonymous">
-
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
         crossorigin="anonymous"></script>
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.0.2/bootstrap-slider.min.js" integrity="sha256-VYMMGFCEeBYop7KDzrlj8Bf6R4rhv0XxdH/ctYViebc="
+        crossorigin="anonymous"></script>
+
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js" integrity="sha384-SlE991lGASHoBfWbelyBPLsUlwY1GwNDJo3jSJO04KZ33K2bwfV9YBauFfnzvynJ"
         crossorigin="anonymous"></script>
 
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'accounts/style.css'%}" type="text/css">
+
+    {% comment %} THIRD {% endcomment %}
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="/static/home/js/lib/pixi.min.js"></script>
+
+
+    {% comment %} LOCAL {% endcomment %}
+
+    <script src="/static/home/js/Utils.js"></script>
+    <script src="/static/home/js/PixiAlias.js"></script>
+    <script src="/static/home/js/supertree/pixi/LineSprite.js"></script>
+
+
+    <script src="/static/home/js/supertree/Supertree.js"></script>
+    <script src="/static/home/js/supertree/pixi/TreeEdge.js"></script>
+    <script src="/static/home/js/supertree/pixi/Leaf.js"></script>
+    <script src="/static/home/js/supertree/pixi/LEdge.js"></script>
+    <!-- Lateral gene transfer -->
+    <script src="/static/home/js/supertree/pixi/LateralEdgeSprite.js"></script>
+    <!-- Lateral gene transfer -->
+
+    <script src="/static/home/js/supertree/SupertreeView.js"></script>
+
+    <script src="/static/home/js/Stream.js"></script>
+    <script src="/static/home/js/StreamView.js"></script>
+    <script src="/static/home/js/main.js"></script>
+
+    {% comment %} {% load static %} {% endcomment %}
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.0.2/css/bootstrap-slider.min.css"
+        integrity="sha256-GwA8DO9HkVp1kdrzQyoT/zi9qZDV/902GSxlrGOfjo8=" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="/static/accounts/style.css" type="text/css">
+    <!-- <link rel="stylesheet" href="/static/home/js/lib/simple-sidebar.css" type="text/css"> -->
 </head>
 
 <body>
@@ -29,11 +67,11 @@
             <div class="container">
                 <div class="row">
                     <div class="col-sm-8 col-md-7 py-4">
-                        <h4 class="text-white">
+                        <h4 class="title text-white">
                             <b>s</b>uper
                             <b>T</b>rees
                             <b>Vis</b>ualization</h4>
-                        <p class="text-muted">
+                        <p class="subtitle text-muted">
                             sTVis is a tool for visualization of supertrees. You can upload a supertree and its related smaller trees to reveal patterns
                             of agreements and disagreaments between the reference tree and the small trees. E.g. Lateral
                             gene transfer.
@@ -59,9 +97,13 @@
             </div>
         </div>
         <div class="navbar navbar-dark bg-dark box-shadow">
-            <div class="col-md-10">
-                <div class="container d-flex justify-content-between">                
-                        <a href="{% url 'home:home' %}" class="navbar-brand d-flex align-items-center">
+            <div class="col-md-2">
+                    <a href="#sidebar" class="navbar-brand d-flex align-items-center" data-toggle="collapse">Options</a>
+            </div>
+            <div class="col-md-8">
+
+                <div class="container d-flex justify-content-between">
+                    <a href="{% url 'home:home' %}" class="navbar-brand d-flex align-items-center">
 
 
                         <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -206,7 +248,6 @@
                         <strong>sTVis</strong>
                     </a>
 
-
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarHeader" aria-controls="navbarHeader"
                         aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -214,7 +255,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                {% comment %}   class="d-flex justify-content-between" {% endcomment %}
+                {% comment %} class="d-flex justify-content-between" {% endcomment %}
                 <div class="">
                     <ul class="navbar-nav navbar-expand-sm">
                         {% if user.is_authenticated %}

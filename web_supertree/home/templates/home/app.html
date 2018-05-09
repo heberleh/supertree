@@ -1,108 +1,501 @@
-{% extends "base.html" %} 
-
-{%block head %}
+{% extends "base.html" %} {%block head %}
 
 <title>Supertree</title>
 
-<meta charset="utf-8">
-<style>
-    body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        margin: 0;
-    }
+{% endblock %} {%block body%}
 
-    #show-length {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-    }
 
-    .links {
-        fill: none;
-        stroke: #000;
-    }
+<div class="container-fluid">
+    <div class="row">
+        <!-- <div class="col-md-2 col-xs-1 p-l-0 p-r-0 collapse in" id="sidebar"> -->
+        <div class="col-md-2 col-xs-1 p-l-0 p-r-0">
+            <div class="list-group panel">
 
-    .link-extensions {
-        fill: none;
-        stroke: #000;
-        stroke-opacity: .25;
-    }
+                <!-- Loading -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseLoad" href="#loading-container" class="collapsed">
+                                Load Trees
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseLoad" class="card-collapse collapse in">
+                        <div class="card-body">
+                            <div class="load">
+                                <input autocomplete="off" id="file" name="file" text="Load trees" style="width: 100%" type="file">
+                                <label class="label-extra" id="Nnodes">0 leaves</label>
+                                <label class="label-extra"> and </label>
+                                <label class="label-extra" id="Nedges">0 LGTs</label>
+                                <br>
+                                <label class="label-extra">(Click</label>
+                                <label class="label-extra">
+                                    <a target="_blank" title="Click here" href="...">here </a>
+                                </label>
+                                <label>to see an example)</label>
 
-    .labels {
-        font: 10px sans-serif;
-    }
+                                <label title="Detailed information about ... use is available at the Help page.">ⓘ</label>
+                                <br>
 
-    .link--active {
-        stroke: #000 !important;
-        stroke-width: 1.5px;
-    }
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    .link-extension--active {
-        stroke-opacity: .6;
-    }
+                <!-- LGTs Slide Filters -->
+                <div class="card card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseForces" href="#loading-container" class="collapsed">
+                                Numerical Filters
+                            </a>
+                        </h4>
+                    </div>
 
-    .label--active {
-        font-weight: bold;
-    }
-</style>
-{% endblock %}
+                    <div id="collapseForces" class="card-collapse collapse">
+                        <div id="numericalFilters"class="card-body">
 
-{%block body%}
+                        </div>
+                    </div>
+                </div>
 
-<div class="container">
+
+
+
+            </div>
+        </div>
+
+        <main class="col-md-10 col-xs-11 p-l-2 p-t-2">
+            <div id="diagrams" class="row">
+                <div id="div_tree">
+
+                </div>
+            </div>
+
+        </main>
+    </div>
 
 </div>
 
+<!-- 
+
 <div class="row">
-    <div class="col-md-12">
-        <div class="row">
-            <div id="diagrams" class="col-md-11">      
-                <label id="show-length">
-                    <input type="checkbox"> Show branch length
-                </label>
+    <div class="col-md-3">
+        <div class="sidebar-nav">
+            <div class="">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseLoad" href="#loading-container" class="collapsed">
+                                Load Network
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseLoad" class="card-collapse collapse in">
+                        <div class="card-body">
+                            <div class="load">
+                                <input autocomplete="off" id="file" name="file" text="Load network" style="width: 100%" type="file">
+                                <label class="label-extra" id="Nnodes">0 nodes</label>
+                                <label class="label-extra"> and </label>
+                                <label class="label-extra" id="Nedges">0 links</label>
+                                <br>
+                                <label class="label-extra">(Click</label>
+                                <label class="label-extra">
+                                    <a target="_blank" title="Click here" href="http://bioinfo03.ibi.unicamp.br/lnbio/IIS2/cellnetvis/index.html?file=http://bioinfo03.ibi.unicamp.br//downloads/projetos/cellnetvis_MAPK_KEGG.interactome.lista_cytoscape_final_2vizinhos_python_lista.xgmml">here </a>
+                                </label>
+                                <label>to see an example)</label>
+
+                                <label title="Detailed information about CellNetVis use is available at the Help page.">ⓘ</label>
+                                <br>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseSearch" href="#loading-container" class="" aria-expanded="true">
+                                Search &amp; Filter
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseSearch" class="card-collapse collapse in" aria-expanded="true">
+                        <div class="card-body">
+                            <div>
+                                <div class="col-md-12 brd">
+                                    <div class="row">
+                                        <textarea class="center-block" id="search_text" style="width: 100%" rows="4"></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <button class="col-md-4" id="find" type="button">Find</button>
+                                        <button class="col-md-4" id="keep" type="button">Filter</button>
+                                        <button class="col-md-4" id="clear" type="button">Clear</button>
+                                    </div>
+                                    <div class="row">
+                                        <input name="exact" id="exact" type="checkbox">
+                                        <label class="label-extra">Exact match.</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseNodes" href="#loading-container" class="" aria-expanded="true">
+                                Nodes
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseNodes" class="card-collapse collapse in" aria-expanded="true" style="">
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Color:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <select id="color" onchange="updateColor()" style="width: 100%"></select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Labels:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <select id="change_label" style="width: 100%">
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Labels:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <button class="col-md-6" id="showlabels" value="Show" type="button">Show</button>
+                                    <button class="col-md-6" id="hidelabels" value="Hide" type="button">Hide</button>
+                                </div>
+                            </div>
+
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Net. measures:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <button id="netmeas" value="ComputeMeasures" type="button">Compute</button>
+                                    <label title="It may take some minutes.">ⓘ</label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseForces" href="#loading-container" class="collapsed">
+                                Forces
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseForces" class="card-collapse collapse">
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Forces:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <div>
+                                        <button class="col-md-6" id="restart_forces" value="restartForce" type="button">Start</button>
+                                        <button class="col-md-6" id="stop_forces" value="restartForce" type="button">Stop</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <br>
+                            </div>
+                            <div class="row">
+                                <br>
+                            </div>
+                            <div class="row">
+                                <div id="repulsive" class="col-md-4">
+                                    <p>Repulsive:</p>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <label id="alphaLabel">0.6</label>
+                                </div>
+                                <div class="col-md-6">
+
+                                    <div class="slider slider-horizontal" id="alphaCollideSlider" style="width: 100%;">
+                                        <div class="slider-track">
+                                            <div class="slider-track-low" style="left: 0px; width: 0%;"></div>
+                                            <div class="slider-selection" style="left: 0%; width: 60%;"></div>
+                                            <div class="slider-track-high" style="right: 0px; width: 40%;"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-main top hide" role="presentation" style="left: 60%; margin-left: 0px;">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner">alpha: 0.6</div>
+                                        </div>
+                                        <div class="tooltip tooltip-min top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-max top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="slider-handle min-slider-handle round" role="slider" aria-valuemin="0" aria-valuemax="1" style="left: 60%;" aria-valuenow="0.6"
+                                            aria-valuetext="alpha: 0.6" tabindex="0"></div>
+                                        <div class="slider-handle max-slider-handle round hide" role="slider" aria-valuemin="0" aria-valuemax="1" style="left: 0%;"
+                                            aria-valuenow="0" aria-valuetext="alpha: 0" tabindex="0"></div>
+                                    </div>
+                                    <input id="alphaCollide" data-slider-id="alphaCollideSlider" data-slider-min="0" data-slider-max="1" data-slider-step="0.05"
+                                        data-slider-value="0.0" data-slider-tooltip="hide" style="width: 100%; display: none;"
+                                        data-value="0.6" value="0.6" type="float">
+
+                                    <script type="text/javascript">
+                                        $('#alphaCollide').slider({
+                                            formatter: function (value) {
+                                                d3.select("#alphaLabel").text(value);
+                                                return 'alpha: ' + value;
+                                            }
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p>Friction:</p>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <label id="frictionLabel">0.7</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="slider slider-horizontal" id="frictionSlider" style="width: 100%;">
+                                        <div class="slider-track">
+                                            <div class="slider-track-low" style="left: 0px; width: 0%;"></div>
+                                            <div class="slider-selection" style="left: 0%; width: 70%;"></div>
+                                            <div class="slider-track-high" style="right: 0px; width: 30%;"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-main top hide" role="presentation" style="left: 70%; margin-left: 0px;">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner">friction: 0.7</div>
+                                        </div>
+                                        <div class="tooltip tooltip-min top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-max top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="slider-handle min-slider-handle round" role="slider" aria-valuemin="0" aria-valuemax="1" style="left: 70%;" aria-valuenow="0.7"
+                                            aria-valuetext="friction: 0.7" tabindex="0"></div>
+                                        <div class="slider-handle max-slider-handle round hide" role="slider" aria-valuemin="0" aria-valuemax="1" style="left: 0%;"
+                                            aria-valuenow="0" aria-valuetext="friction: 0" tabindex="0"></div>
+                                    </div>
+                                    <input id="friction" data-slider-id="frictionSlider" data-slider-min="0" data-slider-max="1" data-slider-step="0.05" data-slider-value="0.7"
+                                        data-slider-tooltip="hide" style="width: 100%; display: none;" data-value="0.7" value="0.7"
+                                        type="float">
+                                    <script type="text/javascript">
+                                        $('#friction').slider({
+                                            formatter: function (value) {
+                                                d3.select("#frictionLabel").text(value);
+                                                return 'friction: ' + value;
+                                            }
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p>Charge:</p>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <label id="chargeLabel">-63</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="slider slider-horizontal" id="chargeSlider" style="width: 100%;">
+                                        <div class="slider-track">
+                                            <div class="slider-track-low" style="left: 0px; width: 0%;"></div>
+                                            <div class="slider-selection" style="left: 0%; width: 79%;"></div>
+                                            <div class="slider-track-high" style="right: 0px; width: 21%;"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-main top hide" role="presentation" style="left: 79%; margin-left: 0px;">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner">charge: -63</div>
+                                        </div>
+                                        <div class="tooltip tooltip-min top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-max top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="slider-handle min-slider-handle round" role="slider" aria-valuemin="-300" aria-valuemax="0" style="left: 79%;"
+                                            aria-valuenow="-63" aria-valuetext="charge: -63" tabindex="0"></div>
+                                        <div class="slider-handle max-slider-handle round hide" role="slider" aria-valuemin="-300" aria-valuemax="0" style="left: 0%;"
+                                            aria-valuenow="-300" aria-valuetext="charge: -300" tabindex="0"></div>
+                                    </div>
+                                    <input id="charge" data-slider-id="chargeSlider" data-slider-min="-300" data-slider-max="0" data-slider-step="7" data-slider-value="-120"
+                                        data-slider-tooltip="hide" style="width: 100%; display: none;" data-value="-63" value="-63"
+                                        type="float">
+                                    <script type="text/javascript">
+                                        $('#charge').slider({
+                                            formatter: function (value) {
+                                                d3.select("#chargeLabel").text(value);
+                                                return 'charge: ' + value;
+                                            }
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p>Link strength: </p>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    <label id="strengthLabel">0.3</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="slider slider-horizontal" id="strengthSlider" style="width: 100%;">
+                                        <div class="slider-track">
+                                            <div class="slider-track-low" style="left: 0px; width: 0%;"></div>
+                                            <div class="slider-selection" style="left: 0%; width: 60%;"></div>
+                                            <div class="slider-track-high" style="right: 0px; width: 40%;"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-main top hide" role="presentation" style="left: 60%; margin-left: 0px;">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner">strength: 0.3</div>
+                                        </div>
+                                        <div class="tooltip tooltip-min top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="tooltip tooltip-max top hide" role="presentation" style="">
+                                            <div class="tooltip-arrow"></div>
+                                            <div class="tooltip-inner"></div>
+                                        </div>
+                                        <div class="slider-handle min-slider-handle round" role="slider" aria-valuemin="0" aria-valuemax="0.5" style="left: 60%;"
+                                            aria-valuenow="0.3" aria-valuetext="strength: 0.3" tabindex="0"></div>
+                                        <div class="slider-handle max-slider-handle round hide" role="slider" aria-valuemin="0" aria-valuemax="0.5" style="left: 0%;"
+                                            aria-valuenow="0" aria-valuetext="strength: 0" tabindex="0"></div>
+                                    </div>
+                                    <input id="strength" data-slider-id="strengthSlider" data-slider-min="0" data-slider-max="0.5" data-slider-step="0.01" data-slider-value="0.01"
+                                        data-slider-tooltip="hide" style="width: 100%; display: none;" data-value="0.3" value="0.3"
+                                        type="float">
+
+                                    <script type="text/javascript">
+                                        $('#strength').slider({
+                                            formatter: function (value) {
+                                                d3.select("#strengthLabel").text(value);
+                                                return 'strength: ' + value;
+                                            }
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="car-title">
+                            <a data-toggle="collapse" data-target="#collapseBundling" href="#loading-container" class="collapsed">
+                                Edge bundling
+                            </a>
+
+
+                        </h4>
+                    </div>
+                    <div id="collapseBundling" class="card-collapse collapse">
+                        <div class="card-body">
+                            <div>
+                                <div clas="row">
+                                    <div class="col-md-6">
+                                        <button id="create_edge_bundling" value="create_edge_bundling" type="button" style="width: 100%">Create</button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button id="remove_bundling" value="remove_edge_bundling" type="button" disabled="" style="width: 100%">Destroy</button>
+                                    </div>
+                                </div>
+                                <div clas="row">
+                                    <div class="col-md-6">
+                                        <button id="show_edge_bundling" value="show_edge_bundling" type="button" disabled="" style="width: 100%">Show</button>
+                                        <br>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button id="hide_bundling" value="hide_edge_bundling" type="button" disabled="" style="width: 100%">Hide</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card t">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                            <a data-toggle="collapse" data-target="#collapseDistribution" href="#loading-container" class="collapsed">
+                                Distribution Chart
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseDistribution" class="card-collapse collapse">
+                        <div class="card-body">
+                            <div id="chart2" class="sidebar_donut">
+                                <div id="donutchart_div">
+                                    <svg id="donutchart" style="width: 300px; height: 350px;"></svg>
+                                </div>
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div>
+                                            <input style="font-family: Sans-serif; font-size: 12px;" class="filename" id="donut-name" placeholder="Write file name here"
+                                                type="text">
+                                        </div>
+                                        <div>
+                                            <select id="donut_figureformat" name="format" form="format" style="font-family: Sans-serif; font-size: 12px;">
+                                                <option value=".svg">.svg</option>
+                                                <option value=".png">.png</option>
+                                                <option value=".csv">.csv</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <button id="export_donut" style="font-family: Sans-serif; font-size: 12px;" value="Save" type="button">Download</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div id=container>
-                    <center>
-                      <svg id=plotSvg></svg>
-                    </center>
-            </div>
-        </div>
-        <div class="row">
-                <div id=container>
-                        <center>
-                          <svg id=plotSvg></svg>
-                        </center>
-                      </div>
         </div>
     </div>
-  </div>
 
-{% comment %} THIRD {% endcomment %}
-<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=default"></script>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="/static/home/js/lib/pixi.min.js"></script>
-<script src="/static/home/js/lib/bootstrap-slider.min.css"></script>
-<script src="/static/home/js/lib/bootstrap-slider.min.js"></script>
+    <div class="col-md-9">
 
-{% comment %} LOCAL {% endcomment %}
-
-<script src="/static/home/js/Utils.js"></script>
-<script src="/static/home/js/PixiAlias.js"></script>
-<script src="/static/home/js/supertree/pixi/LineSprite.js"></script>
-
-
-<script src="/static/home/js/supertree/Supertree.js"></script>
-<script src="/static/home/js/supertree/pixi/TreeEdge.js"></script>
-<script src="/static/home/js/supertree/pixi/Leaf.js"></script>
-<script src="/static/home/js/supertree/pixi/LEdge.js"></script> <!-- Lateral gene transfer -->
-<script src="/static/home/js/supertree/pixi/LateralEdgeSprite.js"></script> <!-- Lateral gene transfer -->
-
-<script src="/static/home/js/supertree/SupertreeView.js"></script>
-
-<script src="/static/home/js/Stream.js"></script>
-<script src="/static/home/js/StreamView.js"></script>
-<script src="/static/home/js/main.js"></script>
+    </div>
+</div> -->
 
 {% endblock %}
