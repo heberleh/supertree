@@ -1,4 +1,20 @@
 /* Panel style */
+
+div.in{
+	opacity: 0.9;
+	font-size: 7px;
+}
+.slider.slider-horizontal:hover .tooltip.tooltip-main.top .tooltip-arrow:after,
+.slider.slider-vertical:hover .tooltip.tooltip-main.top .tooltip-arrow:after {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  left: 40%;
+  bottom: -10px;
+  border: transparent 5px solid;
+  border-top: #000 5px solid;
+}
 label, p {
 	font-size: 11px;
 }
@@ -250,22 +266,10 @@ body {
 		margin-top: 3.5px;
 	}
 
-.in{
-	opacity: .9;
-	}	
-	
-.slider.slider-horizontal:hover, .slider.slider-vertical:hover {
-	.tooltip.tooltip-main {
-			opacity: 0.7 !important;
-	}
-	.tooltip-inner {
-			font-size: 90%;
-			width: auto;
-	}
-}
+
 
 	/* https://www.codeply.com/go/GQ1Mz8RqZB/bootstrap-4-sidebar-menu-(toggleable) */
-	#sidebar .list-group-item {
+#sidebar .list-group-item {
     border-radius: 0;
     background-color: #333;
     color: #ccc;

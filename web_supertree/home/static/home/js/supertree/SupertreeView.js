@@ -7,7 +7,7 @@ class SupertreeView {
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
-        supertree.storeData(this._supertree_d3_hiearchy);        
+        supertree.storeData(this._supertree_d3_hiearchy);
 
         this._treeGroupColor = this._updateTreeGroupColors(supertree.groupsLabels);
         this._setColor(this._supertree_d3_hiearchy);
@@ -28,7 +28,7 @@ class SupertreeView {
         // setUpLinkExtensions();....
         //this._setUpLinkExtension();
 
-        
+
         this._setUpLabels();
 
         this._d3_nodes_hash = this._setUpHashOfD3Nodes();
@@ -37,14 +37,27 @@ class SupertreeView {
 
         this.lgts = this._setUpLGTs(supertree.lgts);
         console.log("number of lgts -> nodes", this.lgts.length);
-        this._updateLGTS();    
+        this._updateLGTS();
 
         this._setUpLinks();
-        
-        this.updateGuiNumericalFilters();
+
+
+
+        this.globalLGTsAlpha = 1;
+        this.setUpGraphicalSlidersFilters();
+
+        this.numericalAttributes = {
+            "dist": {
+                "min": 0,
+                "max": 15,
+                "selMin": 12,
+                "selMax": 13
+            }
+        };
+        this.setUpNumericalSlidersFilters();
     }
 
-    _setUpHashOfD3Nodes(){
+    _setUpHashOfD3Nodes() {
         let root = this._diagram_container;
         var d3_nodes_hash = {};
         this._supertree_d3_hiearchy.descendants().forEach(function (d) {
@@ -62,13 +75,13 @@ class SupertreeView {
             backgroundColor: 0xffffff,
             antialias: true, // default: false
             transparent: false, // default: false
-            resolution: 1.5 // default: 1
+            resolution: 1 // default: 1
         });
-        
-    
+
+
         // Containers
         this._stage = this._treeapp.stage;
-        this._diagram_container = new PIXI.Container();        
+        this._diagram_container = new PIXI.Container();
         this._stage.addChild(this._diagram_container);
 
         // Move container to the center
@@ -76,7 +89,7 @@ class SupertreeView {
         this._diagram_container.y = this._treeapp.screen.height / 2;
 
         this._view = this._diagram_div.append(this._treeapp.view);
-        
+
         // this._treeapp.ticker.add(() => {
         //     // each frame we spin the bunny around a bit
         //    this._diagram_container.rotation += 0.001;
@@ -156,7 +169,7 @@ class SupertreeView {
     _setUpLinks() {
         let container = this._diagram_container;
         this._supertree_d3_hiearchy.links().forEach(function (d) {
-            d.graphics = new TreeEdge(d);            
+            d.graphics = new TreeEdge(d);
             container.addChild(d.graphics);
         });
     }
@@ -196,10 +209,10 @@ class SupertreeView {
         let container = this._diagram_container;
         let superTreeView = this;
         console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
-        this._supertree_d3_hiearchy.leaves().forEach(function(d){
-                    
+        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+
             d.graphics = new Leaf(d);
-            d.graphics.superTreeView = superTreeView;    
+            d.graphics.superTreeView = superTreeView;
             container.addChild(d.graphics);
         });
 
@@ -263,7 +276,7 @@ class SupertreeView {
 
     // Set the color of each node by recursively inheriting.
     _setColor(d) {
-        d.color =  colorToHex(this._treeGroupColor(d.data.c));
+        d.color = colorToHex(this._treeGroupColor(d.data.c));
         if (d.children) d.children.forEach((d) => this._setColor(d));
     }
 
@@ -300,13 +313,13 @@ class SupertreeView {
         return this._supertree.groupsLabels;
     }
 
-    _setUpLGTs(l) {                
-        let lgts_nodes = [];                
+    _setUpLGTs(l) {
+        let lgts_nodes = [];
         let hash = this._d3_nodes_hash;
         var non_tracked_edges = []
         for (let e in l) {
-            if(l[e][0] in hash && l[e][1] in hash){
-                if (e <10){
+            if (l[e][0] in hash && l[e][1] in hash) {
+                if (e < 10) {
                     console.log(hash[l[e][0]]);
                 }
                 lgts_nodes.push({
@@ -315,23 +328,23 @@ class SupertreeView {
                     'dist': parseFloat(l[e][2]),
                     "lateralEdgeSprite": null
                 });
-            }else{
+            } else {
                 non_tracked_edges.push(l[e]);
             }
         }
-        console.log("what is going on with these edges?",non_tracked_edges);
+        console.log("what is going on with these edges?", non_tracked_edges);
         return lgts_nodes;
     }
 
 
     _updateLGTS() {
-        
-        this._lgts_container = new PIXI.Container();        
-        
-        this._diagram_container.addChild(this._lgts_container);                
-        
+
+        this._lgts_container = new PIXI.Container();
+
+        this._diagram_container.addChild(this._lgts_container);
+
         let container = this._lgts_container;
-        console.log("LGTs container",container);
+        console.log("LGTs container", container);
         // container.children.forEach(function(node){
         //     node.destroy();
         // });
@@ -339,12 +352,12 @@ class SupertreeView {
         //     container.removeChild(container.firstChild);
         // }
 
-        this.lgts.forEach((d)=> {
+        this.lgts.forEach((d) => {
             d.lateralEdgeSprite = new LateralEdgeSprite(d);
-            container.addChild(d.lateralEdgeSprite.sprite);              
+            container.addChild(d.lateralEdgeSprite.sprite);
         });
-        
-        this.updateLGTsFilters();        
+
+        this.updateLGTsVisibilityByNumericFilter();
 
         // var lgts = this._diagram.select("#lgts");
 
@@ -382,62 +395,107 @@ class SupertreeView {
         //     .on("mouseout", mouseovered(false));
     }
 
-    updateLGTsFilters(){
-        this.lgts.forEach((d)=> {
+    updateLGTsVisibilityByNumericFilter() {
+        this.lgts.forEach((d) => {
             let visible = true;
-            if (d.dist < this._min_dist || d.dist > this._max_dist){
-                visible = false;                          
+            for (let name in this.numericalAttributes) {
+                if (d.dist < this.numericalAttributes[name].selMin ||
+                    d.dist > this.numericalAttributes[name].selMax) {
+                    visible = false;
+                    break;
+                }
             }
-
             d.lateralEdgeSprite.sprite.visible = visible;
         });
     }
 
-    updateLGTsDefaultAlpha(alpha){
-        this.lgts.forEach((d)=> {
-            d.lateralEdgeSprite.setDefaultAlpha(alpha);
+    updateLGTsDefaultAlpha() {
+        this.lgts.forEach((d) => {
+            d.lateralEdgeSprite.setDefaultAlpha(this.globalLGTsAlpha);
             d.lateralEdgeSprite.highlightOff();
         });
-    }
+    }    
 
-    updateGuiNumericalFilters(){
-        var numericalAttributes = ["dist"];
-        for (let i in numericalAttributes){
-            let name = numericalAttributes[i];
-            let id = name+"inputNumericFilter";
+    setUpNumericalSlidersFilters() {
+        let numericalAttributes = this.numericalAttributes;
+        for (let name in numericalAttributes) {
+
+            let id = name + "inputNumericFilter";
 
             let row = d3.select("#numericalFilters")
-                .append("div").classed("row",true);
+                .append("div").classed("row", true);
 
-            row.append("div").classed("col-md-3",true).append("p").text(name+":");
-            
+            row.append("div").classed("col-md-3", true).append("p").text(name + ":");
+
             // row.append("div")
             //             .attr("class","col-md-2 text-right")
             //             .append("label")
             //             .attr("id",name+"_numericFilter");
-            
-            row.append("div").classed("col-md-8",true)
-                        .append("input")
-                        .attr("id", id)
-                        .attr("type","text")
-                        .style("width", "100%");
 
-            $("#"+id).slider({ id: id+"_slider", min: 0, max: 10, range: true, value: [3, 7] ,tooltip: 'always'});
+            row.append("div").classed("col-md-8", true)
+                .append("input")
+                .attr("id", id)
+                .attr("type", "text")
+                .style("width", "100%");
+
+            let att = this.numericalAttributes[name];
+
+            var slider = $("#" + id).slider({
+                id: id + "_slider",
+                min: att.min,
+                max: att.max,
+                range: true,
+                value: [att.selMin, att.selMax]
+            });
+
+            slider.on('change', () => {
+                let value = slider.data('slider').getValue();
+                att.selMin = value[0];
+                att.selMax = value[1];
+                this.updateLGTsDefaultAlpha();
+            });
         }
-
-        // <div class="row">
-            // <div id="repulsive" class="col-md-4">
-            //     <p>Repulsive:</p>
-            // </div>
-            // <div class="col-md-2 text-right">
-            //     <label id="alphaLabel">0.6</label>
-            // </div>
-            // <div class="col-md-6">
-
-            // <input id="ex12b" type="text"/><br/>
-      
-        
     }
+
+
+    setUpGraphicalSlidersFilters() {
+        let name = "alpha";
+        let id = name + "inputNumericFilter";
+
+        let row = d3.select("#numericalFilters")
+            .append("div")
+            .classed("row", true);
+
+
+        row.append("div").classed("col-md-3", true)
+            .append("p")
+            .text(name + ":");
+
+        row.append("div").classed("col-md-8", true)
+            .append("input")
+            .attr("id", id)
+            .attr("type", "text")
+            .style("width", "100%");
+
+        let ticks = [];
+        for (let i = 0; i <= 1; i+=0.05){
+            ticks.push(i);
+        }
+        var slider = $("#" + id).slider({
+            id: id + "_slider",
+            min: 0,
+            max: 1,
+            thicks: ticks,
+            value: this.globalLGTsAlpha
+        });
+
+        slider.on('change', () => {
+            this.globalLGTsAlpha = slider.data('slider').getValue();
+            this.updateLGTsVisibilityByNumericFilter();
+        });
+
+    }
+
 }
 
 
