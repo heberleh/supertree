@@ -42,12 +42,13 @@ class Leaf extends Text {
             for (var i in lgts) {
                 let lgt = lgts[i];
                 
-                if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {
+                if (lgt.lateralEdgeSprite != null && 
+                    (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {
                     //console.log(lgt);
                     if (this.highlight) {
-                        lgt.lateralEdgeSprite.highlightOn();                        
+                        lgt.lateralEdgeSprite.selected = true;                
                     } else {
-                        lgt.lateralEdgeSprite.highlightOff();                        
+                        lgt.lateralEdgeSprite.selected = false;                        
                     }
                 }
             }

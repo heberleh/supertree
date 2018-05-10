@@ -41,20 +41,46 @@ class SupertreeView {
 
         this._setUpLinks();
 
-
-
+        // slider alpha
         this.globalLGTsAlpha = 1;
         this.setUpGraphicalSlidersFilters();
 
-        this.numericalAttributes = {
-            "dist": {
-                "min": 0,
-                "max": 15,
-                "selMin": 12,
-                "selMax": 13
-            }
-        };
+        // sliders attributes
+        this._setUpNumericalAttributes(supertree.lgts);
         this.setUpNumericalSlidersFilters();
+    }
+
+    _setUpNumericalAttributes(lgts) {
+        let first = lgts[0];
+        this.numericalAttributes = {};
+        let numericAttributes = [];
+        let values = {};
+
+        for (let name in first.attributes) {
+            if (first.attributes[name].type == 'numeric') {
+                numericAttributes.push(name);
+                values[name] = [];
+            }
+        }
+       
+        lgts.forEach(function (e) {            
+            for (let i in numericAttributes) {
+                let name = numericAttributes[i];               
+                values[name].push(e.attributes[name].value);                  
+            }
+        });
+
+        for (let i in numericAttributes) {
+            let dict = {};
+            let name = numericAttributes[i];
+            console.log("values", name, values[name]);
+            dict.min = d3.min(values[name]);
+            dict.max = d3.max(values[name]);
+            dict.selMin = dict.min;
+            dict.selMax = dict.max;
+            console.log("dict att",dict);
+            this.numericalAttributes[name] = dict;
+        }
     }
 
     _setUpHashOfD3Nodes() {
@@ -316,23 +342,22 @@ class SupertreeView {
     _setUpLGTs(l) {
         let lgts_nodes = [];
         let hash = this._d3_nodes_hash;
-        var non_tracked_edges = []
+        var non_tracked_edges = [];
         for (let e in l) {
-            if (l[e][0] in hash && l[e][1] in hash) {
+            if (l[e].source in hash && l[e].target in hash) {
+                l[e].source = hash[l[e].source];
+                l[e].target = hash[l[e].target];
+                l[e].lateralEdgeSprite = null;
+                lgts_nodes.push(l[e]);
+
                 if (e < 10) {
-                    console.log(hash[l[e][0]]);
+                    console.log("Lateral edge", l[e]);
                 }
-                lgts_nodes.push({
-                    "source": hash[l[e][0]],
-                    "target": hash[l[e][1]],
-                    'dist': parseFloat(l[e][2]),
-                    "lateralEdgeSprite": null
-                });
             } else {
                 non_tracked_edges.push(l[e]);
             }
         }
-        console.log("what is going on with these edges?", non_tracked_edges);
+        console.log(">> What is going on with these edges?", non_tracked_edges);
         return lgts_nodes;
     }
 
@@ -395,40 +420,41 @@ class SupertreeView {
         //     .on("mouseout", mouseovered(false));
     }
 
-    updateLGTsVisibilityByNumericFilter() {    
-        
+    updateLGTsVisibilityByNumericFilter() {
+
         this.lgts.forEach((d) => {
-            let visible = true;           
+            let visible = true;
             for (let name in this.numericalAttributes) {
-                if (d[name] < this.numericalAttributes[name].selMin ||
-                    d[name] > this.numericalAttributes[name].selMax) {
-                    visible = false;                    
+                if (d.attributes[name].value < this.numericalAttributes[name].selMin ||
+                    d.attributes[name].value > this.numericalAttributes[name].selMax) {
+                    visible = false;
                     break;
                 }
-            }                       
+            }
             d.lateralEdgeSprite.sprite.visible = visible;
         });
         this._treeapp.renderer.render(this._stage);
-        
+
     }
 
     updateLGTsDefaultAlpha() {
-       
+
         this.lgts.forEach((d) => {
             d.lateralEdgeSprite.setDefaultAlpha(this.globalLGTsAlpha);
             d.lateralEdgeSprite.highlightOff();
         });
         this._treeapp.renderer.render(this._stage);
-    }    
+    }
 
     setUpNumericalSlidersFilters() {
         let numericalAttributes = this.numericalAttributes;
+
         for (let name in numericalAttributes) {
 
             let id = name + "inputNumericFilter";
 
             let row = d3.select("#numericalFilters")
-                .append("div").attr("class","row mt-2 mb-2");
+                .append("div").attr("class", "row mt-2 mb-2");
 
             row.append("div").classed("col-md-3", true).append("p").text(name + ":");
 
@@ -443,10 +469,11 @@ class SupertreeView {
                 .attr("type", "text")
                 .style("width", "100%")
                 .style("height", "100%");
-                       
+
 
             let att = this.numericalAttributes[name];
 
+            console.log("creating slider for", name, att);
             let slider = $("#" + id).slider({
                 id: id + "_slider",
                 min: att.min,
@@ -460,7 +487,7 @@ class SupertreeView {
                 att.selMin = value[0];
                 att.selMax = value[1];
                 this.updateLGTsVisibilityByNumericFilter();
-                
+
             });
         }
     }
@@ -485,24 +512,22 @@ class SupertreeView {
             .attr("type", "text")
             .style("width", "100%")
             .style("height", "100%");
-       
+
         let slider = $("#" + id).slider({
             id: id + "_slider",
             min: 0,
             max: 1,
-            step:0.05,
+            step: 0.05,
             value: this.globalLGTsAlpha
         });
 
         slider.on('change', () => {
             console.log("alpha changed");
-            
+
             this.globalLGTsAlpha = slider.data('slider').getValue();
             this.updateLGTsDefaultAlpha();
         });
-
     }
-
 }
 
 

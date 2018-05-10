@@ -35,6 +35,14 @@ label, p {
 	font-size: 11px;
 }
 
+.card-title{
+	font-size: 14px;
+	color: rgb(46, 45, 45);
+}
+.card-title a{
+	color: #222;
+}
+
 .card-body label.label-extra {
 	font-size: 10px;
 }
