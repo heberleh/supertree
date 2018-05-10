@@ -395,25 +395,30 @@ class SupertreeView {
         //     .on("mouseout", mouseovered(false));
     }
 
-    updateLGTsVisibilityByNumericFilter() {
+    updateLGTsVisibilityByNumericFilter() {    
+        
         this.lgts.forEach((d) => {
-            let visible = true;
+            let visible = true;           
             for (let name in this.numericalAttributes) {
-                if (d.dist < this.numericalAttributes[name].selMin ||
-                    d.dist > this.numericalAttributes[name].selMax) {
-                    visible = false;
+                if (d[name] < this.numericalAttributes[name].selMin ||
+                    d[name] > this.numericalAttributes[name].selMax) {
+                    visible = false;                    
                     break;
                 }
-            }
+            }                       
             d.lateralEdgeSprite.sprite.visible = visible;
         });
+        this._treeapp.renderer.render(this._stage);
+        
     }
 
     updateLGTsDefaultAlpha() {
+       
         this.lgts.forEach((d) => {
             d.lateralEdgeSprite.setDefaultAlpha(this.globalLGTsAlpha);
             d.lateralEdgeSprite.highlightOff();
         });
+        this._treeapp.renderer.render(this._stage);
     }    
 
     setUpNumericalSlidersFilters() {
@@ -423,7 +428,7 @@ class SupertreeView {
             let id = name + "inputNumericFilter";
 
             let row = d3.select("#numericalFilters")
-                .append("div").classed("row", true);
+                .append("div").attr("class","row mt-2 mb-2");
 
             row.append("div").classed("col-md-3", true).append("p").text(name + ":");
 
@@ -436,11 +441,13 @@ class SupertreeView {
                 .append("input")
                 .attr("id", id)
                 .attr("type", "text")
-                .style("width", "100%");
+                .style("width", "100%")
+                .style("height", "100%");
+                       
 
             let att = this.numericalAttributes[name];
 
-            var slider = $("#" + id).slider({
+            let slider = $("#" + id).slider({
                 id: id + "_slider",
                 min: att.min,
                 max: att.max,
@@ -452,7 +459,8 @@ class SupertreeView {
                 let value = slider.data('slider').getValue();
                 att.selMin = value[0];
                 att.selMax = value[1];
-                this.updateLGTsDefaultAlpha();
+                this.updateLGTsVisibilityByNumericFilter();
+                
             });
         }
     }
@@ -475,23 +483,22 @@ class SupertreeView {
             .append("input")
             .attr("id", id)
             .attr("type", "text")
-            .style("width", "100%");
-
-        let ticks = [];
-        for (let i = 0; i <= 1; i+=0.05){
-            ticks.push(i);
-        }
-        var slider = $("#" + id).slider({
+            .style("width", "100%")
+            .style("height", "100%");
+       
+        let slider = $("#" + id).slider({
             id: id + "_slider",
             min: 0,
             max: 1,
-            thicks: ticks,
+            step:0.05,
             value: this.globalLGTsAlpha
         });
 
         slider.on('change', () => {
+            console.log("alpha changed");
+            
             this.globalLGTsAlpha = slider.data('slider').getValue();
-            this.updateLGTsVisibilityByNumericFilter();
+            this.updateLGTsDefaultAlpha();
         });
 
     }
