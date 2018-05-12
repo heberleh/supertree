@@ -16,6 +16,22 @@ div.in{
   border: transparent 5px solid;
   border-top: #000 5px solid;
 }
+.slider-handle {
+	background-image: -webkit-linear-gradient(top,rgb(105, 103, 103) 0,rgb(80, 79, 79) 100%);
+}
+/* .slider-tick {
+	background: rgb(112, 112, 112);
+} */
+
+.slider-tick.in-selection {
+	background: rgb(161, 161, 161);
+}
+/* .slider-track{
+	background-image: linear-gradient(to bottom, rgb(112, 112, 112) 0, rgb(94, 93, 93) 100%);
+} */
+.slider-selection.tick-slider-selection{
+	background-image: linear-gradient(to bottom,rgb(223, 222, 222) 0,rgb(196, 193, 193) 100%);
+}
 
 .slider .tooltip.top{
 	margin-top: -20px !important;

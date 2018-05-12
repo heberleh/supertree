@@ -12,8 +12,6 @@ $(document).ready(function() {
             //console.log("lgts from file",nodes_data.lgts);
             // create models
             var supertree = new Supertree(supertree_nw, nodes_data);
-
-            var supertreeView = new SupertreeView(document.getElementById("div_tree"), supertree);
             // create diagrams
 
             // for each Gene-tree get the leaves distribution over pre-definded groups
@@ -22,12 +20,16 @@ $(document).ready(function() {
             var sizeGroups = labels.length;
             var groups_dist = nodes_data.group_sp_distribution;    
             var totals_in_groups = nodes_data.totals_in_groups;   
+
+            console.log("groups dist", groups_dist);
+            console.log("total number of species in groups",totals_in_groups);
             //console.log("test data", groups_dist);
             max_values = {}
             for (let label in labels){
                 max_values[label] = 0;
             }
-            var genes = [];            
+            var genes = [];   
+                    
             for (let gene in groups_dist){
                 dist = groups_dist[gene];
                 g = {};
@@ -35,12 +37,17 @@ $(document).ready(function() {
                 for (let label in labels){
                     g[label] = 0;
                 }
-                for (let label in dist){
+                for (let label in dist){                                             
                     g[label] = dist[label]/totals_in_groups[label];
                     if (g[label] > max_values[label]){
                         max_values[label] = g[label];
                     }
                 }
+                if (streamData.length < 100){
+                    console.log("max values", max_values);
+                    console.log("per group", groups_dist[gene]);
+                }   
+
                 streamData.push(g);            
             }
 
@@ -54,6 +61,8 @@ $(document).ready(function() {
             stream["max_values"] = max_values;
             stream["genes"] = genes;
             
+
+            var supertreeView = new SupertreeView(document.getElementById("div_tree"), supertree, stream);
 
             d3.csv('/static/home/data_stream_test.txt', function(error, data) {
                 if (error) throw error;

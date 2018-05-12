@@ -1,9 +1,10 @@
 class SupertreeView {
 
-    constructor(diagram_div, supertree) {
+    constructor(diagram_div, supertree, stream) {
         this._outerRadius = 1000 / 2;
         this._innerRadius = this._outerRadius - 170;
 
+        this._stream = stream;
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
@@ -47,6 +48,7 @@ class SupertreeView {
 
         // sliders attributes
         this._setUpNumericalAttributes(supertree.lgts);
+        this._addAttributeLGTGenesScores();
         this.setUpNumericalSlidersFilters();
     }
 
@@ -59,28 +61,103 @@ class SupertreeView {
         for (let name in first.attributes) {
             if (first.attributes[name].type == 'numeric') {
                 numericAttributes.push(name);
-                values[name] = [];
+                values[name] = new Set();
             }
         }
-       
-        lgts.forEach(function (e) {            
+
+        lgts.forEach(function (e) {
             for (let i in numericAttributes) {
-                let name = numericAttributes[i];               
-                values[name].push(e.attributes[name].value);                  
+                let name = numericAttributes[i];
+                values[name].add(e.attributes[name].value);
             }
         });
 
         for (let i in numericAttributes) {
-            let dict = {};
-            let name = numericAttributes[i];
-            console.log("values", name, values[name]);
-            dict.min = d3.min(values[name]);
-            dict.max = d3.max(values[name]);
-            dict.selMin = dict.min;
-            dict.selMax = dict.max;
-            console.log("dict att",dict);
-            this.numericalAttributes[name] = dict;
+            this._addNumericalAttribute(numericAttributes[i], [...values[numericAttributes[i]]]);
         }
+    }
+
+    _addNumericalAttribute(name, values) {
+        let dict = {};
+        dict.min = d3.min(values);
+        dict.max = d3.max(values);
+        dict.selMin = dict.min;
+        dict.selMax = dict.max;
+        dict.values = values;
+        console.log("dict att", dict);
+        this.numericalAttributes[name] = dict;
+    }
+
+    _addAttributeLGTGenesScores() {
+        // create genes' scores
+        let data = stream.data;
+        let genes = stream.genes;
+        console.log('genes', genes);
+        let scores = {};
+        let values = new Set();
+
+        let name_max = "max_gene_score";
+        let name_min = "min_gene_score";
+        this.lgts.forEach(function (e) {
+            let e_scores = [];
+            e.genes.forEach(function(g){
+                let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c])*100);
+                values.add(value);
+                e_scores.push(value);                
+            });
+            e.attributes[name_max] = {'type':'numeric','value':d3.max(e_scores)};
+            e.attributes[name_min] = {'type':'numeric','value':d3.min(e_scores)};
+        });
+
+        let values_list = [...values];
+        this._addNumericalAttribute(name_max, values_list);
+        this._addNumericalAttribute(name_min, values_list);
+  
+    }
+
+
+    _addAttributeMaybe(){
+        for (let i in data) {
+            let clusters_percentages = data[i];
+            let min_value = Infinity;
+            let max_value = -Infinity;
+            let score = 0;
+            if (i < 10){
+                console.log(clusters_percentages);
+            }
+            
+            for (let c in clusters_percentages) {                
+                if (clusters_percentages[c] > 0.0000000000 && clusters_percentages[c] < min_value)
+                    min_value = clusters_percentages[c];
+                if (clusters_percentages[c] > max_value)
+                    max_value = clusters_percentages[c];
+            }
+            if (min_value != Number.POSITIVE_INFINITY) {
+                score = max_value - min_value;
+            }
+
+            score = parseInt(Math.trunc((score*100)));
+            // all attribute values
+            values.add(score);
+            scores[genes[i]] = score;
+        }
+
+        let name_max = "max_gene_score";
+        let name_min = "min_gene_score";
+        // create attribute
+        let values_list = [...values];
+        this._addNumericalAttribute(name_max, values_list);
+        this._addNumericalAttribute(name_min, values_list);
+
+        // store values for each lgt edge as a new attribute       
+        this.lgts.forEach(function (e) {
+            let vl = [];
+            e.genes.forEach(function (g) {
+                vl.push(scores[g]);
+            });
+            // complete storing in the e.attributes
+
+        });
     }
 
     _setUpHashOfD3Nodes() {
@@ -433,7 +510,7 @@ class SupertreeView {
             }
             d.lateralEdgeSprite.sprite.visible = visible;
         });
-        this._treeapp.renderer.render(this._stage);
+        //this._treeapp.renderer.render(this._stage);
 
     }
 
@@ -443,7 +520,7 @@ class SupertreeView {
             d.lateralEdgeSprite.setDefaultAlpha(this.globalLGTsAlpha);
             d.lateralEdgeSprite.highlightOff();
         });
-        this._treeapp.renderer.render(this._stage);
+        //this._treeapp.renderer.render(this._stage);
     }
 
     setUpNumericalSlidersFilters() {
@@ -479,7 +556,8 @@ class SupertreeView {
                 min: att.min,
                 max: att.max,
                 range: true,
-                value: [att.selMin, att.selMax]
+                value: [att.selMin, att.selMax],
+                ticks: att.values
             });
 
             slider.on('change', () => {
