@@ -24,7 +24,8 @@ class SupertreeView {
         this._max_dist = 20;
 
         // [d3.rgb("#007AFF"), d3.rgb('#FFF500')]
-        this.colorLGTrange = [d3.rgb('#d73027'), d3.rgb('#1a9850')];
+        //['#fc8d59','#ffffbf','#99d594']
+        this.colorLGTrange = [d3.rgb('#fc8d59'),d3.rgb('#ffffbf'), d3.rgb('#99d594')];
         this.colorLGTColorInterpolation = d3.interpolateRgb; // d3.interpolateHsl; //interpolateHsl interpolateHcl interpolateRgb
 
         this._setUpView();
@@ -91,7 +92,7 @@ class SupertreeView {
         dict.selMin = dict.min;
         dict.selMax = dict.max;
         dict.values = values;
-        console.log("dict att", dict);
+        //console.log("dict att", dict);
         this.numericalAttributes[name] = dict;
     }
 
@@ -99,7 +100,7 @@ class SupertreeView {
         // create genes' scores
         let data = stream.data;
         let genes = stream.genes;
-        console.log('genes', genes);
+        //console.log('genes', genes);
         let scores = {};
         let values = new Set();
 
@@ -135,9 +136,9 @@ class SupertreeView {
             let min_value = Infinity;
             let max_value = -Infinity;
             let score = 0;
-            if (i < 10) {
-                console.log(clusters_percentages);
-            }
+            // if (i < 10) {
+            //     console.log(clusters_percentages);
+            // }
 
             for (let c in clusters_percentages) {
                 if (clusters_percentages[c] > 0.0000000000 && clusters_percentages[c] < min_value)
@@ -440,9 +441,9 @@ class SupertreeView {
                 l[e].lateralEdgeSprite = null;
                 lgts_nodes.push(l[e]);
 
-                if (e < 10) {
-                    console.log("Lateral edge", l[e]);
-                }
+                // if (e < 10) {
+                //     console.log("Lateral edge", l[e]);
+                // }
             } else {
                 non_tracked_edges.push(l[e]);
             }
@@ -464,7 +465,7 @@ class SupertreeView {
         this._diagram_container.addChild(this._lgts_container);
 
         let container = this._lgts_container;
-        console.log("LGTs container", container);
+        // console.log("LGTs container", container);
 
         this.lgts.forEach((d) => {            
             d.lateralEdgeSprite = new LateralEdgeSprite(container, d);            
@@ -524,7 +525,7 @@ class SupertreeView {
 
             let att = this.numericalAttributes[name];
 
-            console.log("creating slider for", name, att);
+            // console.log("creating slider for", name, att);
             let slider = $("#" + id).slider({
                 id: id + "_slider",
                 min: att.min,
@@ -574,7 +575,7 @@ class SupertreeView {
         });
 
         slider.on('change', () => {
-            console.log("alpha changed");
+            // console.log("alpha changed");
 
             this.globalLGTsAlpha = slider.data('slider').getValue();
             this.updateLGTsDefaultAlpha();
@@ -618,7 +619,7 @@ class SupertreeView {
     updateLGTsColor() {
         let name = this.selectedColorAttributeName;
         let colorScale = d3.scaleLinear()
-            .domain([this.numericalAttributes[name].min, this.numericalAttributes[name].max]).interpolate(this.colorLGTColorInterpolation)
+            .domain([this.numericalAttributes[name].min, d3.mean(this.numericalAttributes[name].values), this.numericalAttributes[name].max]).interpolate(this.colorLGTColorInterpolation)
             .range(this.colorLGTrange);
                     
         let count = 0;

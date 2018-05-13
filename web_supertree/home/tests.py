@@ -168,6 +168,7 @@ class SupertreeAppTest(TestCase):
         t1 = Tree('(((a,b),c), ((e, f), g));')
         t2 = Tree('(((a,c),b), ((e, f), g));')
 
+
         print(t1.robinson_foulds(t2))
 
         rf, max_rf, common_leaves, parts_t1, parts_t2, discarded_edges_t1, discarded_edges_t2 = t1.robinson_foulds(
@@ -750,7 +751,7 @@ class SupertreeAppTest(TestCase):
 
             for c in self.groups_root:                        
                 # find all UPPER nodes that contains that gene in the Intersection
-                for root in self.groups_root[c].iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.inter_genes else False):              
+                for root in self.groups_root[c].iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.genes else False):              
                     if root.g in clusters:
                         clusters[root.g].append(root)
                     else:
@@ -805,59 +806,129 @@ class SupertreeAppTest(TestCase):
         print("Number of LGTs edges (non redundant)", len(lgts_vector))
         return lgts_vector
         
+    def computeLGTsCandidatesTopologyOnly(self,number_of_trees):
+        print("Computing LGT candidates...")        
+        potential_lgts = nx.Graph()               
+        total_number_of_lgts = 0   
+          
+        print("Genes in root vs. total genes", len(self.supertree.genes), len(self.forest))
+        for node in self.supertree.children:
+            print(len(node.genes))
 
+        for tree_index in range(number_of_trees):            
+            roots = []
+            
+            # find all UPPER nodes that contains that gene in the Intersection            
+            for root in self.supertree.iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.genes else False):
+                roots.append(root)
+            
+            if len(roots) > 1:
+                for n1, n2 in itertools.combinations(roots, 2):
+                    for leaf1 in self.forest[tree_index].get_leaves_by_name(n1.name): #only one
+                        for leaf2 in self.forest[tree_index].get_leaves_by_name(n2.name):
+                            distance = leaf1.get_distance(leaf2, topology_only=True) #number of nodes between leaf1 and leaf2
+                            if distance < 2:
+                                total_number_of_lgts += 1
+                                if (potential_lgts.has_edge(n1.name, n2.name)):
+                                    potential_lgts[n1.name][n2.name]['genes'].append(tree_index)
+                                else:
+                                    potential_lgts.add_edge(
+                                                n1.name,
+                                                n2.name,
+                                                source = n1,
+                                                target = n2,
+                                                genes = [tree_index],
+                                                attributes = {
+                                                'path_dist' : {'type': 'numeric', 'value': distance}
+                                            })                        
+
+        lgts_vector = [] 
+        for (src,trg,data) in potential_lgts.edges(data=True):
+            lgt = {
+                'source':self.clean(src),
+                'target':self.clean(trg),
+                'genes': data['genes'],
+                'attributes':{}
+            }
+            
+            lgt['attributes']['path_dist'] = data['attributes']['path_dist']            
+            
+            lgt['attributes']['n_genes'] = {
+                'type': 'numeric', 
+                'value': len(data['genes'])
+            }
+            lgts_vector.append(lgt)
+
+        print("Number of LGTs found", total_number_of_lgts)
+        print("Number of LGTs edges (non redundant)", len(lgts_vector))
+        return lgts_vector
+        
+    def populateSupertreeGenesAttributes(self,number_of_trees):
+
+        for node in self.supertree.traverse("preorder"):
+            node.add_features(genes = set(), name=self.get_name(node))
+
+        for tree_index in range(number_of_trees):
+            for name in self.forest[tree_index].get_leaf_names():
+                for leaf in self.supertree.get_leaves_by_name(name):
+                    leaf.genes.add(tree_index)     
+
+        # compute intersection of children's genes
+        for node in self.supertree.iter_descendants("postorder"):            
+            if node.up.genes:
+                node.up.genes &= node.genes               
+            else: #if first visit
+                node.up.genes = node.genes
+
+    def computeGroupsDistribution(self, number_of_trees):
+        for tree_index in range(number_of_trees):
+            clusters = {}              #clusters 
+
+            for c in self.groups_root:                        
+                # find all UPPER nodes that contains that gene in the Intersection
+                for root in self.groups_root[c].iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.genes else False):              
+                    if root.g in clusters:
+                        clusters[root.g].append(root)
+                    else:
+                        clusters[root.g] = [root]            
+
+            clusters_distribution = {} #distribution
+            for c in clusters:
+                clusters_distribution[c] = 0
+                for root in clusters[c]:    
+                    clusters_distribution[c] += len(root)
+
+            self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)
 
     def testSetGraphLGTClustering(self):
         # parameters
         number_of_trees = len(self.forest)
-        #number_of_trees = 300             
+        #number_of_trees = 100            
         
         vertex_hash = {}
         i = 0
 
-        # self.forest.sort(key=lambda x: len(x.get_leaf_names()), reverse=True)
-        # setup genes attribue in the supertree
-        for node in self.supertree.traverse("preorder"):
-            node.add_features(inter_genes = set(), union_genes=set(), name=self.get_name(node))
-        
-        # store gene set
-        for tree_index in range(number_of_trees):
-            for name in self.forest[tree_index].get_leaf_names():
-                for leaf in self.supertree.get_leaves_by_name(name):
-                    leaf.union_genes.add(tree_index)                    
-        
-        # inter of leaves to theirselves = union
-        for leaf in self.supertree:
-            leaf.inter_genes = leaf.union_genes
+        self.populateSupertreeGenesAttributes(number_of_trees)
 
-
-        # compute the union of children's genes
-        for node in self.supertree.iter_descendants("postorder"):                        
-            node.up.union_genes.update(node.union_genes) 
-
-        # compute intersection of children's genes
-        for node in self.supertree.iter_descendants("postorder"):            
-            if node.up.inter_genes:
-                node.up.inter_genes &= node.union_genes               
-            else: #if first visit
-                node.up.inter_genes.update(node.union_genes)                        
-               
         # compute groups weights
         for node in self.supertree.iter_descendants("preorder"):        
             try:
-                d = (len(node.up.inter_genes) / float(len(node.union_genes)))
-                if d == 1:
-                    d = 0.95
+                d = (len(node.up.genes) / float(len(node.genes)))
+                if d > 0.98:
+                    d = 0.98
                 node.dist = 1 - d    
-                # node.support = len(node.inter_genes)            
+                # node.support = len(node.genes)            
             except:
                 pass                
 
-        max_g, totals_in_groups = self.cluster_tree(self.supertree, cut_off=0.78)
+        max_g, totals_in_groups = self.cluster_tree(self.supertree, cut_off=0.6)
         
+        # /////////////////////// SELECTING LGTS METHOD
         # compute One vector of possible LGTs...
         #lgts_vector = self.computeLGTsCandidatesSimplified(number_of_trees)
         lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
+        #lgts_vector = self.computeLGTsCandidatesTopologyOnly(number_of_trees)
+
 
         for node in self.supertree.traverse():
             node.name = node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')
@@ -913,9 +984,9 @@ class SupertreeAppTest(TestCase):
         for node in self.supertree.traverse("postorder"):
             json_txt += "\"" + node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_') + "\":"
             json_txt += "{\"genes\":["
-            for gene in node.union_genes:
+            for gene in node.genes:
                 json_txt += "\""+str(gene) + "\","
-            if len(node.union_genes) > 0:
+            if len(node.genes) > 0:
                 json_txt = json_txt[: -1]
             json_txt += "],\"g\":\"" + str(node.g)
             json_txt += "\"},"

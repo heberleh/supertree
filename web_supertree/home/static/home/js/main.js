@@ -3,7 +3,11 @@
 $(document).ready(function() {
 
     // read files and load models  -> when loading from django... how it would be?
-    d3.json("/static/home/data.json", function(error, nodes_data) {
+    
+    //let filename = "/static/home/data_all_genes_regular.json";
+    let filename = "/static/home/data.json";
+
+    d3.json(filename, function(error, nodes_data) {
         if (error) throw error;
         d3.text("/static/home/new_tree.nw", function (error, supertree_nw) {
             if (error) throw error;
@@ -42,13 +46,13 @@ $(document).ready(function() {
                     if (g[label] > max_values[label]){
                         max_values[label] = g[label];
                     }
-                }
-                if (streamData.length < 100){
+                }        
+                streamData.push(g);            
+
+                if (streamData.length < 10){
                     console.log("max values", max_values);
                     console.log("per group", groups_dist[gene]);
                 }   
-
-                streamData.push(g);            
             }
 
             //console.log("streamData", streamData);                        
