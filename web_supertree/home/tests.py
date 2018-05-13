@@ -18,7 +18,6 @@ from .models import SupertreeModel
 # from skbio.tree import nj
 
 
-
 class SupertreeAppTest(TestCase):
     databaseTest = False
 
@@ -760,7 +759,7 @@ class SupertreeAppTest(TestCase):
             clusters_distribution = {} #distribution
             for c in clusters:
                 clusters_distribution[c] = 0
-                for root in clusters[c]:
+                for root in clusters[c]:    
                     clusters_distribution[c] += len(root)
 
             self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)

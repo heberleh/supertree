@@ -23,6 +23,10 @@ class SupertreeView {
         this._min_dist = 16;
         this._max_dist = 20;
 
+        // [d3.rgb("#007AFF"), d3.rgb('#FFF500')]
+        this.colorLGTrange = [d3.rgb('#d73027'), d3.rgb('#1a9850')];
+        this.colorLGTColorInterpolation = d3.interpolateRgb; // d3.interpolateHsl; //interpolateHsl interpolateHcl interpolateRgb
+
         this._setUpView();
         // /createLine(this._diagram_container, 50,50,200,200);
 
@@ -50,6 +54,9 @@ class SupertreeView {
         this._setUpNumericalAttributes(supertree.lgts);
         this._addAttributeLGTGenesScores();
         this.setUpNumericalSlidersFilters();
+
+        // Visual color for Numeric attributes
+        this._setUpColorSelectionMenu();
     }
 
     _setUpNumericalAttributes(lgts) {
@@ -100,33 +107,39 @@ class SupertreeView {
         let name_min = "min_gene_score";
         this.lgts.forEach(function (e) {
             let e_scores = [];
-            e.genes.forEach(function(g){
-                let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c])*100);
+            e.genes.forEach(function (g) {
+                let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c]) * 100);
                 values.add(value);
-                e_scores.push(value);                
+                e_scores.push(value);
             });
-            e.attributes[name_max] = {'type':'numeric','value':d3.max(e_scores)};
-            e.attributes[name_min] = {'type':'numeric','value':d3.min(e_scores)};
+            e.attributes[name_max] = {
+                'type': 'numeric',
+                'value': d3.max(e_scores)
+            };
+            e.attributes[name_min] = {
+                'type': 'numeric',
+                'value': d3.min(e_scores)
+            };
         });
 
         let values_list = [...values];
         this._addNumericalAttribute(name_max, values_list);
         this._addNumericalAttribute(name_min, values_list);
-  
+
     }
 
 
-    _addAttributeMaybe(){
+    _addAttributeMaybe() {
         for (let i in data) {
             let clusters_percentages = data[i];
             let min_value = Infinity;
             let max_value = -Infinity;
             let score = 0;
-            if (i < 10){
+            if (i < 10) {
                 console.log(clusters_percentages);
             }
-            
-            for (let c in clusters_percentages) {                
+
+            for (let c in clusters_percentages) {
                 if (clusters_percentages[c] > 0.0000000000 && clusters_percentages[c] < min_value)
                     min_value = clusters_percentages[c];
                 if (clusters_percentages[c] > max_value)
@@ -136,7 +149,7 @@ class SupertreeView {
                 score = max_value - min_value;
             }
 
-            score = parseInt(Math.trunc((score*100)));
+            score = parseInt(Math.trunc((score * 100)));
             // all attribute values
             values.add(score);
             scores[genes[i]] = score;
@@ -439,62 +452,25 @@ class SupertreeView {
     }
 
 
+
     _updateLGTS() {
 
-        this._lgts_container = new PIXI.Container();
+        // if (this._lgts_container){
+        //     this._diagram_container.removeChild(this._lgts_container);
+        //     this._lgts_container.destroy();
+        // }
 
+        this._lgts_container = new PIXI.Container();
         this._diagram_container.addChild(this._lgts_container);
 
         let container = this._lgts_container;
         console.log("LGTs container", container);
-        // container.children.forEach(function(node){
-        //     node.destroy();
-        // });
-        // while (container.firstChild) {
-        //     container.removeChild(container.firstChild);
-        // }
 
-        this.lgts.forEach((d) => {
-            d.lateralEdgeSprite = new LateralEdgeSprite(d);
-            container.addChild(d.lateralEdgeSprite.sprite);
+        this.lgts.forEach((d) => {            
+            d.lateralEdgeSprite = new LateralEdgeSprite(container, d);            
         });
 
         this.updateLGTsVisibilityByNumericFilter();
-
-        // var lgts = this._diagram.select("#lgts");
-
-        // function mouseovered(active) {
-        //     return function (d) {
-        //         if (active) {
-        //             d3.select(this).attr("stroke", "black").attr('stroke-opacity', 1);
-        //         } else {
-        //             d3.select(this).attr("stroke", "red").attr('stroke-opacity', 0.10);
-        //         }
-        //     };
-        // }
-
-        // lgts = lgts
-        //     .selectAll(".lgt")
-        //     .data(lgts_data)
-        //     .enter()
-        //     .append('path')
-        //     .classed('lgt', true)
-
-        //     .attr('d', (d) => {
-        //         return lgtLineC(d.source.x, d.source.y, d.target.x, d.target.y);
-        //     })
-        //     .attr('class', 'edgepath')
-        //     .attr('fill-opacity', 0.3)
-        //     .attr('stroke-opacity', 0.10)
-        //     .attr('fill', 'blue')
-        //     .attr('stroke-width', 0.5)
-        //     .attr('stroke', 'red')
-        //     .attr('id', function (d, i) {
-        //         return 'edgepath' + i
-        //     })
-        //     //.style("pointer-events", "none")
-        //     .on("mouseover", mouseovered(true))
-        //     .on("mouseout", mouseovered(false));
     }
 
     updateLGTsVisibilityByNumericFilter() {
@@ -510,8 +486,6 @@ class SupertreeView {
             }
             d.lateralEdgeSprite.sprite.visible = visible;
         });
-        //this._treeapp.renderer.render(this._stage);
-
     }
 
     updateLGTsDefaultAlpha() {
@@ -575,7 +549,7 @@ class SupertreeView {
         let name = "alpha";
         let id = name + "inputNumericFilter";
 
-        let row = d3.select("#numericalFilters")
+        let row = d3.select("#visualAttributes")
             .append("div")
             .classed("row", true);
 
@@ -606,6 +580,59 @@ class SupertreeView {
             this.updateLGTsDefaultAlpha();
         });
     }
+
+    _setUpColorSelectionMenu() {
+        let row = d3.select("#visualAttributes").append("div")
+            .classed("row", true);
+
+        row.append("div").classed("col-md-3", true)
+            .append("p")
+            .text("Edges' color:");
+
+        // <select name="carlist" form="carform">
+        //   <option value="volvo">Volvo</option>
+        //   <option value="saab">Saab</option>
+        //   <option value="opel">Opel</option>
+        //   <option value="audi">Audi</option>
+        // </select>
+        let select = row.append("div").classed("col-md-8", true)
+            .append("select")
+            .attr("id", "color-selection")
+            .style("width", "100%")
+            .style("height", "100%");
+
+        for (let name in this.numericalAttributes) {
+            select.append("option").attr('value', name).text(name);
+        }
+        select.on('change', (d) => {
+            this.selectedColorAttribute = select.node().value; // attribute name
+        });
+
+    }
+
+    set selectedColorAttribute(name) {
+        this.selectedColorAttributeName = name;
+        this.updateLGTsColor();
+    }
+
+    updateLGTsColor() {
+        let name = this.selectedColorAttributeName;
+        let colorScale = d3.scaleLinear()
+            .domain([this.numericalAttributes[name].min, this.numericalAttributes[name].max]).interpolate(this.colorLGTColorInterpolation)
+            .range(this.colorLGTrange);
+                    
+        let count = 0;
+        LineSprite.resetCanvas();
+        this.lgts.forEach(function (e) {           
+            e.lateralEdgeSprite.color = colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value))));
+            // if (count < 10){                
+            //     console.log("color ", colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value)))));
+            //     count+=1;
+            // }
+        });        
+        //this._lgts_container.updateTransform();        
+    }
+
 }
 
 
