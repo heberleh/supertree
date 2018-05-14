@@ -25,7 +25,13 @@ class SupertreeView {
 
         // [d3.rgb("#007AFF"), d3.rgb('#FFF500')]
         //['#fc8d59','#ffffbf','#99d594']
-        this.colorLGTrange = [d3.rgb('#fc8d59'),d3.rgb('#ffffbf'), d3.rgb('#99d594')];
+        //#7fc97f #beaed4 #fdc086
+        let color_list = ['#1b9e77', '#7570b3', '#d95f02'];
+        this.colorLGTrange = [];
+        for (let i in color_list) {
+            this.colorLGTrange.push(d3.rgb(color_list[i]));
+        }
+
         this.colorLGTColorInterpolation = d3.interpolateRgb; // d3.interpolateHsl; //interpolateHsl interpolateHcl interpolateRgb
 
         this._setUpView();
@@ -40,9 +46,11 @@ class SupertreeView {
         this._d3_nodes_hash = this._setUpHashOfD3Nodes();
         console.log("number of nodes in hash", this._d3_nodes_hash.length);
         console.log("number of lgts", supertree.lgts.length);
+        
 
         this.lgts = this._setUpLGTs(supertree.lgts);
         console.log("number of lgts -> nodes", this.lgts.length);
+        console.log("lgts", this.lgts);
         this._updateLGTS();
 
         this._setUpLinks();
@@ -467,8 +475,8 @@ class SupertreeView {
         let container = this._lgts_container;
         // console.log("LGTs container", container);
 
-        this.lgts.forEach((d) => {            
-            d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);            
+        this.lgts.forEach((d) => {
+            d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);
         });
 
         this.updateLGTsVisibilityByNumericFilter();
@@ -486,6 +494,20 @@ class SupertreeView {
                 }
             }
             d.lateralEdgeSprite.sprite.visible = visible;
+        });
+    }
+
+
+    updateLGTsVisibilityByGeneFilter(gene) {
+
+        this.lgts.forEach((d) => {            
+            if (d.genes.includes(gene)) {
+                console.log(d.genes);
+                d.lateralEdgeSprite.selected = true;
+                d.lateralEdgeSprite.sprite.visible = true;
+            }else{
+                d.lateralEdgeSprite.selected = false;
+            }        
         });
     }
 
@@ -619,42 +641,44 @@ class SupertreeView {
     updateLGTsColor() {
         let name = this.selectedColorAttributeName;
         let colorScale = d3.scaleLinear()
-            .domain([this.numericalAttributes[name].min, d3.mean(this.numericalAttributes[name].values), this.numericalAttributes[name].max]).interpolate(this.colorLGTColorInterpolation)
+            .domain([this.numericalAttributes[name].min, d3.median(this.numericalAttributes[name].values), this.numericalAttributes[name].max]).interpolate(this.colorLGTColorInterpolation)
             .range(this.colorLGTrange);
-                    
+
         let count = 0;
         LineSprite.resetCanvas();
-        this.lgts.forEach(function (e) {           
+        this.lgts.forEach(function (e) {
             e.lateralEdgeSprite.color = colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value))));
             // if (count < 10){                
             //     console.log("color ", colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value)))));
             //     count+=1;
             // }
-        });        
+        });
         //this._lgts_container.updateTransform();        
     }
 
-    highlightLeaves(names){   
-        console.log("leaves", this._supertree_d3_hiearchy.leaves());
-        this._supertree_d3_hiearchy.leaves().forEach(function (d) {            
-            if (names.includes(d.data.name)){
-                console.log(d.name);
+    highlightLeaves(names) {        
+        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+            if (names.includes(d.data.name)) {                
                 d.graphics.setSelected(true);
-            }else{
+            } else {
                 d.graphics.setSelected(false);
             }
         });
     }
 
-    
-    highlightLeavesFromGenes(genes){
-        for (let i in genes){
-            if (i < 2){
-                console.log("species", this.supertree.forest[genes[i]].species);
-            }
+
+    highlightLeavesFromGenes(genes) {
+        for (let i in genes) {
             this.highlightLeaves(this.supertree.forest[genes[i]].species);
         }
     }
+
+    filterLGTsFromGenes(genes) {
+        for (let i in genes) {
+            this.updateLGTsVisibilityByGeneFilter(genes[i]);
+        }        
+    }
+
 }
 
 
