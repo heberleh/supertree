@@ -468,7 +468,7 @@ class SupertreeView {
         // console.log("LGTs container", container);
 
         this.lgts.forEach((d) => {            
-            d.lateralEdgeSprite = new LateralEdgeSprite(container, d);            
+            d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);            
         });
 
         this.updateLGTsVisibilityByNumericFilter();
@@ -634,6 +634,27 @@ class SupertreeView {
         //this._lgts_container.updateTransform();        
     }
 
+    highlightLeaves(names){   
+        console.log("leaves", this._supertree_d3_hiearchy.leaves());
+        this._supertree_d3_hiearchy.leaves().forEach(function (d) {            
+            if (names.includes(d.data.name)){
+                console.log(d.name);
+                d.graphics.setSelected(true);
+            }else{
+                d.graphics.setSelected(false);
+            }
+        });
+    }
+
+    
+    highlightLeavesFromGenes(genes){
+        for (let i in genes){
+            if (i < 2){
+                console.log("species", this.supertree.forest[genes[i]].species);
+            }
+            this.highlightLeaves(this.supertree.forest[genes[i]].species);
+        }
+    }
 }
 
 

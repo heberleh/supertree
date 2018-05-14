@@ -58,4 +58,8 @@ class Supertree{
     get lgts(){
         return this._lgts;
     }
+
+    get forest(){
+        return this._forest;
+    }
 }

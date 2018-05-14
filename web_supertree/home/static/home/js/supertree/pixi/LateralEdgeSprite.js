@@ -2,11 +2,12 @@
 
 
 class LateralEdgeSprite {
-    constructor(container, d) {
+    constructor(container, d, view) {
         this.data = d;
         this.container = container;
         this._highlighted = false;
         this._selected = false;
+        this._supertreeView = view;
 
         // defaults
         this.defaultAlpha = 0.05;
@@ -45,7 +46,7 @@ class LateralEdgeSprite {
         if (sel) {
             this.highlightOn();
         } else {
-            this.highlightOff()
+            this.highlightOff();
         };
     }
 
@@ -76,6 +77,10 @@ class LateralEdgeSprite {
 
         this.sprite.on('mouseout', () => {
             this.highlightOff();
+        });
+
+        this.sprite.on('mousedown', ()=>{            
+            this._supertreeView.highlightLeavesFromGenes(this.data.genes);
         });
 
         this.container.addChild(this.sprite);

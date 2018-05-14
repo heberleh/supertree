@@ -944,7 +944,7 @@ class SupertreeAppTest(TestCase):
             # write the species
             json_txt += "\"species\":["
             for leaf in tree:
-                json_txt +=  "\""+ leaf.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_') + "\","
+                json_txt +=  "\""+ self.clean(leaf.name) + "\","
             json_txt = json_txt[:-1]
 
             # write the tree in newick format

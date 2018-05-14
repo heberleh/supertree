@@ -23,12 +23,11 @@ class Leaf extends Text {
         this.interactive = true;
 
         this.on('mouseover', function () {
-            //console.log(this);
-            this.style.fontWeight = 'bold';
+            this.highlightOn();
         });
 
         this.on('mouseout', function () {
-            this.style.fontWeight = 'normal';
+            if (!this.selected) this.highlightOff();
         });
 
         this.highlight = false;
@@ -36,67 +35,41 @@ class Leaf extends Text {
         let lineWidth = 1;
 
         this.on('mousedown', () => {
-            this.highlight = !this.highlight;
-
             let lgts = this.superTreeView.lgts;
-            for (var i in lgts) {
-                let lgt = lgts[i];
-                
-                if (lgt.lateralEdgeSprite != null && 
-                    (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {
-                    //console.log(lgt);
-                    if (this.highlight) {
-                        lgt.lateralEdgeSprite.selected = true;                
-                    } else {
-                        lgt.lateralEdgeSprite.selected = false;                        
+            if (this.selected){
+                this.setSelected(false);
+                for (var i in lgts) {
+                    lgts[i].lateralEdgeSprite.selected = false;                    
+                }
+            }else{
+                this.setSelected(true);
+                for (var i in lgts) {
+                    let lgt = lgts[i];                    
+                    if (lgt.lateralEdgeSprite != null && 
+                        (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {    
+                        lgt.lateralEdgeSprite.selected = true;                        
                     }
                 }
-            }
+            }            
         });
-
-        // this.on('mousedown', function(){
-        //     let node = this.data;
-        //     console.log("mouse cliked");
-
-        //     if (this.highlight){
-        //         let color = 0x000000;                
-        //         while(node.parent){    
-        //             console.log(node);
-
-        //             let line = node.linkGraphics;
-        //             line.clear();
-        //             line.lineStyle(lineWidth, color, line.lineAlpha); 
-        //             console.log(lineWidth, color, line.lineAlpha);
-        //             node = node.parent;
-        //         }            
-        //     }else{                
-        //         while(node.parent){
-        //             console.log(node);
-
-        //             let line = node.linkGraphics;
-        //             line.clear();
-        //             line.lineStyle(lineWidth, node.color, line.lineAlpha); 
-        //             console.log(lineWidth, node.color, line.lineAlpha);
-
-        //             node = node.parent;
-        //         }   
-
-        //     }            
-        //     this.highlight = !this.highlight;
-
-        // });
-
-        // function moveToFront() {
-        //     this.parentNode.appendChild(this);
-        // }
-
-        // function mouseovered(active) {
-        //     return function (d) {
-        //         d3.select(this).classed("label--active", active);
-        //         d3.select(d.linkExtensionNode).classed("link-extension--active", active).each(moveToFront);
-        //         do d3.select(d.linkNode).classed("link--active", active).each(moveToFront); while (d = droot.parent);
-        //     };
-        // }
     }
 
+    highlightOn(){
+        this.style.fontWeight = 'bold';
+        this.highlighted = true;
+    }
+
+    highlightOff(){
+        this.style.fontWeight = 'normal';
+        this.highlighted = false;    
+    }
+
+    setSelected(value){
+        this.selected = value;
+        if(value){
+            this.highlightOn();
+        }else{
+            this.highlightOff();
+        }
+    }
 }
