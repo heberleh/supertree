@@ -4,13 +4,13 @@ class SupertreeView {
         this._outerRadius = 1000 / 2;
         this._innerRadius = this._outerRadius - 170;
 
-        this._stream = stream;
+        this.stream = stream;
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
         supertree.storeData(this._supertree_d3_hiearchy);
 
-        this._treeGroupColor = this._updateTreeGroupColors(supertree.groupsLabels);
+        this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels);
         this._setColor(this._supertree_d3_hiearchy);
         this._treeLayoutCluster = this._setUpTreeLayoutCluster();
         this._treeLayoutCluster(this._supertree_d3_hiearchy);
@@ -42,11 +42,12 @@ class SupertreeView {
 
 
         this._setUpLabels();
+        this._setUpGenomeBars();
 
         this._d3_nodes_hash = this._setUpHashOfD3Nodes();
         console.log("number of nodes in hash", this._d3_nodes_hash.length);
         console.log("number of lgts", supertree.lgts.length);
-        
+
 
         this.lgts = this._setUpLGTs(supertree.lgts);
         console.log("number of lgts -> nodes", this.lgts.length);
@@ -133,10 +134,40 @@ class SupertreeView {
 
         let values_list = [...values];
         this._addNumericalAttribute(name_max, values_list);
-        this._addNumericalAttribute(name_min, values_list);
-
+        this._addNumericalAttribute(name_min, values_list);        
     }
 
+    _addAttributeLGTGenesScores() {
+        // create genes' scores
+        let data = stream.data;
+        let genes = stream.genes;
+        //console.log('genes', genes);
+        let scores = {};
+        let values = new Set();
+
+        let name_max = "max_gene_score";
+        let name_min = "min_gene_score";
+        this.lgts.forEach(function (e) {
+            let e_scores = [];
+            e.genes.forEach(function (g) {
+                let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c]) * 100);
+                values.add(value);
+                e_scores.push(value);
+            });
+            e.attributes[name_max] = {
+                'type': 'numeric',
+                'value': d3.max(e_scores)
+            };
+            e.attributes[name_min] = {
+                'type': 'numeric',
+                'value': d3.min(e_scores)
+            };
+        });
+
+        let values_list = [...values];
+        this._addNumericalAttribute(name_max, values_list);
+        this._addNumericalAttribute(name_min, values_list);
+    }
 
     _addAttributeMaybe() {
         for (let i in data) {
@@ -144,9 +175,6 @@ class SupertreeView {
             let min_value = Infinity;
             let max_value = -Infinity;
             let score = 0;
-            // if (i < 10) {
-            //     console.log(clusters_percentages);
-            // }
 
             for (let c in clusters_percentages) {
                 if (clusters_percentages[c] > 0.0000000000 && clusters_percentages[c] < min_value)
@@ -268,28 +296,6 @@ class SupertreeView {
             createTreeEdge(root, d.target.x, d.target.y, d.target.x, radius, 1.5, colorToHex(d.target.color));
         });
     }
-    // _setUpLinkExtension() {
-    //     return this._diagram.append("g")
-    //         .attr("class", "link-extensions")
-    //         .selectAll("path")
-    //         .data(this._supertree_d3_hiearchy.links().filter(function (d) {
-    //             return !d.target.children;
-    //         }))
-    //         .enter().append("path")
-    //         .each(function (d) {
-    //             d.target.linkExtensionNode = this;
-    //         })
-    //         .attr("d", (d) => this._linkExtensionConstant(d));
-    // }
-
-    // _setUpToolTip() {
-    //     return this._diagram
-    //         .append("div")
-    //         .style("position", "absolute")
-    //         .style("z-index", "10")
-    //         .style("visibility", "hidden")
-    //         .text("");
-    // }
 
     _setUpLinks() {
         let container = this._diagram_container;
@@ -298,37 +304,6 @@ class SupertreeView {
             container.addChild(d.graphics);
         });
     }
-
-    // _setUpLinks(linkConstant) {
-    //     return this._diagram
-    //         .append("g")
-    //         .attr("class", "links")
-    //         .attr("id", "links")
-    //         .selectAll("path")
-    //         .data(this._supertree_d3_hiearchy.links())
-    //         .enter().append("path")
-    //         .each(function (d) {
-    //             d.target.linkNode = this;
-    //         })
-    //         .attr("d", linkConstant)
-    //         .attr("stroke", function (d) {
-    //             return d3.rgb(d.target.color).darker(1);
-    //         })
-    //         .attr('stroke-width', 1.5)
-    //         .attr("id", function (d) {
-    //             return "lgt_" + d.source.data.name
-    //         })
-    //         .on("mouseover", (d) => {
-    //             this._tooltip.text("Length: " + d.target.data.length);
-    //             return this._tooltip.style("visibility", "visible");
-    //         })
-    //         .on("mousemove", () => {
-    //             return this._tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
-    //         })
-    //         .on("mouseout", () => {
-    //             return this._tooltip.style("visibility", "hidden");
-    //         });
-    // }
 
     _setUpLabels() {
         let container = this._diagram_container;
@@ -401,7 +376,7 @@ class SupertreeView {
 
     // Set the color of each node by recursively inheriting.
     _setColor(d) {
-        d.color = colorToHex(this._treeGroupColor(d.data.c));
+        d.color = colorToHex(this._treeGroupColorMap(d.data.c));
         if (d.children) d.children.forEach((d) => this._setColor(d));
     }
 
@@ -460,8 +435,6 @@ class SupertreeView {
         return lgts_nodes;
     }
 
-
-
     _updateLGTS() {
 
         // if (this._lgts_container){
@@ -497,17 +470,15 @@ class SupertreeView {
         });
     }
 
-
     updateLGTsVisibilityByGeneFilter(gene) {
 
-        this.lgts.forEach((d) => {            
-            if (d.genes.includes(gene)) {
-                console.log(d.genes);
+        this.lgts.forEach((d) => {
+            if (d.genes.includes(gene)) {              
                 d.lateralEdgeSprite.selected = true;
                 d.lateralEdgeSprite.sprite.visible = true;
-            }else{
+            } else {
                 d.lateralEdgeSprite.selected = false;
-            }        
+            }
         });
     }
 
@@ -566,7 +537,6 @@ class SupertreeView {
             });
         }
     }
-
 
     setUpGraphicalSlidersFilters() {
         let name = "alpha";
@@ -656,16 +626,15 @@ class SupertreeView {
         //this._lgts_container.updateTransform();        
     }
 
-    highlightLeaves(names) {        
+    highlightLeaves(names) {
         this._supertree_d3_hiearchy.leaves().forEach(function (d) {
-            if (names.includes(d.data.name)) {                
+            if (names.includes(d.data.name)) {
                 d.graphics.setSelected(true);
             } else {
                 d.graphics.setSelected(false);
             }
         });
     }
-
 
     highlightLeavesFromGenes(genes) {
         for (let i in genes) {
@@ -676,7 +645,46 @@ class SupertreeView {
     filterLGTsFromGenes(genes) {
         for (let i in genes) {
             this.updateLGTsVisibilityByGeneFilter(genes[i]);
-        }        
+        }
+    }
+
+    listGenes(genes) {
+        let text = d3.select("#gene_list")
+            .selectAll('p')
+            .data(genes);
+
+        text.exit().remove();
+
+        text.enter().append('p');
+
+        text.text(function (d) {
+                return d;
+            })
+            .on("click", (d) => {
+                this.highlightLeavesFromGenes([d]);
+                this.filterLGTsFromGenes([d]);
+            });
+
+
+    }
+
+    _setUpGenomeBars(){
+        let container = this._diagram_container;
+        let superTreeView = this;
+        console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
+        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+            d.graphics = new Leaf(d);
+            d.graphics.superTreeView = superTreeView;
+            container.addChild(d.graphics);
+        });        
+    }
+
+    get groupsColorMap(){
+        return this._treeGroupColor;
+    }
+
+    get numerOfGenomes(){
+        return this._supertree_d3_hiearchy.leaves().length;
     }
 
 }
@@ -706,3 +714,61 @@ class SupertreeView {
 // .text(function (d) {
 //     return d;
 // }); {% endcomment %}
+
+
+
+
+
+// _setUpLinkExtension() {
+//     return this._diagram.append("g")
+//         .attr("class", "link-extensions")
+//         .selectAll("path")
+//         .data(this._supertree_d3_hiearchy.links().filter(function (d) {
+//             return !d.target.children;
+//         }))
+//         .enter().append("path")
+//         .each(function (d) {
+//             d.target.linkExtensionNode = this;
+//         })
+//         .attr("d", (d) => this._linkExtensionConstant(d));
+// }
+
+// _setUpToolTip() {
+//     return this._diagram
+//         .append("div")
+//         .style("position", "absolute")
+//         .style("z-index", "10")
+//         .style("visibility", "hidden")
+//         .text("");
+// }
+
+// _setUpLinks(linkConstant) {
+//     return this._diagram
+//         .append("g")
+//         .attr("class", "links")
+//         .attr("id", "links")
+//         .selectAll("path")
+//         .data(this._supertree_d3_hiearchy.links())
+//         .enter().append("path")
+//         .each(function (d) {
+//             d.target.linkNode = this;
+//         })
+//         .attr("d", linkConstant)
+//         .attr("stroke", function (d) {
+//             return d3.rgb(d.target.color).darker(1);
+//         })
+//         .attr('stroke-width', 1.5)
+//         .attr("id", function (d) {
+//             return "lgt_" + d.source.data.name
+//         })
+//         .on("mouseover", (d) => {
+//             this._tooltip.text("Length: " + d.target.data.length);
+//             return this._tooltip.style("visibility", "visible");
+//         })
+//         .on("mousemove", () => {
+//             return this._tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+//         })
+//         .on("mouseout", () => {
+//             return this._tooltip.style("visibility", "hidden");
+//         });
+// }

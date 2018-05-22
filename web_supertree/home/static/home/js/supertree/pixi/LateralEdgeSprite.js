@@ -82,6 +82,7 @@ class LateralEdgeSprite {
         this.sprite.on('mousedown', ()=>{            
             this._supertreeView.highlightLeavesFromGenes(this.data.genes);
             this._supertreeView.filterLGTsFromGenes(this.data.genes);
+            this._supertreeView.listGenes(this.data.genes);
         });
 
         this.container.addChild(this.sprite);
