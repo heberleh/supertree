@@ -13,6 +13,8 @@ $(document).ready(function() {
             if (error) throw error;
             
             console.log("nodes data", nodes_data);
+            console.log("nodes data", nodes_data.supertree["Acetohalobium_arabaticum_DSM_5501"].genes);
+
             //console.log("lgts from file",nodes_data.lgts);
             // create models
             var supertree = new Supertree(supertree_nw, nodes_data);

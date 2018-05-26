@@ -982,10 +982,10 @@ class SupertreeAppTest(TestCase):
         # write genes and group of each node from supertree
         json_txt += "],\"supertree\":{"
         for node in self.supertree.traverse("postorder"):
-            json_txt += "\"" + node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_') + "\":"
+            json_txt += "\"" + self.clean(node.name) + "\":"
             json_txt += "{\"genes\":["
             for gene in node.genes:
-                json_txt += "\""+str(gene) + "\","
+                json_txt += str(gene) +","
             if len(node.genes) > 0:
                 json_txt = json_txt[: -1]
             json_txt += "],\"g\":\"" + str(node.g)

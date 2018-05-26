@@ -35,9 +35,18 @@ function rgbToHex(rgb){
      ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
      ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
      ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
-   }
+}
 
 function project(x, y) {
     let angle = (x - 90) / 180 * Math.PI;
     return [y * Math.cos(angle), y * Math.sin(angle), angle]; //new x, new y, angle
+}
+
+function anyIntersection(a,b){   
+    for(let e of a){              
+        if (b.has(e)){           
+            return true;
+        }
+    }
+    return false;
 }

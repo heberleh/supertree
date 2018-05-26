@@ -4,22 +4,18 @@ class GenomeSprite extends Sprite{
 
     constructor(data, supertreeView) {
         super();
-        this._data= data;
+        this._data = data;
         this._setUpGroups();
 
-        this.texture = this._getTexture();        
+        this._createTexture();        
         this._supertreeView = supertreeView;
-        this._supertreeView = numerOfGenomes();        
-
-        // revise
-        this._thickness = thickness;
-        this._color = color;
+        let max_n = this._supertreeView.supertree.numerOfGenomes();        
+                  
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.updatePosition();
-        this.anchor.x = 0.5;
+        this.updatePosition();        
     }
     
     _setUpGroups(){
@@ -64,7 +60,7 @@ class GenomeSprite extends Sprite{
         this.initCanvas()        
     }
 
-    _getTexture() {        
+    _createTexture() {        
         let texture = null;
 
         if (this._canvas === null) {
@@ -90,20 +86,15 @@ class GenomeSprite extends Sprite{
         context.fillStyle = gradient;     
         context.fillRect(this.x, this.y, this.width, this.height);
 
-        var texture = new PIXI.Texture(this._canvas, PIXI.SCALE_MODES.LINEAR);
-        texture.frame = new PIXI.Rectangle(this.x, this.y, this.width, this.height);
-        return texture;
+        this.texture = new PIXI.Texture(this._canvas, PIXI.SCALE_MODES.LINEAR);
+        this.texture.frame = new PIXI.Rectangle(this.x, this.y, this.width, this.height);        
     }
 
     updatePosition() {
-        this.position.x = this.x1;
-        this.position.y = this.y1;
-        this.height = Math.sqrt((this.x2 - this.x1) * (this.x2 - this.x1) + (this.y2 - this.y1) * (this.y2 - this.y1));
-        var dir = Math.atan2(this.y1 - this.y2, this.x1 - this.x2);
-        this.rotation = Math.PI * 0.5 + dir;
+        this.position.x = this.x;
+        this.position.y = this.y;
+        // this.height = Math.sqrt((this.x2 - this.x1) * (this.x2 - this.x1) + (this.y2 - this.y1) * (this.y2 - this.y1));
+        // var dir = Math.atan2(this.y1 - this.y2, this.x1 - this.x2);
+        // this.rotation = Math.PI * 0.5 + dir;
     }
 }
-
-GenomeSprite.maxWidth = 50;
-GenomeSprite.maxHeight = 200;
-GenomeSprite.colors = 0;

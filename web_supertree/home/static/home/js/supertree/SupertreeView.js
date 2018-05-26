@@ -7,17 +7,19 @@ class SupertreeView {
         this.stream = stream;
         this._diagram_div = diagram_div;
         this.supertree = supertree;
-        this._supertree_d3_hiearchy = this._setUpSupertreeD3Hierarchy(supertree);
-        supertree.storeData(this._supertree_d3_hiearchy);
+        this.supertree.hierarchy;
+       
+        console.log("Supertree", this.supertree.hierarchy);
+
 
         this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels);
-        this._setColor(this._supertree_d3_hiearchy);
+        this._setColor(this.supertree.hierarchy);
         this._treeLayoutCluster = this._setUpTreeLayoutCluster();
-        this._treeLayoutCluster(this._supertree_d3_hiearchy);
+        this._treeLayoutCluster(this.supertree.hierarchy);
 
-        this._setRadius(this._supertree_d3_hiearchy,
-            this._supertree_d3_hiearchy.data.length = 0,
-            this._innerRadius / this._maxLength(this._supertree_d3_hiearchy)
+        this._setRadius(this.supertree.hierarchy,
+            this.supertree.hierarchy.data.length = 0,
+            this._innerRadius / this._maxLength(this.supertree.hierarchy)
         );
 
         this._min_dist = 16;
@@ -44,14 +46,11 @@ class SupertreeView {
         this._setUpLabels();
         this._setUpGenomeBars();
 
-        this._d3_nodes_hash = this._setUpHashOfD3Nodes();
-        console.log("number of nodes in hash", this._d3_nodes_hash.length);
         console.log("number of lgts", supertree.lgts.length);
 
-
-        this.lgts = this._setUpLGTs(supertree.lgts);
-        console.log("number of lgts -> nodes", this.lgts.length);
-        console.log("lgts", this.lgts);
+        //this.supertree.lgts = this._setUpLGTs(supertree.lgts);
+        console.log("number of lgts -> nodes", this.supertree.lgts.length);
+        console.log("lgts", this.supertree.lgts);
         this._updateLGTS();
 
         this._setUpLinks();
@@ -115,7 +114,7 @@ class SupertreeView {
 
         let name_max = "max_gene_score";
         let name_min = "min_gene_score";
-        this.lgts.forEach(function (e) {
+        this.supertree.lgts.forEach(function (e) {
             let e_scores = [];
             e.genes.forEach(function (g) {
                 let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c]) * 100);
@@ -147,7 +146,7 @@ class SupertreeView {
 
         let name_max = "max_gene_score";
         let name_min = "min_gene_score";
-        this.lgts.forEach(function (e) {
+        this.supertree.lgts.forEach(function (e) {
             let e_scores = [];
             e.genes.forEach(function (g) {
                 let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c]) * 100);
@@ -200,7 +199,7 @@ class SupertreeView {
         this._addNumericalAttribute(name_min, values_list);
 
         // store values for each lgt edge as a new attribute       
-        this.lgts.forEach(function (e) {
+        this.supertree.lgts.forEach(function (e) {
             let vl = [];
             e.genes.forEach(function (g) {
                 vl.push(scores[g]);
@@ -208,15 +207,6 @@ class SupertreeView {
             // complete storing in the e.attributes
 
         });
-    }
-
-    _setUpHashOfD3Nodes() {
-        let root = this._diagram_container;
-        var d3_nodes_hash = {};
-        this._supertree_d3_hiearchy.descendants().forEach(function (d) {
-            d3_nodes_hash[d.data.name] = d;
-        });
-        return d3_nodes_hash;
     }
 
     _setUpView() {
@@ -264,17 +254,6 @@ class SupertreeView {
             });
     }
 
-    _setUpSupertreeD3Hierarchy(supertree) {
-        return d3.hierarchy(supertree.hierarchy, function (d) {
-                return d.branchset;
-            })
-            .sum(function (d) {
-                return d.branchset ? 0 : 1;
-            })
-            .sort(function (a, b) {
-                return (a.value - b.value) || d3.ascending(a.data.length, b.data.length);
-            });
-    }
 
     _setUpCheckBoxClusterOnOff() {
         this._checkBoxLayoutCluster =
@@ -290,7 +269,7 @@ class SupertreeView {
     _setUpLinkExtension() {
         let radius = this._innerRadius;
         let root = this._diagram_container;
-        this._supertree_d3_hiearchy.links().filter(function (d) {
+        this.supertree.hierarchy.links().filter(function (d) {
             return !d.target.children;
         }).forEach(function (d) {
             createTreeEdge(root, d.target.x, d.target.y, d.target.x, radius, 1.5, colorToHex(d.target.color));
@@ -299,7 +278,7 @@ class SupertreeView {
 
     _setUpLinks() {
         let container = this._diagram_container;
-        this._supertree_d3_hiearchy.links().forEach(function (d) {
+        this.supertree.hierarchy.links().forEach(function (d) {
             d.graphics = new TreeEdge(d);
             container.addChild(d.graphics);
         });
@@ -308,8 +287,8 @@ class SupertreeView {
     _setUpLabels() {
         let container = this._diagram_container;
         let superTreeView = this;
-        console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
-        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+        console.log("number of leaves", this.supertree.hierarchy.leaves().length);
+        this.supertree.hierarchy.leaves().forEach(function (d) {
 
             d.graphics = new Leaf(d);
             d.graphics.superTreeView = superTreeView;
@@ -332,7 +311,7 @@ class SupertreeView {
         //     .append("g")
         //     .attr("class", "labels")
         //     .selectAll("text")
-        //     .data(this._supertree_d3_hiearchy.leaves())
+        //     .data(this.supertree.hierarchy.leaves())
         //     .enter().append("text")
         //     .attr("dy", ".31em")
         //     .attr("transform", (d) => {
@@ -413,27 +392,6 @@ class SupertreeView {
         return this._supertree.groupsLabels;
     }
 
-    _setUpLGTs(l) {
-        let lgts_nodes = [];
-        let hash = this._d3_nodes_hash;
-        var non_tracked_edges = [];
-        for (let e in l) {
-            if (l[e].source in hash && l[e].target in hash) {
-                l[e].source = hash[l[e].source];
-                l[e].target = hash[l[e].target];
-                l[e].lateralEdgeSprite = null;
-                lgts_nodes.push(l[e]);
-
-                // if (e < 10) {
-                //     console.log("Lateral edge", l[e]);
-                // }
-            } else {
-                non_tracked_edges.push(l[e]);
-            }
-        }
-        console.log(">> What is going on with these edges?", non_tracked_edges);
-        return lgts_nodes;
-    }
 
     _updateLGTS() {
 
@@ -448,7 +406,7 @@ class SupertreeView {
         let container = this._lgts_container;
         // console.log("LGTs container", container);
 
-        this.lgts.forEach((d) => {
+        this.supertree.lgts.forEach((d) => {
             d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);
         });
 
@@ -457,7 +415,7 @@ class SupertreeView {
 
     updateLGTsVisibilityByNumericFilter() {
 
-        this.lgts.forEach((d) => {
+        this.supertree.lgts.forEach((d) => {
             let visible = true;
             for (let name in this.numericalAttributes) {
                 if (d.attributes[name].value < this.numericalAttributes[name].selMin ||
@@ -472,7 +430,7 @@ class SupertreeView {
 
     updateLGTsVisibilityByGeneFilter(gene) {
 
-        this.lgts.forEach((d) => {
+        this.supertree.lgts.forEach((d) => {
             if (d.genes.includes(gene)) {              
                 d.lateralEdgeSprite.selected = true;
                 d.lateralEdgeSprite.sprite.visible = true;
@@ -484,7 +442,7 @@ class SupertreeView {
 
     updateLGTsDefaultAlpha() {
 
-        this.lgts.forEach((d) => {
+        this.supertree.lgts.forEach((d) => {
             d.lateralEdgeSprite.setDefaultAlpha(this.globalLGTsAlpha);
             d.lateralEdgeSprite.highlightOff();
         });
@@ -616,7 +574,7 @@ class SupertreeView {
 
         let count = 0;
         LineSprite.resetCanvas();
-        this.lgts.forEach(function (e) {
+        this.supertree.lgts.forEach(function (e) {
             e.lateralEdgeSprite.color = colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value))));
             // if (count < 10){                
             //     console.log("color ", colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value)))));
@@ -627,7 +585,7 @@ class SupertreeView {
     }
 
     highlightLeaves(names) {
-        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+        this.supertree.hierarchy.leaves().forEach(function (d) {
             if (names.includes(d.data.name)) {
                 d.graphics.setSelected(true);
             } else {
@@ -671,8 +629,8 @@ class SupertreeView {
     _setUpGenomeBars(){
         let container = this._diagram_container;
         let superTreeView = this;
-        console.log("number of leaves", this._supertree_d3_hiearchy.leaves().length);
-        this._supertree_d3_hiearchy.leaves().forEach(function (d) {
+        console.log("number of leaves", this.supertree.hierarchy.leaves().length);
+        this.supertree.hierarchy.leaves().forEach(function (d) {
             d.graphics = new Leaf(d);
             d.graphics.superTreeView = superTreeView;
             container.addChild(d.graphics);
@@ -681,10 +639,6 @@ class SupertreeView {
 
     get groupsColorMap(){
         return this._treeGroupColor;
-    }
-
-    get numerOfGenomes(){
-        return this._supertree_d3_hiearchy.leaves().length;
     }
 
 }
@@ -723,7 +677,7 @@ class SupertreeView {
 //     return this._diagram.append("g")
 //         .attr("class", "link-extensions")
 //         .selectAll("path")
-//         .data(this._supertree_d3_hiearchy.links().filter(function (d) {
+//         .data(this.supertree.hierarchy.links().filter(function (d) {
 //             return !d.target.children;
 //         }))
 //         .enter().append("path")
@@ -748,7 +702,7 @@ class SupertreeView {
 //         .attr("class", "links")
 //         .attr("id", "links")
 //         .selectAll("path")
-//         .data(this._supertree_d3_hiearchy.links())
+//         .data(this.supertree.hierarchy.links())
 //         .enter().append("path")
 //         .each(function (d) {
 //             d.target.linkNode = this;

@@ -10,8 +10,8 @@ class Leaf extends Text {
             align: 'center'
         };
         super(d.data.name, style);
-        var p = project(d.x-1, d.y);
-        this.data = d;
+        var p = project(d.x - 1, d.y);
+        this._node = d;
         this.rotation += p[2];
         if (p[0] < 0) {
             this.anchor.x = 1;
@@ -35,40 +35,53 @@ class Leaf extends Text {
         let lineWidth = 1;
 
         this.on('mousedown', () => {
-            let lgts = this.superTreeView.lgts;
-            if (this.selected){
+            let lgts = this.superTreeView.supertree.lgts;
+            if (this.selected) {
                 this.setSelected(false);
                 for (var i in lgts) {
-                    lgts[i].lateralEdgeSprite.selected = false;                    
+                    lgts[i].lateralEdgeSprite.selected = false;
                 }
-            }else{
-                this.setSelected(true);
-                for (var i in lgts) {
-                    let lgt = lgts[i];                    
-                    if (lgt.lateralEdgeSprite != null && 
-                        (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {    
-                        lgt.lateralEdgeSprite.selected = true;                        
+            } else {
+                this.setSelected(true);                
+                lgts.forEach(lgt => {
+                    if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                                               
+                        lgt.lateralEdgeSprite.selected = true;
+                        lgt.lateralEdgeSprite.sprite.visible = true;
+                    } else {
+                        lgt.lateralEdgeSprite.selected = false;
                     }
-                }
-            }            
+                });
+
+
+                //////////////////////////////////////////////////////////////////
+                // HIGHLIGH ALL LGTS OF PATH FROM CLICKED LEAF TO THE ROOT
+                // for (var i in lgts) {
+                //     let lgt = lgts[i];                    
+                //     if (lgt.lateralEdgeSprite != null && 
+                //         (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {    
+                //         lgt.lateralEdgeSprite.selected = true;                        
+                //     }
+                // }
+                /////////////////////////////////////////////////////////////////
+            }
         });
     }
 
-    highlightOn(){
+    highlightOn() {
         this.style.fontWeight = 'bold';
         this.highlighted = true;
     }
 
-    highlightOff(){
+    highlightOff() {
         this.style.fontWeight = 'normal';
-        this.highlighted = false;    
+        this.highlighted = false;
     }
 
-    setSelected(value){
+    setSelected(value) {
         this.selected = value;
-        if(value){
+        if (value) {
             this.highlightOn();
-        }else{
+        } else {
             this.highlightOff();
         }
     }

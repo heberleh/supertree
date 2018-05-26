@@ -46,6 +46,8 @@ python manage.py runserver # if already configured
 
 . ../env/bin/activate
 
+python manage.py test home.tests.SupertreeAppTest.testSetGraphLGTClustering
+
 
 # --------------------------------------------------------------------------
 # //// VISUAL CODE

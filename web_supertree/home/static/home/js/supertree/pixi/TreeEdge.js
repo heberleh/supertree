@@ -9,6 +9,7 @@ class TreeEdge extends Graphics{
         let p1 = project(d.target.x, d.target.y);        
         this.lineStyle(1, d.target.color, 1);  // linewidth, color, alpha
         this.moveTo(p0[0], p0[1]);
+        
         // create an arc
         // (cx, cy, radius, startAngle, endAngle, anticlockwise)          
         if (d.source.x !== 0 && d.source.y !== 0){
@@ -18,6 +19,7 @@ class TreeEdge extends Graphics{
                 this.arc(0, 0, d.source.y, p0[2], p1[2], true);
             }        
         }                        
+
         this.lineTo(p1[0], p1[1]);
         this.endFill(); 
         this.data.target.linkGraphics = this;
