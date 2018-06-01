@@ -8,10 +8,13 @@ class Leaf extends Text {
             fontSize: 10,
             fill: d.color,
             align: 'center'
+            // stroke: "black",
+            // strokeThickness: 1
         };
         super(d.data.name, style);
         var p = project(d.x - 1, d.y);
         this._node = d;
+
         this.rotation += p[2];
         if (p[0] < 0) {
             this.anchor.x = 1;
@@ -35,6 +38,8 @@ class Leaf extends Text {
         let lineWidth = 1;
 
         this.on('mousedown', () => {
+            console.log(this._node.data, this._node.data.genes);
+
             let lgts = this.superTreeView.supertree.lgts;
             if (this.selected) {
                 this.setSelected(false);
@@ -69,11 +74,13 @@ class Leaf extends Text {
 
     highlightOn() {
         this.style.fontWeight = 'bold';
+        this.style.fill = 0x000000;
         this.highlighted = true;
     }
 
     highlightOff() {
         this.style.fontWeight = 'normal';
+        this.style.fill = this._node.color;
         this.highlighted = false;
     }
 

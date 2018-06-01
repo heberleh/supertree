@@ -18,6 +18,7 @@ class LateralEdgeSprite {
 
         let p0 = project(d.source.x, d.source.y);
         let p1 = project(d.target.x, d.target.y);        
+        
         this.rebuild(p0[0], p0[1], p1[0], p1[1]);        
     }
 
@@ -71,6 +72,7 @@ class LateralEdgeSprite {
         this.sprite.alpha = this.defaultAlpha;
 
         this.sprite.interactive = true;
+        
         this.sprite.on('mouseover', () => {
             this.highlightOn();
         });
@@ -80,9 +82,11 @@ class LateralEdgeSprite {
         });
 
         this.sprite.on('mousedown', ()=>{            
-            this._supertreeView.highlightLeavesFromGenes(this.data.genes);
-            this._supertreeView.filterLGTsFromGenes(this.data.genes);
-            this._supertreeView.listGenes(this.data.genes);
+            console.log(this.data.genes);
+            // this._supertreeView.highlightLeavesFromGenes(this.data.genes);
+            // this._supertreeView.filterLGTsFromGenes(this.data.genes);
+            // this._supertreeView.listGenes(this.data.genes);
+
         });
 
         this.container.addChild(this.sprite);

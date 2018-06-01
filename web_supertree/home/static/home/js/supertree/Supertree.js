@@ -20,8 +20,7 @@ class Supertree {
         this._storeData(this.hierarchy);
 
 
-        this._supertree_nodes_hash = this._setUpSupetreeNodesHash();
-        console.log("number of nodes in hash", this._supertree_nodes_hash.length);
+        this._supertree_nodes_hash = this._setUpSupetreeNodesHash();        
 
 
         // set up groups -> original groups
@@ -30,9 +29,18 @@ class Supertree {
 
         // set up forest
         this._forest = nodes_data.forest;
+        
+        let max_n_g = 0;
+        this.hierarchy.leaves().forEach(leaf =>{             
+            if(max_n_g < leaf.data.genes.size){
+                max_n_g = leaf.data.genes.size;
+            }
+        });
+        this._max_number_of_genes_in_a_genome = max_n_g;
 
         // set up LGTs edges
         this._lgts = this._setUpLGTs(nodes_data.lgts);
+        
 
     }
 
@@ -51,8 +59,9 @@ class Supertree {
 
     // given a ROOT d... of a tree.. store the date in this tree
     _storeData(d) {
+        //console.log(Object.keys(this._nodes_data.supertree));
         if (d.data.name == "") {
-            d.data.c = 0;
+            d.data.c = '-';
             d.data.genes = [];
         } else {
             try {
@@ -60,7 +69,12 @@ class Supertree {
                 d.data.c = node.g;
                 d.data.genes = new Set(node.genes);
             } catch (error) {
+                console.log(error);
+                console.log("ERROR");
                 console.log(d.data.name);
+                d.data.c = node.g;
+                d.data.genes = new Set();
+
                 return;
             }
 
@@ -70,10 +84,15 @@ class Supertree {
 
     _setUpTreeGroupsLabels(nodes) {
         var gs = new Set();
+        var gs_list = [];
         for (let key in nodes) {
-            gs.add(nodes[key].g);
+            if (!gs.has(nodes[key].g)){
+                gs.add(nodes[key].g);
+                gs_list.push(nodes[key].g);
+            }            
         }
-        return [...gs].sort();
+        
+        return gs_list.sort();
     }
 
     get groupsLabels() {
@@ -141,5 +160,14 @@ class Supertree {
 
     get numerOfGenomes(){
         return this.hierarchy.leaves().length;
+    }
+
+
+    getGroupsDistribution(gene){
+        return this._nodes_data.group_sp_distribution[gene];
+    }
+
+    get maxNgenes(){
+        return this._max_number_of_genes_in_a_genome;
     }
 }

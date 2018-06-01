@@ -51,7 +51,7 @@ $(document).ready(function() {
                 }        
                 streamData.push(g);            
 
-                if (streamData.length < 10){
+                if (streamData.length < 3){
                     console.log("max values", max_values);
                     console.log("per group", groups_dist[gene]);
                 }   
@@ -65,6 +65,7 @@ $(document).ready(function() {
             stream["totals_in_groups"] = totals_in_groups;
             //console.log("total",stream["totals_in_groups"]);
             stream["max_values"] = max_values;
+            stream["group_sp_distribution"] = nodes_data.group_sp_distribution;
             stream["genes"] = genes;
             
 

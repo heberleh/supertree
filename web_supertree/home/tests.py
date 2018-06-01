@@ -21,7 +21,6 @@ from .models import SupertreeModel
 class SupertreeAppTest(TestCase):
     databaseTest = False
 
-
     def testRFDistanceTrees2(self):
         t1 = Tree("((((1,2),(3,4)),((5,6),(7,8))),(((9,10),(11,12)),((13,14),(15,16))));")
         t2 = Tree("(((7,8),((1,(2,(14,5))),(3,4))),(((11,(6,12)),10),((13,(15,16)),9)));")
@@ -53,6 +52,16 @@ class SupertreeAppTest(TestCase):
                 self.forest.append(
                     Tree(newick=tree_nw+';', format=self.format))
         else:
+            self.hash_groups = {}
+            self.groups_names = set()
+            for group in TestData.group_class().split("\n\n"):
+                names = group.split("\n")
+                group_name = self.clean(names[0])
+                self.groups_names.add(group_name)
+                for i in range(1,len(names)):
+                    self.hash_groups[self.clean(names[i])] = group_name
+
+            
             reference_newick = TestData.supertree_newick()
             forest_newicks = TestData.forest_newicks()
             self.format = 9
@@ -60,12 +69,17 @@ class SupertreeAppTest(TestCase):
                 newick=reference_newick,
                 format=self.format
             )
+            for node in self.supertree:
+                node.name = self.clean(node.name)
+
             self.forest = []
             for tree_nw in sorted(forest_newicks.split(';'), key=len, reverse=True):
-                self.forest.append(
-                    Tree(newick=tree_nw+';', format=self.format))
-        self.forest = sorted(self.forest, key=len, reverse=True)
-
+                tree = Tree(newick=tree_nw+';', format=self.format)
+                for node in tree:
+                    node.name = self.clean(node.name)
+                self.forest.append(tree)
+                
+        #self.forest = sorted(self.forest, key=len)
 
     def testPrinting(self):
         print(self.supertree)
@@ -121,7 +135,6 @@ class SupertreeAppTest(TestCase):
                 print(node.get_ascii(attributes=["name"], show_internal=False))
 
         print(tree2)
-
 
     def testRFDistanceMatrix(self):
         size = 10  # len(self.forest)
@@ -385,7 +398,7 @@ class SupertreeAppTest(TestCase):
     def get_name(self,tree):
         names = tree.get_leaf_names()
         names.sort()
-        return ','.join(names)
+        return '_#_'.join(names)
 
     def testSetGraphLGT(self):
         g = nx.DiGraph()
@@ -644,6 +657,51 @@ class SupertreeAppTest(TestCase):
         plt.savefig('circular_tree.png')
         plt.show()
 
+    def cluster_tree_by_group_name(self, tree):
+        g = "-"
+        for node in tree.traverse("preorder"):
+            node.add_features(g=g)               
+
+        for node in tree:
+            node.g = self.hash_groups[node.name]
+
+        for node in tree.traverse("postorder"):
+            if node.children:
+                dif = False
+                g = node.children[0].g
+                for child in node.children:
+                    if child.g != g:
+                        dif = True
+                        break
+                if not dif:
+                    node.g = g
+        
+
+        self.groups_root = {}
+
+        def cluster_root(node):
+            if node.g in self.groups_names:
+                return True
+            return False
+
+        for root in tree.iter_leaves(is_leaf_fn=cluster_root):           
+            if root.g in self.groups_root:
+                self.groups_root[root.g].append(root)
+            else:
+                self.groups_root[root.g] = [root]
+
+        totals_in_groups = {}
+
+        for node in tree:
+            if node.g in totals_in_groups:
+                totals_in_groups[node.g] +=1
+            else:
+                totals_in_groups[node.g] = 0
+        
+        print("Number of groups: ", len(self.groups_root), self.groups_root)
+        print(totals_in_groups)
+        return (g, totals_in_groups)
+
     def cluster_tree(self, tree, cut_off):
         g = 0
         for node in tree.traverse("preorder"):
@@ -677,7 +735,7 @@ class SupertreeAppTest(TestCase):
         return n / float(len(s1) + len(s2) - n)
 
     def clean(self,txt):
-        return txt.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')
+        return txt.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_').replace('\"','').replace(' ','')
 
     def computeLGTsCandidatesSimplified(self,number_of_trees):
         print("Computing LGT candidates...")        
@@ -719,8 +777,8 @@ class SupertreeAppTest(TestCase):
         lgts_vector = [] 
         for (src,trg,data) in potential_lgts.edges(data=True):
             lgt = {
-                'source':self.clean(src),
-                'target':self.clean(trg),
+                'source':src,
+                'target':trg,
                 'genes': data['genes'],
                 'attributes':{}
             }
@@ -740,53 +798,52 @@ class SupertreeAppTest(TestCase):
         print("Number of LGTs edges (non redundant)", len(lgts_vector))
         return lgts_vector
         
-    def computeLGTsCandidatesPartentIntersecion(self,number_of_trees):
-        print("Computing LGT candidates...")        
+    def computeLGTsCandidatesPartentIntersecion(self,number_of_trees):             
         potential_lgts = nx.Graph()       
         
         total_number_of_lgts = 0     
 
+        print("Root groups keys", self.groups_root.keys())
+
         for tree_index in range(number_of_trees):
             clusters = {}              #clusters 
 
-            for c in self.groups_root:                        
+            for c in self.groups_root:                                
                 # find all UPPER nodes that contains that gene in the Intersection
-                for root in self.groups_root[c].iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.genes else False):              
-                    if root.g in clusters:
-                        clusters[root.g].append(root)
-                    else:
-                        clusters[root.g] = [root]            
-
-            clusters_distribution = {} #distribution
-            for c in clusters:
-                clusters_distribution[c] = 0
-                for root in clusters[c]:    
-                    clusters_distribution[c] += len(root)
-
-            self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)
-            
-            for c1, c2 in itertools.combinations(clusters, 2):
-                for n1 in clusters[c1]:
-                    for n2 in clusters[c2]:                                        
-                        total_number_of_lgts += 1
-                        if (potential_lgts.has_edge(n1.name, n2.name)):
-                            potential_lgts[n1.name][n2.name]['genes'].append(tree_index)
-                        else:
-                            potential_lgts.add_edge(
-                                                n1.name,
-                                                n2.name,
-                                                source = n1,
-                                                target = n2,
-                                                genes = [tree_index],
-                                                attributes = {}
-                                                )
+                for root in self.groups_root[c]:
+                    if c not in clusters:
+                        clusters[c] = []
                     
+                    if tree_index in root.genes:                    
+                        clusters[c].append(root)
+                    else:
+                        for node in root.iter_leaves(is_leaf_fn = lambda node2: True if tree_index in node2.genes else False):                       
+                            clusters[c].append(node)
+         
+            # print("cluster elements: ", clusters["Alphaproteobacteria"])
 
+            if len(clusters.keys()) > 1:
+                for c1, c2 in itertools.combinations(clusters, 2):
+                    for n1 in clusters[c1]:
+                        for n2 in clusters[c2]:
+                            total_number_of_lgts += 1                       
+                            if (potential_lgts.has_edge(n1.name, n2.name)):
+                                potential_lgts[n1.name][n2.name]['genes'].append(tree_index)
+                            else:
+                                potential_lgts.add_edge(
+                                                    n1.name,
+                                                    n2.name,
+                                                    source = n1,
+                                                    target = n2,
+                                                    genes = [tree_index],
+                                                    attributes = {}
+                                                    )
+                        
         lgts_vector = [] 
         for (src,trg,data) in potential_lgts.edges(data=True):
             lgt = {
-                'source':self.clean(src),
-                'target':self.clean(trg),
+                'source':src,
+                'target':trg,
                 'genes': data['genes'],
                 'attributes':{}
             }
@@ -845,8 +902,8 @@ class SupertreeAppTest(TestCase):
         lgts_vector = [] 
         for (src,trg,data) in potential_lgts.edges(data=True):
             lgt = {
-                'source':self.clean(src),
-                'target':self.clean(trg),
+                'source':src,
+                'target':trg,
                 'genes': data['genes'],
                 'attributes':{}
             }
@@ -866,19 +923,25 @@ class SupertreeAppTest(TestCase):
     def populateSupertreeGenesAttributes(self,number_of_trees):
 
         for node in self.supertree.traverse("preorder"):
-            node.add_features(genes = set(), name=self.get_name(node))
+            if not node.is_leaf():
+                node.add_features(genes = set(), name=self.clean(self.get_name(node)))
+            else:
+                node.add_features(genes = set())
 
         for tree_index in range(number_of_trees):
             for name in self.forest[tree_index].get_leaf_names():
                 for leaf in self.supertree.get_leaves_by_name(name):
-                    leaf.genes.add(tree_index)     
+                    leaf.genes.add(tree_index)
+                    # if name == "Geobacter_uraniireducens_Rf4":
+                    #     print("size for Geobacter...", len(leaf.genes))
 
+        count = 0
         # compute intersection of children's genes
         for node in self.supertree.iter_descendants("postorder"):            
             if node.up.genes:
                 node.up.genes &= node.genes               
             else: #if first visit
-                node.up.genes = node.genes
+                node.up.genes = set(node.genes)
 
     def computeGroupsDistribution(self, number_of_trees):
         for tree_index in range(number_of_trees):
@@ -911,17 +974,21 @@ class SupertreeAppTest(TestCase):
         self.populateSupertreeGenesAttributes(number_of_trees)
 
         # compute groups weights
-        for node in self.supertree.iter_descendants("preorder"):        
+        for node in self.supertree.iter_descendants("preorder"):
             try:
-                d = (len(node.up.genes) / float(len(node.genes)))
-                if d > 0.98:
-                    d = 0.98
-                node.dist = 1 - d    
+                if len(node.up.genes) == 0:
+                    sim = 0
+                else:
+                    sim = (len(node.up.genes) / float(len(node.genes)))
+
+                node.dist = 1 - sim
+                print(node.dist)
                 # node.support = len(node.genes)            
             except:
                 pass                
 
-        max_g, totals_in_groups = self.cluster_tree(self.supertree, cut_off=0.6)
+        max_g, totals_in_groups = self.cluster_tree(self.supertree, cut_off=0.999)
+        # if dist < cut_off true
         
         # /////////////////////// SELECTING LGTS METHOD
         # compute One vector of possible LGTs...
@@ -929,9 +996,6 @@ class SupertreeAppTest(TestCase):
         lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
         #lgts_vector = self.computeLGTsCandidatesTopologyOnly(number_of_trees)
 
-
-        for node in self.supertree.traverse():
-            node.name = node.name.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_')
 
         self.supertree.write(format=1, outfile="./home/static/home/new_tree.nw")
         
@@ -944,7 +1008,7 @@ class SupertreeAppTest(TestCase):
             # write the species
             json_txt += "\"species\":["
             for leaf in tree:
-                json_txt +=  "\""+ self.clean(leaf.name) + "\","
+                json_txt +=  "\""+ leaf.name + "\","
             json_txt = json_txt[:-1]
 
             # write the tree in newick format
@@ -982,7 +1046,7 @@ class SupertreeAppTest(TestCase):
         # write genes and group of each node from supertree
         json_txt += "],\"supertree\":{"
         for node in self.supertree.traverse("postorder"):
-            json_txt += "\"" + self.clean(node.name) + "\":"
+            json_txt += "\"" + node.name + "\":"
             json_txt += "{\"genes\":["
             for gene in node.genes:
                 json_txt += str(gene) +","
@@ -997,4 +1061,103 @@ class SupertreeAppTest(TestCase):
             f.write(json_txt)
             f.close()        
 
+    def testSetGraphLGTClusteringByName(self):
+        # parameters
+        number_of_trees = len(self.forest)
+        #number_of_trees = 700          
+        
+        vertex_hash = {}
+        i = 0
 
+        print("Populating supertree with genes...")
+        self.populateSupertreeGenesAttributes(number_of_trees)
+
+        print("Computing Clusters...")
+        max_g, totals_in_groups = self.cluster_tree_by_group_name(self.supertree)   
+        
+        print("Computing clusters distribution for each Gene...")
+        for tree_index in range(number_of_trees):
+            clusters_distribution = {} #distribution
+            tree = self.forest[tree_index]
+            for c in self.groups_names:
+                clusters_distribution[c] = 0
+            for name in tree.get_leaf_names():
+                for leaf in self.supertree.get_leaves_by_name(name):
+                    clusters_distribution[leaf.g] += 1
+
+            # print(clusters_distribution)
+            self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)    
+        
+        print("Computing LGTs candidates...")
+        # /////////////////////// SELECTING LGTS METHOD
+        # compute One vector of possible LGTs...
+        #lgts_vector = self.computeLGTsCandidatesSimplified(number_of_trees)
+        lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
+        #lgts_vector = self.computeLGTsCandidatesTopologyOnly(number_of_trees)
+
+        # print("Hash groups:")
+        # print(self.hash_groups)
+        print("Writing Supertree on file...")
+        self.supertree.write(format=1, outfile="./home/static/home/new_tree.nw")
+        
+        # write data associated with each tree from the florest
+        json_txt = "{\"forest\":{"        
+        for tree_index in range(number_of_trees):
+            tree = self.forest[tree_index]
+            json_txt += "\""+str(tree_index) +"\":{"
+            
+            # write the species
+            json_txt += "\"species\":["
+            for leaf in tree:
+                json_txt +=  "\""+ leaf.name + "\","
+            json_txt = json_txt[:-1]
+
+            # write the tree in newick format
+            json_txt += "],\"newick\": "
+            json_txt += "\"(A,B);\""
+
+            # # write the distribution of species in each group, for this gene
+            # json_txt += ",\"group_sp_distribution\":"
+            # json_txt += json.dumps(tree.clusters_distribution)
+
+            # write how many edges have src/trg in each group
+            json_txt += ",\"group_lgt_distribution\":{"            
+            json_txt += "}"
+            json_txt += "},"
+        json_txt = json_txt[:-1]
+
+        json_txt += "},\"group_sp_distribution\":{"
+        for tree_index in range(number_of_trees):        
+            tree = self.forest[tree_index]
+            json_txt += "\""+str(tree_index) +"\":"
+            json_txt += json.dumps(tree.clusters_distribution)
+            json_txt += ","
+        json_txt = json_txt[:-1]
+
+        # total of species in each group
+        json_txt += "},\"totals_in_groups\":"
+        json_txt += json.dumps(totals_in_groups)
+
+        # write lgts edges
+        json_txt += ",\"lgts\":["
+        for edge in lgts_vector:
+            json_txt += json.dumps(edge) +","
+        json_txt = json_txt[:-1]
+
+        # write genes and group of each node from supertree
+        json_txt += "],\"supertree\":{"
+        for node in self.supertree.traverse("postorder"):
+            json_txt += "\"" + node.name + "\":"
+            json_txt += "{\"genes\":["
+            for gene in node.genes:
+                json_txt += str(gene) + ","
+            if len(node.genes) > 0:
+                json_txt = json_txt[: -1]
+            json_txt += "],\"g\":\"" + str(node.g)
+            json_txt += "\"},"
+        json_txt = json_txt[: -1]
+        json_txt += "}}"
+        
+        with open("./home/static/home/data.json","w") as f:
+            f.write(json_txt)
+            f.close()        

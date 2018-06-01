@@ -8,9 +8,8 @@ class SupertreeView {
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this.supertree.hierarchy;
-       
-        console.log("Supertree", this.supertree.hierarchy);
 
+        console.log("Supertree", this.supertree.hierarchy);
 
         this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels);
         this._setColor(this.supertree.hierarchy);
@@ -62,10 +61,39 @@ class SupertreeView {
         // sliders attributes
         this._setUpNumericalAttributes(supertree.lgts);
         this._addAttributeLGTGenesScores();
+        this._addAttributeNumberOfSpecies();
         this.setUpNumericalSlidersFilters();
+
+        this._setUpGroupsLegend();
 
         // Visual color for Numeric attributes
         this._setUpColorSelectionMenu();
+
+    }
+
+    _setUpGroupsLegend() {
+
+        console.log("legenda");
+        let svg = d3.select("#groups_legend").append("svg");
+        let ordinal = this.groupsColorMap;
+        console.log("ordinal", ordinal);
+
+        svg.append("g")
+            .attr("class", "legendOrdinal")
+            .attr("transform", "translate(20,20)");
+
+        console.log("group labels", this.supertree.groupsLabels);
+        let legendOrdinal = d3.legendColor()         
+            .shape("path", d3.symbol().type(d3.symbolTriangle).size(150)())
+            .shapePadding(10)
+            //use cellFilter to hide the "e" cell
+            .cellFilter(function (d) {
+                return d.label !== "e"
+            })
+            .scale(ordinal);
+
+        svg.select(".legendOrdinal")
+            .call(legendOrdinal);
     }
 
     _setUpNumericalAttributes(lgts) {
@@ -133,39 +161,34 @@ class SupertreeView {
 
         let values_list = [...values];
         this._addNumericalAttribute(name_max, values_list);
-        this._addNumericalAttribute(name_min, values_list);        
+        this._addNumericalAttribute(name_min, values_list);
     }
 
-    _addAttributeLGTGenesScores() {
+    _addAttributeNumberOfSpecies() {
         // create genes' scores
-        let data = stream.data;
-        let genes = stream.genes;
+
         //console.log('genes', genes);
         let scores = {};
         let values = new Set();
 
-        let name_max = "max_gene_score";
-        let name_min = "min_gene_score";
-        this.supertree.lgts.forEach(function (e) {
+        let name = "at_least_one_gene";
+        this.supertree.lgts.forEach((e) => {
             let e_scores = [];
-            e.genes.forEach(function (g) {
-                let value = Math.trunc(Math.abs(data[g][e.source.data.c] - data[g][e.target.data.c]) * 100);
+            e.genes.forEach(g => {
+                let value = Object.values(this.supertree.getGroupsDistribution(g)).reduce(function (a, b) {
+                    return a + b;
+                });
                 values.add(value);
                 e_scores.push(value);
             });
-            e.attributes[name_max] = {
-                'type': 'numeric',
-                'value': d3.max(e_scores)
-            };
-            e.attributes[name_min] = {
-                'type': 'numeric',
-                'value': d3.min(e_scores)
+            e.attributes[name] = {
+                'type': 'numeric_list_at_least',
+                'value': e_scores
             };
         });
 
         let values_list = [...values];
-        this._addNumericalAttribute(name_max, values_list);
-        this._addNumericalAttribute(name_min, values_list);
+        this._addNumericalAttribute(name, values_list);
     }
 
     _addAttributeMaybe() {
@@ -240,7 +263,9 @@ class SupertreeView {
 
     }
 
-    _updateTreeGroupColors(labels, color_scheme = d3.schemeCategory10) {
+    // colors = ["#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059","#FFDBE5", "#7A4900", "#0000A6", "#63FFAC", "#B79762", "#004D43", "#8FB0FF", "#997D87","#5A0007", "#809693", "#FEFFE6", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80","#61615A", "#BA0900", "#6B7900", "#00C2A0", "#FFAA92", "#FF90C9", "#B903AA", "#D16100","#DDEFFF", "#000035", "#7B4F4B", "#A1C299", "#300018", "#0AA6D8", "#013349", "#00846F","#372101", "#FFB500", "#C2FFED", "#A079BF", "#CC0744", "#C0B9B2", "#C2FF99", "#001E09","#00489C", "#6F0062", "#0CBD66", "#EEC3FF", "#456D75", "#B77B68", "#7A87A1", "#788D66","#885578", "#FAD09F", "#FF8A9A", "#D157A0", "#BEC459", "#456648", "#0086ED", "#886F4C","#34362D", "#B4A8BD", "#00A6AA", "#452C2C", "#636375", "#A3C8C9", "#FF913F", "#938A81","#575329", "#00FECF", "#B05B6F", "#8CD0FF", "#3B9700", "#04F757", "#C8A1A1", "#1E6E00","#7900D7", "#A77500", "#6367A9", "#A05837", "#6B002C", "#772600", "#D790FF", "#9B9700","#549E79", "#FFF69F", "#201625", "#72418F", "#BC23FF", "#99ADC0", "#3A2465", "#922329","#5B4534", "#FDE8DC", "#404E55", "#0089A3", "#CB7E98", "#A4E804", "#324E72", "#6A3A4C"]
+
+    _updateTreeGroupColors(labels, color_scheme = d3.shuffle(d3.schemeCategory20)) {
         return d3.scaleOrdinal()
             .domain(labels)
             .range(color_scheme);
@@ -418,10 +443,26 @@ class SupertreeView {
         this.supertree.lgts.forEach((d) => {
             let visible = true;
             for (let name in this.numericalAttributes) {
-                if (d.attributes[name].value < this.numericalAttributes[name].selMin ||
-                    d.attributes[name].value > this.numericalAttributes[name].selMax) {
-                    visible = false;
-                    break;
+                if (d.attributes[name].type == "numeric_list_at_least") {
+                    let at_least = false;
+                    let values = d.attributes[name].value;
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i] >= this.numericalAttributes[name].selMin &&
+                            values[i] <= this.numericalAttributes[name].selMax) {
+                            at_least = true;
+                            break;
+                        }
+                    }
+                    if (!at_least) {
+                        visible = false;
+                        break;
+                    }
+                } else {
+                    if (d.attributes[name].value < this.numericalAttributes[name].selMin ||
+                        d.attributes[name].value > this.numericalAttributes[name].selMax) {
+                        visible = false;
+                        break;
+                    }
                 }
             }
             d.lateralEdgeSprite.sprite.visible = visible;
@@ -431,7 +472,7 @@ class SupertreeView {
     updateLGTsVisibilityByGeneFilter(gene) {
 
         this.supertree.lgts.forEach((d) => {
-            if (d.genes.includes(gene)) {              
+            if (d.genes.includes(gene)) {
                 d.lateralEdgeSprite.selected = true;
                 d.lateralEdgeSprite.sprite.visible = true;
             } else {
@@ -626,19 +667,17 @@ class SupertreeView {
 
     }
 
-    _setUpGenomeBars(){
+    _setUpGenomeBars() {
         let container = this._diagram_container;
         let superTreeView = this;
         console.log("number of leaves", this.supertree.hierarchy.leaves().length);
         this.supertree.hierarchy.leaves().forEach(function (d) {
-            d.graphics = new Leaf(d);
-            d.graphics.superTreeView = superTreeView;
-            container.addChild(d.graphics);
-        });        
+            d.genomeSprite = new GenomeSprite(container, d, superTreeView);        
+        });
     }
 
-    get groupsColorMap(){
-        return this._treeGroupColor;
+    get groupsColorMap() {
+        return this._treeGroupColorMap;
     }
 
 }
