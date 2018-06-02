@@ -40,6 +40,7 @@ class Leaf extends Text {
         this.on('mousedown', () => {
             console.log(this._node.data, this._node.data.genes);
 
+            console.log(this._node.genomeSprite.groups);
             let lgts = this.superTreeView.supertree.lgts;
             if (this.selected) {
                 this.setSelected(false);
@@ -51,9 +52,11 @@ class Leaf extends Text {
                 lgts.forEach(lgt => {
                     if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                                               
                         lgt.lateralEdgeSprite.selected = true;
-                        lgt.lateralEdgeSprite.sprite.visible = true;
+
+                        // lgt.lateralEdgeSprite.sprite.visible = true;
                     } else {
                         lgt.lateralEdgeSprite.selected = false;
+                        // lgt.lateralEdgeSprite.sprite.visible = false;
                     }
                 });
 

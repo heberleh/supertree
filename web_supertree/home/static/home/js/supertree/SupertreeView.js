@@ -11,7 +11,33 @@ class SupertreeView {
 
         console.log("Supertree", this.supertree.hierarchy);
 
-        this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels);
+        //let colors = d3.shuffle(d3.schemeCategory20);
+        //console.log(colors);
+        let colors = [
+            "#9467bd",
+            "#8c564b",
+            "#ffbb78",
+            "#c7c7c7",
+            "#f7b6d2",
+            "#2ca02c",
+            "#c5b0d5",
+            "#9edae5",
+            "#dbdb8d",
+            "#bcbd22",
+            "#ff7f0e",
+            "#7f7f7f",
+            "#c49c94",
+            "#1f77b4",
+            "#aec7e8",
+            "#d62728",
+            "#98df8a",
+            "#17becf",
+            "#e377c2",
+            "#ff9896"
+          ];
+        
+        console.log("Groups labels", supertree.groupsLabels);
+        this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels, colors);
         this._setColor(this.supertree.hierarchy);
         this._treeLayoutCluster = this._setUpTreeLayoutCluster();
         this._treeLayoutCluster(this.supertree.hierarchy);
@@ -56,7 +82,11 @@ class SupertreeView {
 
         // slider alpha
         this.globalLGTsAlpha = 1;
+        this.globalGenomesAlpha =  0.3;
+        this.globalGenomeLabelAlpha = 1.0;
         this.setUpGraphicalSlidersFilters();
+        this.setUpGenomeAlpha();
+        this.setUpGenomeLabelsAlpha();
 
         // sliders attributes
         this._setUpNumericalAttributes(supertree.lgts);
@@ -490,6 +520,18 @@ class SupertreeView {
         //this._treeapp.renderer.render(this._stage);
     }
 
+    updateGenomesDefaultAlpha() {
+        this.supertree.hierarchy.leaves().forEach(d => {            
+            d.genomeSprite.alpha = this.globalGenomesAlpha;                            
+        });
+    }
+
+    updateGenomesLabelsDefaultAlpha() {
+        this.supertree.hierarchy.leaves().forEach(d => {            
+            d.graphics.alpha = this.globalGenomeLabelAlpha;                            
+        });
+    }
+
     setUpNumericalSlidersFilters() {
         let numericalAttributes = this.numericalAttributes;
 
@@ -570,6 +612,79 @@ class SupertreeView {
 
             this.globalLGTsAlpha = slider.data('slider').getValue();
             this.updateLGTsDefaultAlpha();
+        });
+
+        /////////////////////////////////////////////////
+        // alpha for genome boxes
+     
+
+    }
+
+    setUpGenomeAlpha(){
+        let name = "alpha-genomes";
+        let id = name + "inputNumericFilter";
+
+        let row = d3.select("#visualAttributes")
+            .append("div")
+            .classed("row", true);
+
+
+        row.append("div").classed("col-md-3", true)
+            .append("p")
+            .text(name + ":");
+
+        row.append("div").classed("col-md-8", true)
+            .append("input")
+            .attr("id", id)
+            .attr("type", "text")
+            .style("width", "100%")
+            .style("height", "100%");
+
+        let slider = $("#" + id).slider({
+            id: id + "_slider",
+            min: 0,
+            max: 1,
+            step: 0.05,
+            value:  this.globalGenomesAlpha
+        });
+
+        slider.on('change', () => {            
+            this.globalGenomesAlpha = slider.data('slider').getValue();
+            this.updateGenomesDefaultAlpha();
+        });
+    }
+
+    setUpGenomeLabelsAlpha(){
+        let name = "alpha-genomes-labels";
+        let id = name + "inputNumericFilter";
+
+        let row = d3.select("#visualAttributes")
+            .append("div")
+            .classed("row", true);
+
+
+        row.append("div").classed("col-md-3", true)
+            .append("p")
+            .text(name + ":");
+
+        row.append("div").classed("col-md-8", true)
+            .append("input")
+            .attr("id", id)
+            .attr("type", "text")
+            .style("width", "100%")
+            .style("height", "100%");
+
+        let slider = $("#" + id).slider({
+            id: id + "_slider",
+            min: 0,
+            max: 1,
+            step: 0.05,
+            value:  this.globalGenomesAlpha
+        });
+
+        slider.on('change', () => {            
+            this.globalGenomeLabelAlpha = slider.data('slider').getValue();
+            this.updateGenomesLabelsDefaultAlpha();
         });
     }
 
