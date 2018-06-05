@@ -466,6 +466,45 @@ class SupertreeView {
         });
 
         this.updateLGTsVisibilityByNumericFilter();
+
+
+        // {
+        //     "id": <string id>,
+        //     "name": <string name>,
+        //     "data": {
+        //         "coords": [
+        //             <coord x from>,
+        //             <coord y from>,
+        //             <coord x to>,
+        //             <coord y to>
+        //         ]
+        //     }
+        // }
+        let edges_for_bundling = [];
+        let id = 0;
+
+        this.supertree.lgts.forEach(d=>{
+            let p0 = project(d.source.x, d.source.y);
+            let p1 = project(d.target.x, d.target.y); 
+            edges_for_bundling.push(
+                {
+                    "id": id,
+                    "name": "",
+                    "data":{
+                        "coords":[p0[0], p0[1], p1[0], p1[1]]
+                    }
+                }
+            );
+            id+=1;
+        });
+
+        var bundle = new Bundler();
+        bundle.setNodes(edges_for_bundling);
+        bundle.buildNearestNeighborGraph();
+        bundle.MINGLE();
+        console.time('test');    
+        console.log("BUNDLE",bundle);
+        console.timeEnd('test');
     }
 
     updateLGTsVisibilityByNumericFilter() {
