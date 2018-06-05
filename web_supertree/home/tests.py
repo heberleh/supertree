@@ -920,6 +920,55 @@ class SupertreeAppTest(TestCase):
         print("Number of LGTs edges (non redundant)", len(lgts_vector))
         return lgts_vector
         
+    def computeLGTsCandidatesNoParenting(self,number_of_trees):             
+        potential_lgts = nx.Graph()       
+        
+        total_number_of_lgts = 0     
+
+        print("Root groups keys", self.groups_root.keys())
+
+        for c1, c2 in itertools.combinations(self.groups_root, 2):
+            for tree1 in self.groups_root[c1]:
+                for n1 in tree1:
+                    for tree2 in self.groups_root[c2]:
+                        for n2 in tree2:
+                            total_number_of_lgts += 1
+                            intersect = n1.genes.intersection(n2.genes)
+                            if intersect:
+                                potential_lgts.add_edge(
+                                                    n1.name,
+                                                    n2.name,
+                                                    source = n1,
+                                                    target = n2,
+                                                    genes = list(intersect),
+                                                    attributes = {}
+                                                    )
+                    
+        lgts_vector = [] 
+        for (src,trg,data) in potential_lgts.edges(data=True):
+            lgt = {
+                'source':src,
+                'target':trg,
+                'genes': data['genes'],
+                'attributes':{}
+            }
+            
+            lgt['attributes']['path_dist'] = {
+                'type': 'numeric', 
+                'value': data['source'].get_distance(data['target'], topology_only=True)
+            }
+            
+            lgt['attributes']['n_genes'] = {
+                'type': 'numeric', 
+                'value': len(data['genes'])
+            }
+            lgts_vector.append(lgt)
+
+        print("Number of LGTs found", total_number_of_lgts)
+        print("Number of LGTs edges (non redundant)", len(lgts_vector))
+        return lgts_vector
+                
+
     def populateSupertreeGenesAttributes(self,number_of_trees):
 
         for node in self.supertree.traverse("preorder"):
@@ -1092,8 +1141,9 @@ class SupertreeAppTest(TestCase):
         # /////////////////////// SELECTING LGTS METHOD
         # compute One vector of possible LGTs...
         #lgts_vector = self.computeLGTsCandidatesSimplified(number_of_trees)
-        lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
+        #lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
         #lgts_vector = self.computeLGTsCandidatesTopologyOnly(number_of_trees)
+        lgts_vector = self.computeLGTsCandidatesNoParenting(number_of_trees)
 
         # print("Hash groups:")
         # print(self.hash_groups)
