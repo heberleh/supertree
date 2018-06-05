@@ -498,13 +498,6 @@ class SupertreeView {
             id+=1;
         });
 
-        var bundle = new Bundler();
-        bundle.setNodes(edges_for_bundling);
-        bundle.buildNearestNeighborGraph();
-        bundle.MINGLE();
-        console.time('test');    
-        console.log("BUNDLE",bundle);
-        console.timeEnd('test');
     }
 
     updateLGTsVisibilityByNumericFilter() {
