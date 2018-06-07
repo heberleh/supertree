@@ -11,29 +11,52 @@ class SupertreeView {
 
         console.log("Supertree", this.supertree.hierarchy);
 
-        //let colors = d3.shuffle(d3.schemeCategory20);
-        //console.log(colors);
+        // let colors = d3.shuffle(d3.schemeCategory20);
+        // console.log(colors);
+        // let colors = [
+        //     "#9467bd",
+        //     "#8c564b",
+        //     "#ffbb78",
+        //     "#c7c7c7",
+        //     "#f7b6d2",
+        //     "#2ca02c",
+        //     "#c5b0d5",
+        //     "#9edae5",
+        //     "#dbdb8d",
+        //     "#bcbd22",
+        //     "#ff7f0e",
+        //     "#7f7f7f",
+        //     "#c49c94",
+        //     "#1f77b4",
+        //     "#aec7e8",
+        //     "#d62728",
+        //     "#98df8a",
+        //     "#17becf",
+        //     "#e377c2",
+        //     "#ff9896"
+        //   ];
+
         let colors = [
-            "#9467bd",
-            "#8c564b",
-            "#ffbb78",
-            "#c7c7c7",
-            "#f7b6d2",
-            "#2ca02c",
-            "#c5b0d5",
-            "#9edae5",
-            "#dbdb8d",
-            "#bcbd22",
-            "#ff7f0e",
-            "#7f7f7f",
-            "#c49c94",
-            "#1f77b4",
-            "#aec7e8",
-            "#d62728",
-            "#98df8a",
             "#17becf",
+            "#ff7f0e",
+            "#d62728",
+            "#c49c94",
+            "#98df8a",
             "#e377c2",
-            "#ff9896"
+            "#2ca02c",
+            "#ff9896",
+            "#8c564b",
+            "#9467bd",
+            "#1f77b4",
+            "#c5b0d5",
+            "#7f7f7f",
+            "#f7b6d2",
+            "#c7c7c7",
+            "#ffbb78",
+            "#bcbd22",
+            "#aec7e8",
+            "#9edae5",
+            "#dbdb8d"
           ];
         
         console.log("Groups labels", supertree.groupsLabels);
@@ -173,12 +196,8 @@ class SupertreeView {
         this.supertree.lgts.forEach(e =>{
             let e_scores = [];
             e.genes.forEach( g  =>{
-                let src_v = this.supertree.getGroupsDistribution(g)[e.source.data.c]/Object.values(this.supertree.getGroupsDistribution(g)).reduce(function (a, b) {
-                    return a + b;
-                });
-                let trg_v = this.supertree.getGroupsDistribution(g)[e.target.data.c]/Object.values(this.supertree.getGroupsDistribution(g)).reduce(function (a, b) {
-                    return a + b;
-                });
+                let src_v = this.supertree.getGroupsDistribution(g)[e.source.data.c]/this.supertree.totals_in_groups[e.source.data.c];
+                let trg_v = this.supertree.getGroupsDistribution(g)[e.target.data.c]/this.supertree.totals_in_groups[e.target.data.c];
                 
                 let value = Math.trunc(Math.abs(src_v - trg_v) * 100);
 
@@ -462,7 +481,7 @@ class SupertreeView {
         let container = this._lgts_container;
         // console.log("LGTs container", container);
 
-        this.supertree.lgts.forEach((d) => {
+        this.supertree.lgts.forEach((d) => {            
             d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);
         });
 

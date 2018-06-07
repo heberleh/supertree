@@ -41,7 +41,22 @@ class Supertree {
         // set up LGTs edges
         this._lgts = this._setUpLGTs(nodes_data.lgts);
         
+        this._totals_in_groups = this._setUpTotalsInGroups();
 
+
+    }
+
+    _setUpTotalsInGroups(){
+        let totals_in_groups = {};
+        this.groupsLabels.forEach(label =>{
+            totals_in_groups[label] = 0;
+        });
+
+        this.hierarchy.leaves().forEach(leaf =>{             
+            totals_in_groups[leaf.data.c] += 1;
+        });
+        console.log("Number of genomes in each group: ", totals_in_groups)
+        return totals_in_groups;
     }
 
     _updateNodesData() {
@@ -137,6 +152,7 @@ class Supertree {
                 l[e].target = hash[l[e].target];
                 l[e].lateralEdgeSprite = null;
                 l[e].genes = new Set(l[e].genes);
+                l[e].supertree = this;
                 lgts_nodes.push(l[e]);                
             } else {
                 non_tracked_edges.push(l[e]);
@@ -169,5 +185,9 @@ class Supertree {
 
     get maxNgenes(){
         return this._max_number_of_genes_in_a_genome;
+    }
+
+    get totals_in_groups(){
+        return this._totals_in_groups;
     }
 }

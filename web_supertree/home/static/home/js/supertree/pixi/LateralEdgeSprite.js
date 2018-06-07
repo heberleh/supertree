@@ -83,6 +83,18 @@ class LateralEdgeSprite {
 
         this.sprite.on('mousedown', ()=>{            
             console.log(this.data.genes);
+            this.data.genes.forEach(g => {
+                console.log(this.data.supertree.getGroupsDistribution(g));
+                let src_v = this.data.supertree.getGroupsDistribution(g)[this.data.source.data.c]/this.data.supertree.totals_in_groups[this.data.source.data.c];
+                let trg_v = this.data.supertree.getGroupsDistribution(g)[this.data.target.data.c]/this.data.supertree.totals_in_groups[this.data.target.data.c];
+
+                console.log("values: ", src_v, trg_v, this.data.supertree.totals_in_groups[this.data.source.data.c], this.data.supertree.totals_in_groups[this.data.target.data.c]);
+                console.log("dif: ", Math.trunc(Math.abs(src_v - trg_v) * 100));
+            });
+
+
+            
+                        
             // this._supertreeView.highlightLeavesFromGenes(this.data.genes);
             // this._supertreeView.filterLGTsFromGenes(this.data.genes);
             // this._supertreeView.listGenes(this.data.genes);

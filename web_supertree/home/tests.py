@@ -62,7 +62,7 @@ class SupertreeAppTest(TestCase):
                     self.hash_groups[self.clean(names[i])] = group_name
 
             
-            reference_newick = TestData.get_supertree_spr_aquificae_rooting()
+            reference_newick = TestData.get_supertree_spr_mrp_rooting() #get_supertree_spr_aquificae_rooting()
             forest_newicks = TestData.get_mrp_gene_trees()
             self.format = 9
             self.supertree = Tree(
