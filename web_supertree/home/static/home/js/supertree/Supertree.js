@@ -1,6 +1,6 @@
 class Supertree {
 
-    constructor(supertree_newick, nodes_data) {
+    constructor(supertree_newick, nodes_data, lgts_key) {
         // update data structure
         this._nodes_data = nodes_data;   
 
@@ -31,18 +31,35 @@ class Supertree {
         this._forest = nodes_data.forest;
         
         let max_n_g = 0;
+        let min_n_g = Object.values(this._forest).length;
+
+        console.log("&&&&&&&&&&&&&&&&&&&&&&&&&", min_n_g);
         this.hierarchy.leaves().forEach(leaf =>{             
             if(max_n_g < leaf.data.genes.size){
                 max_n_g = leaf.data.genes.size;
             }
+            if(min_n_g > leaf.data.genes.size){
+                min_n_g = leaf.data.genes.size;
+            }        
         });
         this._max_number_of_genes_in_a_genome = max_n_g;
+        this._min_number_of_genes_in_a_genome = min_n_g;
 
         // set up LGTs edges
-        this._lgts = this._setUpLGTs(nodes_data.lgts);
-        
-        this._totals_in_groups = this._setUpTotalsInGroups();
+        console.log("DEBUG", nodes_data[lgts_key]);
+        this._lgts = this._setUpLGTs(nodes_data[lgts_key]);
 
+
+        let max_genes = 0;
+        this._lgts.forEach(lgt =>{
+            if (lgt.genes.size > max_genes){
+                max_genes = lgt.genes.size;
+            }
+        });      
+        console.log("Max number of genes in edges", max_genes);
+        this._max_number_of_genes_in_edges = max_genes;
+
+        this._totals_in_groups = this._setUpTotalsInGroups();
 
     }
 
@@ -60,12 +77,14 @@ class Supertree {
     }
 
     _updateNodesData() {
+        
         this._nodes_data.lgts.forEach(lgt=>{
+
             new_genes = new Set();
             lgt.genes.forEach(gene =>{
                 new_genes.add()
             });
-        });
+        });      
     }
 
     _setUpGenesDict() {
@@ -187,7 +206,15 @@ class Supertree {
         return this._max_number_of_genes_in_a_genome;
     }
 
+    get minNgenes(){
+        return this._min_number_of_genes_in_a_genome;
+    }
+
     get totals_in_groups(){
         return this._totals_in_groups;
+    }
+
+    get max_number_of_genes_in_edges(){
+        return this._max_number_of_genes_in_edges;
     }
 }

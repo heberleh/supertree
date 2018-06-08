@@ -14,8 +14,12 @@ class LateralEdgeSprite {
         this.highlightAlpha = 1;
 
         this.defaultColor = 0x808080;
-        this.defaultWidth = 1;
-
+        
+        let s = d3.scaleLinear()
+                    .domain([1, this.data.supertree.max_number_of_genes_in_edges])
+                    .range([1.0, 4.0]);
+        this.defaultWidth = s(this.data.genes.size);
+        // this.defaultWidth = 1;
         let p0 = project(d.source.x, d.source.y);
         let p1 = project(d.target.x, d.target.y);        
         

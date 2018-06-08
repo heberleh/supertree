@@ -390,11 +390,6 @@ class SupertreeAppTest(TestCase):
         #     if e[2]['w'] >= second_max:
         #         print(e)
 
-    # def testPeptidesTrees(self):                
-    #     dm = DistanceMatrix(data, ids)
-    #     newick = nj(dm, result_constructor=str)
-    #     pass
-
     def get_name(self,tree):
         names = tree.get_leaf_names()
         names.sort()
@@ -736,69 +731,8 @@ class SupertreeAppTest(TestCase):
 
     def clean(self,txt):
         return txt.replace(',', '_').replace('/', '_').replace('.', '_').replace('-','_').replace('\"','').replace(' ','')
-
-    def computeLGTsCandidatesSimplified(self,number_of_trees):
-        print("Computing LGT candidates...")        
-        potential_lgts = nx.Graph()       
-        
-        total_number_of_lgts = 0
-        for tree_index in range(number_of_trees):
-            taxon = self.forest[tree_index].get_leaf_names()
-            clusters = {}
-            clusters_distribution = {} #distribution
-            for taxa_name in taxon:
-                for leaf in self.supertree.get_leaves_by_name(taxa_name):
-                    if leaf.g in clusters:
-                        clusters[leaf.g].append(leaf)
-                    else:
-                        clusters[leaf.g] = [leaf]            
-            for c in clusters:
-                clusters_distribution[c] = len(clusters[c])
-
-            self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)
-
-            # cluster_lgts_dist = {} # for now it does not make sense to store this
-            for c1, c2 in itertools.combinations(clusters, 2):
-                n1 = self.supertree.get_common_ancestor(clusters[c1])
-                n2 = self.supertree.get_common_ancestor(clusters[c2])                
-                total_number_of_lgts += 1
-                if (potential_lgts.has_edge(n1.name, n2.name)):
-                    potential_lgts[n1.name][n2.name]['genes'].append(tree_index)
-                else:
-                    potential_lgts.add_edge(n1.name,
-                                        n2.name,
-                                        source = n1,
-                                        target = n2,
-                                        genes = [tree_index],
-                                        attributes = {}
-                                        )
-                
-
-        lgts_vector = [] 
-        for (src,trg,data) in potential_lgts.edges(data=True):
-            lgt = {
-                'source':src,
-                'target':trg,
-                'genes': data['genes'],
-                'attributes':{}
-            }
-            
-            lgt['attributes']['path_dist'] = {
-                'type': 'numeric', 
-                'value': data['source'].get_distance(data['target'], topology_only=True)
-            }
-            
-            lgt['attributes']['n_genes'] = {
-                'type': 'numeric', 
-                'value': len(data['genes'])
-            }
-            lgts_vector.append(lgt)
-
-        print("Number of LGTs found", total_number_of_lgts)
-        print("Number of LGTs edges (non redundant)", len(lgts_vector))
-        return lgts_vector
-        
-    def computeLGTsCandidatesPartentIntersecion(self,number_of_trees):             
+    
+    def computeLGTsCandidatesParentIntersecion(self,number_of_trees):             
         potential_lgts = nx.Graph()       
         
         total_number_of_lgts = 0     
@@ -862,64 +796,7 @@ class SupertreeAppTest(TestCase):
         print("Number of LGTs found", total_number_of_lgts)
         print("Number of LGTs edges (non redundant)", len(lgts_vector))
         return lgts_vector
-        
-    def computeLGTsCandidatesTopologyOnly(self,number_of_trees):
-        print("Computing LGT candidates...")        
-        potential_lgts = nx.Graph()               
-        total_number_of_lgts = 0   
-          
-        print("Genes in root vs. total genes", len(self.supertree.genes), len(self.forest))
-        for node in self.supertree.children:
-            print(len(node.genes))
-
-        for tree_index in range(number_of_trees):            
-            roots = []
-            
-            # find all UPPER nodes that contains that gene in the Intersection            
-            for root in self.supertree.iter_leaves(is_leaf_fn = lambda node: True if tree_index in node.genes else False):
-                roots.append(root)
-            
-            if len(roots) > 1:
-                for n1, n2 in itertools.combinations(roots, 2):
-                    for leaf1 in self.forest[tree_index].get_leaves_by_name(n1.name): #only one
-                        for leaf2 in self.forest[tree_index].get_leaves_by_name(n2.name):
-                            distance = leaf1.get_distance(leaf2, topology_only=True) #number of nodes between leaf1 and leaf2
-                            if distance < 2:
-                                total_number_of_lgts += 1
-                                if (potential_lgts.has_edge(n1.name, n2.name)):
-                                    potential_lgts[n1.name][n2.name]['genes'].append(tree_index)
-                                else:
-                                    potential_lgts.add_edge(
-                                                n1.name,
-                                                n2.name,
-                                                source = n1,
-                                                target = n2,
-                                                genes = [tree_index],
-                                                attributes = {
-                                                'path_dist' : {'type': 'numeric', 'value': distance}
-                                            })                        
-
-        lgts_vector = [] 
-        for (src,trg,data) in potential_lgts.edges(data=True):
-            lgt = {
-                'source':src,
-                'target':trg,
-                'genes': data['genes'],
-                'attributes':{}
-            }
-            
-            lgt['attributes']['path_dist'] = data['attributes']['path_dist']            
-            
-            lgt['attributes']['n_genes'] = {
-                'type': 'numeric', 
-                'value': len(data['genes'])
-            }
-            lgts_vector.append(lgt)
-
-        print("Number of LGTs found", total_number_of_lgts)
-        print("Number of LGTs edges (non redundant)", len(lgts_vector))
-        return lgts_vector
-        
+         
     def computeLGTsCandidatesNoParenting(self,number_of_trees):             
         potential_lgts = nx.Graph()       
         
@@ -968,7 +845,6 @@ class SupertreeAppTest(TestCase):
         print("Number of LGTs edges (non redundant)", len(lgts_vector))
         return lgts_vector
                 
-
     def populateSupertreeGenesAttributes(self,number_of_trees):
 
         for node in self.supertree.traverse("preorder"):
@@ -1138,12 +1014,11 @@ class SupertreeAppTest(TestCase):
             self.forest[tree_index].add_features(clusters_distribution = clusters_distribution)    
         
         print("Computing LGTs candidates...")
-        # /////////////////////// SELECTING LGTS METHOD
+        # /////////////////////// SELECTING LGTS METHOD /////////////////////////////////////////
         # compute One vector of possible LGTs...
         #lgts_vector = self.computeLGTsCandidatesSimplified(number_of_trees)
-        #lgts_vector = self.computeLGTsCandidatesPartentIntersecion(number_of_trees)
-        #lgts_vector = self.computeLGTsCandidatesTopologyOnly(number_of_trees)
-        lgts_vector = self.computeLGTsCandidatesNoParenting(number_of_trees)
+        lgts_vector_intersection = self.computeLGTsCandidatesParentIntersecion(number_of_trees)
+        lgts_vector_no_parenting = self.computeLGTsCandidatesNoParenting(number_of_trees)
 
         # print("Hash groups:")
         # print(self.hash_groups)
@@ -1189,8 +1064,13 @@ class SupertreeAppTest(TestCase):
         json_txt += json.dumps(totals_in_groups)
 
         # write lgts edges
-        json_txt += ",\"lgts\":["
-        for edge in lgts_vector:
+        json_txt += ",\"lgts_1\":["
+        for edge in lgts_vector_intersection:
+            json_txt += json.dumps(edge) +","
+        json_txt = json_txt[:-1]        
+        
+        json_txt += "],\"lgts_2\":["
+        for edge in lgts_vector_no_parenting:
             json_txt += json.dumps(edge) +","
         json_txt = json_txt[:-1]
 

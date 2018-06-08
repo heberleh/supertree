@@ -15,17 +15,17 @@ $(document).ready(function() {
             console.log("nodes data", nodes_data);
             console.log("nodes data", nodes_data.supertree["Acetohalobium_arabaticum_DSM_5501"].genes);
 
-            //console.log("lgts from file",nodes_data.lgts);
-            // create models
-            var supertree = new Supertree(supertree_nw, nodes_data);
+            //console.log("lgts from file",nodes_data.lgts1,nodes_data.lgts2);
+            // create models            
+            var supertree = new Supertree(supertree_nw, nodes_data, location.search.split('lgts=')[1]);
             // create diagrams
 
             // for each Gene-tree get the leaves distribution over pre-definded groups
             var streamData = [];
             var labels = supertree.groupsLabels;
             var sizeGroups = labels.length;
-            var groups_dist = nodes_data.group_sp_distribution;    
-            var totals_in_groups = nodes_data.totals_in_groups;   
+            var groups_dist = nodes_data.group_sp_distribution;
+            var totals_in_groups = nodes_data.totals_in_groups;
 
             console.log("groups dist", groups_dist);
             console.log("total number of species in groups",totals_in_groups);

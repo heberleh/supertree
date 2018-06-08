@@ -11,7 +11,12 @@ class GenomeSprite extends Sprite {
         let max_height = 150;
         this.width = 7;
 
-        this.height = Math.trunc(max_height * this._node.data.genes.size / this._supertreeView.supertree.maxNgenes);
+        let s = d3.scaleLinear()
+                    .domain([this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes])
+                    .range([10, max_height]);
+
+        console.log("Scale genome size: ", [this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes], s(this._node.data.genes.size));
+        this.height = Math.trunc(s(this._node.data.genes.size));
 
         this.container = container;
 
