@@ -29,6 +29,14 @@ class Supertree {
 
         // set up forest
         this._forest = nodes_data.forest;
+        this._forest.forEach(gene => {
+            if (typeof(gene.attributes) == 'undefined'){
+                gene.attributes = {};
+            }
+            if (typeof(gene.filtered) == 'undefined'){
+                gene.filtered = true;
+            }
+        });
         
         let max_n_g = 0;
         let min_n_g = Object.values(this._forest).length;
