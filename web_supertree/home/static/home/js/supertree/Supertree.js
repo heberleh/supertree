@@ -29,14 +29,16 @@ class Supertree {
 
         // set up forest
         this._forest = nodes_data.forest;
-        this._forest.forEach(gene => {
+        console.log("Forest", this._forest);
+        for(let i in this._forest){
+            let gene = this._forest[i];
             if (typeof(gene.attributes) == 'undefined'){
                 gene.attributes = {};
             }
             if (typeof(gene.filtered) == 'undefined'){
                 gene.filtered = true;
             }
-        });
+        }
         
         let max_n_g = 0;
         let min_n_g = Object.values(this._forest).length;
@@ -86,13 +88,13 @@ class Supertree {
 
     _updateNodesData() {
         
-        this._nodes_data.lgts.forEach(lgt=>{
+        // this._nodes_data.lgts.forEach(lgt=>{
 
-            new_genes = new Set();
-            lgt.genes.forEach(gene =>{
-                new_genes.add()
-            });
-        });      
+        //     new_genes = new Set();
+        //     lgt.genes.forEach(gene =>{
+        //         new_genes.add()
+        //     });
+        // });      
     }
 
     _setUpGenesDict() {
@@ -109,7 +111,7 @@ class Supertree {
             try {
                 var node = this._nodes_data.supertree[d.data.name];
                 d.data.c = node.g;
-                d.data.genes = new Set(node.genes);
+                d.data.genes = new Set(node.genes);                
             } catch (error) {
                 console.log(error);
                 console.log("ERROR");
@@ -178,8 +180,10 @@ class Supertree {
                 l[e].source = hash[l[e].source];
                 l[e].target = hash[l[e].target];
                 l[e].lateralEdgeSprite = null;
+                l[e].genes_array = l[e].genes;
                 l[e].genes = new Set(l[e].genes);
                 l[e].supertree = this;
+                l[e].enabled = true;
                 lgts_nodes.push(l[e]);                
             } else {
                 non_tracked_edges.push(l[e]);

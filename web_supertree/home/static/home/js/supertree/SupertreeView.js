@@ -57,8 +57,8 @@ class SupertreeView {
             "#aec7e8",
             "#9edae5",
             "#dbdb8d"
-          ];
-        
+        ];
+
         console.log("Groups labels", supertree.groupsLabels);
         this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels, colors);
         this._setColor(this.supertree.hierarchy);
@@ -108,7 +108,7 @@ class SupertreeView {
 
         // VIEW FILTERS
         this.globalLGTsAlpha = 1;
-        this.globalGenomesAlpha =  0.3;
+        this.globalGenomesAlpha = 0.3;
         this.globalGenomeLabelAlpha = 1.0;
         this.setUpGraphicalSlidersFilters();
         this.setUpGenomeAlpha();
@@ -119,6 +119,7 @@ class SupertreeView {
         //this._addAttributeLGTGenesScores();
 
         // GENE FILTERS
+        this.numericalGeneAttributes = {};
         this._addGeneAttributeNumberOfGenomes();
 
 
@@ -145,7 +146,7 @@ class SupertreeView {
             .attr("transform", "translate(20,20)");
 
         console.log("group labels", this.supertree.groupsLabels);
-        let legendOrdinal = d3.legendColor()         
+        let legendOrdinal = d3.legendColor()
             .shape("path", d3.symbol().type(d3.symbolTriangle).size(150)())
             .shapePadding(10)
             //use cellFilter to hide the "e" cell
@@ -189,7 +190,7 @@ class SupertreeView {
         dict.max = d3.max(values);
         dict.selMin = dict.min;
         dict.selMax = dict.max;
-        dict.values = values;        
+        dict.values = values;
         this.numericalLGTAttributes[name] = dict;
     }
 
@@ -212,12 +213,12 @@ class SupertreeView {
 
         let name_max = "max_gene_score";
         let name_min = "min_gene_score";
-        this.supertree.lgts.forEach(e =>{
+        this.supertree.lgts.forEach(e => {
             let e_scores = [];
-            e.genes.forEach( g  =>{
-                let src_v = this.supertree.getGroupsDistribution(g)[e.source.data.c]/this.supertree.totals_in_groups[e.source.data.c];
-                let trg_v = this.supertree.getGroupsDistribution(g)[e.target.data.c]/this.supertree.totals_in_groups[e.target.data.c];
-                
+            e.genes.forEach(g => {
+                let src_v = this.supertree.getGroupsDistribution(g)[e.source.data.c] / this.supertree.totals_in_groups[e.source.data.c];
+                let trg_v = this.supertree.getGroupsDistribution(g)[e.target.data.c] / this.supertree.totals_in_groups[e.target.data.c];
+
                 let value = Math.trunc(Math.abs(src_v - trg_v) * 100);
 
                 values.add(value);
@@ -476,11 +477,8 @@ class SupertreeView {
         let container = this._lgts_container;
         // console.log("LGTs container", container);
 
-        this.supertree.lgts.forEach((d) => {            
+        this.supertree.lgts.forEach((d) => {
             d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);
-            d.genes.forEach(gene =>{
-                this.supertree.forest[gene].lateralEdgeSprites.append(d.lateralEdgeSprite);
-            });
         });
 
         this.updateEdgesVisibilityByNumericLGTFilter();
@@ -501,19 +499,17 @@ class SupertreeView {
         let edges_for_bundling = [];
         let id = 0;
 
-        this.supertree.lgts.forEach(d=>{
+        this.supertree.lgts.forEach(d => {
             let p0 = project(d.source.x, d.source.y);
-            let p1 = project(d.target.x, d.target.y); 
-            edges_for_bundling.push(
-                {
-                    "id": id,
-                    "name": "",
-                    "data":{
-                        "coords":[p0[0], p0[1], p1[0], p1[1]]
-                    }
+            let p1 = project(d.target.x, d.target.y);
+            edges_for_bundling.push({
+                "id": id,
+                "name": "",
+                "data": {
+                    "coords": [p0[0], p0[1], p1[0], p1[1]]
                 }
-            );
-            id+=1;
+            });
+            id += 1;
         });
 
     }
@@ -523,8 +519,9 @@ class SupertreeView {
         this.supertree.lgts.forEach((d) => {
             let visible = true;
             for (let name in this.numericalLGTAttributes) {
-                if (d.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
-                    d.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
+                if (!d.enabled
+                    || d.attributes[name].value < this.numericalLGTAttributes[name].selMin
+                    || d.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
                     visible = false;
                     break;
                 }
@@ -544,18 +541,18 @@ class SupertreeView {
     }
 
     updateGenomesDefaultAlpha() {
-        this.supertree.hierarchy.leaves().forEach(d => {            
-            d.genomeSprite.alpha = this.globalGenomesAlpha;                            
+        this.supertree.hierarchy.leaves().forEach(d => {
+            d.genomeSprite.alpha = this.globalGenomesAlpha;
         });
     }
 
     updateGenomesLabelsDefaultAlpha() {
-        this.supertree.hierarchy.leaves().forEach(d => {            
-            d.graphics.alpha = this.globalGenomeLabelAlpha;                            
+        this.supertree.hierarchy.leaves().forEach(d => {
+            d.graphics.alpha = this.globalGenomeLabelAlpha;
         });
     }
 
-    setUpNumericalSlidersFilters() {        
+    setUpNumericalSlidersFilters() {
 
         // LGT FILTERS
         for (let name in this.numericalLGTAttributes) {
@@ -591,9 +588,10 @@ class SupertreeView {
                 this.updateEdgesVisibilityByNumericLGTFilter();
             });
         }
-        
+
         // GENES FILTERS
         for (let name in this.numericalGeneAttributes) {
+            console.log("attribute gne name: ", name);
 
             let id = name + "inputNumericFilter";
 
@@ -609,7 +607,7 @@ class SupertreeView {
                 .style("width", "100%")
                 .style("height", "100%");
 
-            let att = this.numericalLGTAttributes[name];
+            let att = this.numericalGeneAttributes[name];
             let slider = $("#" + id).slider({
                 id: id + "_slider",
                 min: att.min,
@@ -666,11 +664,11 @@ class SupertreeView {
 
         /////////////////////////////////////////////////
         // alpha for genome boxes
-     
+
 
     }
 
-    setUpGenomeAlpha(){
+    setUpGenomeAlpha() {
         let name = "alpha-genomes";
         let id = name + "inputNumericFilter";
 
@@ -695,16 +693,16 @@ class SupertreeView {
             min: 0,
             max: 1,
             step: 0.05,
-            value:  this.globalGenomesAlpha
+            value: this.globalGenomesAlpha
         });
 
-        slider.on('change', () => {            
+        slider.on('change', () => {
             this.globalGenomesAlpha = slider.data('slider').getValue();
             this.updateGenomesDefaultAlpha();
         });
     }
 
-    setUpGenomeLabelsAlpha(){
+    setUpGenomeLabelsAlpha() {
         let name = "alpha-genomes-labels";
         let id = name + "inputNumericFilter";
 
@@ -729,10 +727,10 @@ class SupertreeView {
             min: 0,
             max: 1,
             step: 0.05,
-            value:  this.globalGenomesAlpha
+            value: this.globalGenomesAlpha
         });
 
-        slider.on('change', () => {            
+        slider.on('change', () => {
             this.globalGenomeLabelAlpha = slider.data('slider').getValue();
             this.updateGenomesLabelsDefaultAlpha();
         });
@@ -808,7 +806,6 @@ class SupertreeView {
 
     ////// main gene filter methods //////
     updateLGTsVisibilityByGeneFilter(gene) {
-
         this.supertree.lgts.forEach((d) => {
             if (d.genes.includes(gene)) {
                 d.lateralEdgeSprite.selected = true;
@@ -828,39 +825,48 @@ class SupertreeView {
     _addGeneAttributeNumberOfGenomes() {
         let values = new Set();
 
-        let name = "|Genomes|";
-               
-        this.supertree.forest.forEach(gene => {
-            let value = Object.values(this.supertree.getGroupsDistribution(g)).reduce(function (a, b) {
+        let name = "N_Genomes";
+
+        for(let gene_index in this.supertree.forest){
+            let gene = this.supertree.forest[gene_index];
+            let value = Object.values(this.supertree.getGroupsDistribution(gene_index)).reduce(function (a, b) {
                 return a + b;
             });
+
             values.add(value);
             gene.attributes[name] = {
                 'type': 'numeric_list_at_least',
                 'value': value
             };
-        });
+        }                  
 
         this._addNumericalGeneAttribute(name, [...values]);
     }
 
-    updateEdgesVisibilityByNumericGeneFilter(){
+    updateEdgesVisibilityByNumericGeneFilter() {
         this._selected_genes = [];
-
-        this.supertree.forest.forEach(gene => {
+        
+        for(let gene_index in this.supertree.forest){
+            let gene = this.supertree.forest[gene_index];
             let selected = true;
             for (let name in this.numericalGeneAttributes) {
-                if (d.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
-                    d.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
-                    visible = false;
+                if (gene.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
+                    gene.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
+                    selected = false;
                     break;
                 }
             }
             gene.filtered = selected;
+        }
+        
+        this.supertree.lgts.forEach(lgt => {
+            lgt.enabled = lgt.genes_array.some(gene =>{
+                return this.supertree.forest[gene].filtered;
+            });
         });
+
+        this.updateEdgesVisibilityByNumericLGTFilter();
     }
-
-
 
     listGenes(genes) {
         let text = d3.select("#gene_list")
@@ -878,8 +884,6 @@ class SupertreeView {
                 this.highlightLeavesFromGenes([d]);
                 this.filterLGTsFromGenes([d]);
             });
-
-
     }
 
     _setUpGenomeBars() {
@@ -887,7 +891,7 @@ class SupertreeView {
         let superTreeView = this;
         console.log("number of leaves", this.supertree.hierarchy.leaves().length);
         this.supertree.hierarchy.leaves().forEach(function (d) {
-            d.genomeSprite = new GenomeSprite(container, d, superTreeView);        
+            d.genomeSprite = new GenomeSprite(container, d, superTreeView);
         });
     }
 
