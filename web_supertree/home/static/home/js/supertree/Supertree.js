@@ -209,7 +209,6 @@ class Supertree {
         return this.hierarchy.leaves().length;
     }
 
-
     getGroupsDistribution(gene){
         return this._nodes_data.group_sp_distribution[gene];
     }
