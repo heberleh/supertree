@@ -3,6 +3,7 @@
 $(document).ready(function() {
 
     // read files and load models  -> when loading from django... how it would be?
+
     
     //let filename = "/static/home/data_all_genes_regular.json";
     let filename = "/static/home/data.json";

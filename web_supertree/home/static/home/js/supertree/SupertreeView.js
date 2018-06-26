@@ -120,7 +120,7 @@ class SupertreeView {
         // GENE FILTERS
         this.numericalGeneAttributes = {};
         this._addGeneAttributeNumberOfGenomes();
-        this._addAttributeGenesScores();
+        this._addAttributeGenesScores();        
 
         //FILTERS SLIDERS
         this.setUpNumericalSlidersFilters();
@@ -959,8 +959,6 @@ class SupertreeView {
         this._addNumericalGeneAttribute(name_std, [...values_std]);
     }
 
-
-
     listGenes(genes) {
         let text = d3.select("#gene_list")
             .selectAll('p')
@@ -990,6 +988,24 @@ class SupertreeView {
 
     get groupsColorMap() {
         return this._treeGroupColorMap;
+    }
+
+    addSearchBox(){
+
+        // $('#exact').click(function () {
+        //     search('#search_text');
+        // });
+    
+        // $('#search_text')[0].oninput = function () {
+        //     search('#search_text');
+        // };
+    
+        // $('#find').click(function () {
+        //     search('#search_text')
+        // });
+        // $('#keep').click(keep);
+        // $('#clear').click(function(){clear_visibility(true)});
+    
     }
 
 }
