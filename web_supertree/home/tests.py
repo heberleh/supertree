@@ -9,6 +9,8 @@ from networkx.drawing.nx_agraph import graphviz_layout
 from scipy.sparse import csr_matrix
 import itertools
 import json
+import string
+import random
 
 from home.test_data import TestData
 
@@ -986,6 +988,14 @@ class SupertreeAppTest(TestCase):
             f.write(json_txt)
             f.close()        
 
+
+    def get_gene_functions(gene):
+        # load gene function from Gene Ontology
+        return [random.choice(string.letters), random.choice(string.letters)]
+
+    def get_gene_name(tree_index):
+        return None
+
     def testSetGraphLGTClusteringByName(self):
         # parameters
         number_of_trees = len(self.forest)
@@ -1030,6 +1040,12 @@ class SupertreeAppTest(TestCase):
         for tree_index in range(number_of_trees):
             tree = self.forest[tree_index]
             json_txt += "\""+str(tree_index) +"\":{"
+
+            # write gene functions
+            json_txt += "\"functions\":["
+            for function in self.get_gene_functions(tree_index): #self.get_gene_name(tree_index)
+                json_txt +=  "\""+ function + "\","
+            json_txt = json_txt[:-1]
             
             # write the species
             json_txt += "\"species\":["

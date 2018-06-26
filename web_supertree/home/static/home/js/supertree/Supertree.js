@@ -42,8 +42,7 @@ class Supertree {
         
         let max_n_g = 0;
         let min_n_g = Object.values(this._forest).length;
-
-        console.log("&&&&&&&&&&&&&&&&&&&&&&&&&", min_n_g);
+        
         this.hierarchy.leaves().forEach(leaf =>{             
             if(max_n_g < leaf.data.genes.size){
                 max_n_g = leaf.data.genes.size;
@@ -133,9 +132,9 @@ class Supertree {
             if (!gs.has(nodes[key].g)){
                 gs.add(nodes[key].g);
                 gs_list.push(nodes[key].g);
-            }            
+            }
         }
-        
+
         return gs_list.sort();
     }
 
