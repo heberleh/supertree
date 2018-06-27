@@ -120,7 +120,7 @@ class SupertreeView {
         // GENE FILTERS
         this.numericalGeneAttributes = {};
         this._addGeneAttributeNumberOfGenomes();
-        this._addAttributeGenesScores();        
+        this._addAttributeGenesScores();
 
         //FILTERS SLIDERS
         this.setUpNumericalSlidersFilters();
@@ -990,22 +990,54 @@ class SupertreeView {
         return this._treeGroupColorMap;
     }
 
-    addSearchBox(){
+    /**
+     * Filter edges by strings writen in the input text box
+     * @param {string} inputID The inputText HTML element' id
+     */
+    search(inputID) {
+        var exact = d3.select("#exact").node().checked;
+        var str = d3.select(inputID).node().value.toUpperCase();
+
+        for (let gene_index in this.supertree.forest) {
+            let gene = this.supertree.forest[gene_index];
+
+            let has_string = false;
+            if (exact){
+                has_string = gene["functions"].some(func => {
+                    return func.toUpperCase().valueOf() === str.valueOf();
+                });               
+            }else{
+                has_string = gene["functions"].some(func => {
+                    return func.toUpperCase().valueOf().search(str) > -1;
+                });            
+            }
+
+            gene.filter = has_string;
+        }             
+
+        this.supertree.lgts.forEach(lgt => {
+            lgt.enabled = lgt.genes_array.some(gene => {
+                return this.supertree.forest[gene].filtered;
+            });
+        });
+    }
+
+    addSearchBox() {
 
         // $('#exact').click(function () {
         //     search('#search_text');
         // });
-    
+
         // $('#search_text')[0].oninput = function () {
         //     search('#search_text');
         // };
-    
+
         // $('#find').click(function () {
         //     search('#search_text')
         // });
         // $('#keep').click(keep);
         // $('#clear').click(function(){clear_visibility(true)});
-    
+
     }
 
 }
