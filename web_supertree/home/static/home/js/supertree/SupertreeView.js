@@ -129,6 +129,11 @@ class SupertreeView {
         // Visual color for Numeric attributes
         this._setUpColorSelectionMenu();
 
+        // Searching box
+        this._addSearchBox();
+
+        this._updateVisualStatistics();
+
     }
 
     _setUpGroupsLegend() {
@@ -536,6 +541,8 @@ class SupertreeView {
             }
             d.lateralEdgeSprite.sprite.visible = visible;
         });
+
+        this._updateVisualStatistics();
     }
 
 
@@ -857,12 +864,16 @@ class SupertreeView {
         for (let gene_index in this.supertree.forest) {
             let gene = this.supertree.forest[gene_index];
             let selected = true;
-            for (let name in this.numericalGeneAttributes) {
-                if (gene.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
-                    gene.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
-                    selected = false;
-                    break;
+            if (gene.filtered_by_search){
+                for (let name in this.numericalGeneAttributes) {
+                    if (gene.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
+                        gene.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
+                        selected = false;
+                        break;
+                    }
                 }
+            }else{
+                selected = false;
             }
             gene.filtered = selected;
         }
@@ -998,46 +1009,66 @@ class SupertreeView {
         var exact = d3.select("#exact").node().checked;
         var str = d3.select(inputID).node().value.toUpperCase();
 
+        console.log(str);
+
+        if (str == ""){
+            return;
+        }
+
         for (let gene_index in this.supertree.forest) {
             let gene = this.supertree.forest[gene_index];
 
-            let has_string = false;
-            if (exact){
-                has_string = gene["functions"].some(func => {
-                    return func.toUpperCase().valueOf() === str.valueOf();
-                });               
-            }else{
-                has_string = gene["functions"].some(func => {
-                    return func.toUpperCase().valueOf().search(str) > -1;
-                });            
+            if (gene_index < 10){
+                console.log(gene);
+                console.log(str, gene["functions"].some(func => {
+                    return func.toUpperCase() == str;
+                }));
             }
 
-            gene.filter = has_string;
+            if (exact){
+                this.supertree.forest[gene_index].filtered_by_search = gene["functions"].some(func => {
+                    return func.toUpperCase() == str;
+                });               
+            }else{
+                this.supertree.forest[gene_index].filtered_by_search = gene["functions"].some(func => {
+                    return func.toUpperCase().search(str) > -1;
+                });
+            }
         }             
 
+        let count = 0;
         this.supertree.lgts.forEach(lgt => {
-            lgt.enabled = lgt.genes_array.some(gene => {
-                return this.supertree.forest[gene].filtered;
+            lgt.enabled = lgt.enabled && lgt.genes_array.some(gene => {
+                return this.supertree.forest[gene].filtered_by_search;
             });
         });
+        this._updateVisualStatistics();
+        //this.updateEdgesVisibilityByNumericGeneFilter();               
     }
 
-    addSearchBox() {
-
-        // $('#exact').click(function () {
-        //     search('#search_text');
-        // });
+    _addSearchBox() {
+        $('#exact').click(()=> {
+            this.search('#search_text');
+        });
 
         // $('#search_text')[0].oninput = function () {
         //     search('#search_text');
         // };
 
-        // $('#find').click(function () {
-        //     search('#search_text')
-        // });
+        $('#find').click(() => {
+            this.search('#search_text')
+        });
         // $('#keep').click(keep);
         // $('#clear').click(function(){clear_visibility(true)});
+    }
 
+    _updateStatisticsVisibleEdges(){
+        console.log("Number of edges", this.supertree.lgts.filter(e => e.enabled).length);
+        d3.select("#n_visible_edges").text(this.supertree.lgts.filter(e => e.enabled).length);
+    }
+
+    _updateVisualStatistics(){
+        this._updateStatisticsVisibleEdges();
     }
 
 }

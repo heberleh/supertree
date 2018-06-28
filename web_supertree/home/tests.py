@@ -989,11 +989,11 @@ class SupertreeAppTest(TestCase):
             f.close()        
 
 
-    def get_gene_functions(gene):
+    def get_gene_functions(self, gene):
         # load gene function from Gene Ontology
-        return [random.choice(string.letters), random.choice(string.letters)]
+        return [random.choice(string.ascii_letters), random.choice(string.ascii_letters)]
 
-    def get_gene_name(tree_index):
+    def get_gene_name(self, tree_index):
         return None
 
     def testSetGraphLGTClusteringByName(self):
@@ -1048,7 +1048,7 @@ class SupertreeAppTest(TestCase):
             json_txt = json_txt[:-1]
             
             # write the species
-            json_txt += "\"species\":["
+            json_txt += "],\"species\":["
             for leaf in tree:
                 json_txt +=  "\""+ leaf.name + "\","
             json_txt = json_txt[:-1]

@@ -15,7 +15,7 @@ class GenomeSprite extends Sprite {
                     .domain([this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes])
                     .range([10, max_height]);
 
-        console.log("Scale genome size: ", [this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes], s(this._node.data.genes.size));
+        //console.log("Scale genome size: ", [this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes], s(this._node.data.genes.size));
         this.height = Math.trunc(s(this._node.data.genes.size));
 
         this.container = container;
@@ -71,7 +71,7 @@ class GenomeSprite extends Sprite {
 
 
         if (this._node.data.genes.size == 0) {
-            console.log("Why is this node problematic?", this._node.data);
+            console.log("?", this._node.data);
         } else {
             for (let group in groups) {
                 groups[group] = groups[group] / this._node.data.genes.size;

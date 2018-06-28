@@ -38,6 +38,9 @@ class Supertree {
             if (typeof(gene.filtered) == 'undefined'){
                 gene.filtered = true;
             }
+            if (typeof(gene.filtered_by_search) == 'undefined'){
+                gene.filtered_by_search = true;
+            }
         }
         
         let max_n_g = 0;
