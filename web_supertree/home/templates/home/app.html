@@ -79,8 +79,7 @@
                         <div id="search" class="card-body">
                             <div class="row">
                                 {% comment %}
-                                <textarea class="center-block" style="width: 100%" id="search_text" class="input"
-                                    rows="1"></textarea> {% endcomment %}
+                                <textarea class="center-block" style="width: 100%" id="search_text" class="input" rows="1"></textarea> {% endcomment %}
                                 <input type="text" name="" id="search_text">
                             </div>
 
@@ -163,10 +162,41 @@
             </div>
         </main>
 
-        <div class="col-md-2 row container" id="groups_legend"></div>
-        <div class="col-md-2 row" id="gene_list">
+        <div class="col-md-2">
+            <div class="row container" id="groups_legend">
+
+            </div>
+
+             <!-- Functions list -->
+            <div class="row containter">
+                    <div class="card card">
+                            <div class="card-header">
+                                <h4 class="card-title">
+                                    <a data-toggle="collapse" data-target="#collapseFunctionList" href="#loading-container" class="collapsed">
+                                        Gene Function
+                                    </a>
+                                </h4>
+                            </div>
+            
+                            <div id="collapseFunctionList" class="card-collapse collapse">
+                                <div id="functionList" class="card-body">
+            
+                                </div>
+                            </div>
+                    </div>
+            </div>
+           
+           
+
 
         </div>
+
+
+    </div>
+    {% comment %}
+    <div class="col-md-2 row" id="gene_list"> {% endcomment %}
+
+
 
     </div>
 

@@ -132,7 +132,8 @@ class SupertreeView {
         // Searching box
         this._addSearchBox();
 
-        this._updateVisualStatistics();
+        this._updateVisibleLGTsList();
+        this._updateVisibleGenesSets();
 
     }
 
@@ -542,7 +543,8 @@ class SupertreeView {
             d.lateralEdgeSprite.sprite.visible = visible;
         });
 
-        this._updateVisualStatistics();
+        this._updateVisibleLGTsList();  
+        this._listFunctionsFromVisibleEdges();      
     }
 
 
@@ -1042,7 +1044,8 @@ class SupertreeView {
                 return this.supertree.forest[gene].filtered_by_search;
             });
         });
-        this._updateVisualStatistics();
+        this._updateVisibleLGTsList();  
+        this._listFunctionsFromVisibleEdges();      
         //this.updateEdgesVisibilityByNumericGeneFilter();               
     }
 
@@ -1063,12 +1066,54 @@ class SupertreeView {
     }
 
     _updateStatisticsVisibleEdges(){
-        console.log("Number of edges", this.supertree.lgts.filter(e => e.enabled).length);
-        d3.select("#n_visible_edges").text(this.supertree.lgts.filter(e => e.enabled).length);
+        console.log("Number of edges", this._visible_lgts.length);
+        d3.select("#n_visible_edges").text(this._visible_lgts.length);
     }
 
-    _updateVisualStatistics(){
+    _updateVisualStatistics(){        
         this._updateStatisticsVisibleEdges();
+    }
+
+    _updateVisibleLGTsList(){
+        this._visible_lgts = this.supertree.lgts.filter(e => e.enabled);
+        this._updateVisualStatistics();
+        this._updateVisibleGenesSets();
+    }
+
+    _updateVisibleGenesSets(){
+        this._visible_genes_set = new Set();
+                
+        this._visible_lgts.forEach(e => {
+            e.genes.forEach(gene =>{
+                this._visible_genes_set.add(gene);
+            });            
+        });
+    }
+
+    _listFunctionsFromVisibleEdges(){
+        let current_functions = new Set();
+        console.log(this._visible_genes_set);
+
+        this._visible_genes_set.forEach(tree_index =>{
+            this.supertree.forest[tree_index].functions.forEach(func => {
+                current_functions.add(func);
+            });  
+        });
+
+        console.log("current functions", current_functions);
+        
+        let functions = [...current_functions];
+        functions.sort();
+        // for each function... create a label
+        let functionDiv = d3.select("#functionList");
+       
+        let elements = functionDiv.selectAll("p").data(functions);
+        elements.exit().remove();
+        elements.enter().append("p").text(function(d){return d;});
+        
+
+        
+        // sort the labels by frequency
     }
 
 }
