@@ -481,11 +481,6 @@ class SupertreeView {
 
     _updateLGTS() {
 
-        // if (this._lgts_container){
-        //     this._diagram_container.removeChild(this._lgts_container);
-        //     this._lgts_container.destroy();
-        // }
-
         this._lgts_container = new PIXI.Container();
         this._diagram_container.addChild(this._lgts_container);
 
@@ -496,36 +491,23 @@ class SupertreeView {
             d.lateralEdgeSprite = new LateralEdgeSprite(container, d, this);
         });
 
-        this.updateEdgesVisibilityByNumericLGTFilter();
+        // this.filterByNumericEdgeAttribute();
 
+        // let edges_for_bundling = [];
+        // let id = 0;
 
-        // {
-        //     "id": <string id>,
-        //     "name": <string name>,
-        //     "data": {
-        //         "coords": [
-        //             <coord x from>,
-        //             <coord y from>,
-        //             <coord x to>,
-        //             <coord y to>
-        //         ]
-        //     }
-        // }
-        let edges_for_bundling = [];
-        let id = 0;
-
-        this.supertree.lgts.forEach(d => {
-            let p0 = project(d.source.x, d.source.y);
-            let p1 = project(d.target.x, d.target.y);
-            edges_for_bundling.push({
-                "id": id,
-                "name": "",
-                "data": {
-                    "coords": [p0[0], p0[1], p1[0], p1[1]]
-                }
-            });
-            id += 1;
-        });
+        // this.supertree.lgts.forEach(d => {
+        //     let p0 = project(d.source.x, d.source.y);
+        //     let p1 = project(d.target.x, d.target.y);
+        //     edges_for_bundling.push({
+        //         "id": id,
+        //         "name": "",
+        //         "data": {
+        //             "coords": [p0[0], p0[1], p1[0], p1[1]]
+        //         }
+        //     });
+        //     id += 1;
+        // });
 
     }
 
@@ -583,7 +565,7 @@ class SupertreeView {
                 let value = slider.data('slider').getValue();
                 att.selMin = value[0];
                 att.selMax = value[1];
-                this.updateEdgesVisibilityByNumericLGTFilter();
+                this.filterByNumericEdgeAttribute();
             });
         }
 
@@ -619,7 +601,7 @@ class SupertreeView {
                 let value = slider.data('slider').getValue();
                 att.selMin = value[0];
                 att.selMax = value[1];
-                this.updateEdgesVisibilityByNumericGeneFilter();
+                this.filterByNumericGeneAttribute();
 
             });
         }
