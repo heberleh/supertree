@@ -9,6 +9,8 @@ class SupertreeView {
         this.supertree = supertree;
         this.supertree.hierarchy;
 
+        this._visible_genes_set = new Set();
+
         console.log("Supertree", this.supertree.hierarchy);
 
         // let colors = d3.shuffle(d3.schemeCategory20);
@@ -133,6 +135,8 @@ class SupertreeView {
         this._addSearchBox();
 
         this._updateVisibleLGTsList();
+
+        
         this._updateVisibleGenesSets();
 
     }
@@ -207,7 +211,6 @@ class SupertreeView {
         this.numericalGeneAttributes[name] = dict;
     }
 
-
     _addAttributeLGTGenesScores() {
         // create genes' scores        
         //console.log('genes', genes);
@@ -242,7 +245,6 @@ class SupertreeView {
         this._addNumericalLGTAttribute(name_max, values_list);
         this._addNumericalLGTAttribute(name_min, values_list);
     }
-
 
     _addAttributeMaybe() {
         for (let i in data) {
@@ -340,7 +342,6 @@ class SupertreeView {
                 this._checkBoxLayoutCluster.property("checked", true).each((d) => this._clusterCheckboxChanged(d));
             }, 2000);
     }
-
 
     _setUpLinkExtension() {
         let radius = this._innerRadius;
@@ -531,22 +532,38 @@ class SupertreeView {
     updateEdgesVisibilityByNumericLGTFilter() {
 
         this.supertree.lgts.forEach((d) => {
-            let visible = true;
-            for (let name in this.numericalLGTAttributes) {
-                if (!d.enabled ||
-                    d.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
-                    d.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
-                    visible = false;
-                    break;
+            if (d.filtered){
+                let visible = true;
+                for (let name in this.numericalLGTAttributes) {
+                    if (d.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
+                        d.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
+                        visible = false;
+                        break;
+                    }
                 }
+                d.lateralEdgeSprite.sprite.visible = visible;                                
+            }else{
+                d.lateralEdgeSprite.sprite.visible = false;
             }
-            d.lateralEdgeSprite.sprite.visible = visible;
         });
 
-        this._updateVisibleLGTsList();  
-        this._listFunctionsFromVisibleEdges();      
+        this._updateVisibleLGTsList();
+        this._listFunctionsFromVisibleEdges();
     }
 
+    updateEdgesVisibility(){
+        this.supertree.lgts.forEach((e) => {
+            if (e.filtered){
+                d.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
+                    return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
+                });
+            }else{
+                d.lateralEdgeSprite.sprite.visible = false;
+            }
+        });
+        this._updateVisibleLGTsList();
+        this._listFunctionsFromVisibleEdges();
+    }
 
     updateLGTsDefaultAlpha() {
 
@@ -881,7 +898,7 @@ class SupertreeView {
         }
 
         this.supertree.lgts.forEach(lgt => {
-            lgt.enabled = lgt.genes_array.some(gene => {
+            lgt.filtered = lgt.genes_array.some(gene => {
                 return this.supertree.forest[gene].filtered;
             });
         });
@@ -1040,7 +1057,7 @@ class SupertreeView {
 
         let count = 0;
         this.supertree.lgts.forEach(lgt => {
-            lgt.enabled = lgt.enabled && lgt.genes_array.some(gene => {
+            lgt.filtered = lgt.filtered && lgt.genes_array.some(gene => {
                 return this.supertree.forest[gene].filtered_by_search;
             });
         });
@@ -1075,13 +1092,13 @@ class SupertreeView {
     }
 
     _updateVisibleLGTsList(){
-        this._visible_lgts = this.supertree.lgts.filter(e => e.enabled);
+        this._visible_lgts = this.supertree.lgts.filter(e => e.filtered);
         this._updateVisualStatistics();
         this._updateVisibleGenesSets();
     }
 
     _updateVisibleGenesSets(){
-        this._visible_genes_set = new Set();
+        this._visible_genes_set.clear();
                 
         this._visible_lgts.forEach(e => {
             e.genes.forEach(gene =>{
@@ -1092,15 +1109,15 @@ class SupertreeView {
 
     _listFunctionsFromVisibleEdges(){
         let current_functions = new Set();
-        console.log(this._visible_genes_set);
+        console.log("Visible genes: ", this._visible_genes_set);
 
         this._visible_genes_set.forEach(tree_index =>{
             this.supertree.forest[tree_index].functions.forEach(func => {
-                current_functions.add(func);
+                current_functions.add(func.toUpperCase());
             });  
         });
 
-        console.log("current functions", current_functions);
+        console.log("Current functions:", current_functions);
         
         let functions = [...current_functions];
         functions.sort();
@@ -1110,9 +1127,7 @@ class SupertreeView {
         let elements = functionDiv.selectAll("p").data(functions);
         elements.exit().remove();
         elements.enter().append("p").text(function(d){return d;});
-        
-
-        
+            
         // sort the labels by frequency
     }
 
