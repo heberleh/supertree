@@ -529,42 +529,6 @@ class SupertreeView {
 
     }
 
-    updateEdgesVisibilityByNumericLGTFilter() {
-
-        this.supertree.lgts.forEach((d) => {
-            if (d.filtered){
-                let visible = true;
-                for (let name in this.numericalLGTAttributes) {
-                    if (d.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
-                        d.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
-                        visible = false;
-                        break;
-                    }
-                }
-                d.lateralEdgeSprite.sprite.visible = visible;                                
-            }else{
-                d.lateralEdgeSprite.sprite.visible = false;
-            }
-        });
-
-        this._updateVisibleLGTsList();
-        this._listFunctionsFromVisibleEdges();
-    }
-
-    updateEdgesVisibility(){
-        this.supertree.lgts.forEach((e) => {
-            if (e.filtered){
-                d.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
-                    return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
-                });
-            }else{
-                d.lateralEdgeSprite.sprite.visible = false;
-            }
-        });
-        this._updateVisibleLGTsList();
-        this._listFunctionsFromVisibleEdges();
-    }
-
     updateLGTsDefaultAlpha() {
 
         this.supertree.lgts.forEach((d) => {
@@ -838,7 +802,6 @@ class SupertreeView {
         }
     }
 
-    ////// main gene filter methods //////
     updateLGTsVisibilityByGeneFilter(gene) {
         this.supertree.lgts.forEach((d) => {
             if (d.genes.includes(gene)) {
@@ -875,35 +838,6 @@ class SupertreeView {
         }
 
         this._addNumericalGeneAttribute(name, [...values]);
-    }
-
-    updateEdgesVisibilityByNumericGeneFilter() {
-        this._selected_genes = [];
-
-        for (let gene_index in this.supertree.forest) {
-            let gene = this.supertree.forest[gene_index];
-            let selected = true;
-            if (gene.filtered_by_search){
-                for (let name in this.numericalGeneAttributes) {
-                    if (gene.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
-                        gene.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
-                        selected = false;
-                        break;
-                    }
-                }
-            }else{
-                selected = false;
-            }
-            gene.filtered = selected;
-        }
-
-        this.supertree.lgts.forEach(lgt => {
-            lgt.filtered = lgt.genes_array.some(gene => {
-                return this.supertree.forest[gene].filtered;
-            });
-        });
-
-        this.updateEdgesVisibilityByNumericLGTFilter();
     }
 
     _entropy(prob_vector) {
@@ -1020,52 +954,6 @@ class SupertreeView {
         return this._treeGroupColorMap;
     }
 
-    /**
-     * Filter edges by strings writen in the input text box
-     * @param {string} inputID The inputText HTML element' id
-     */
-    search(inputID) {
-        var exact = d3.select("#exact").node().checked;
-        var str = d3.select(inputID).node().value.toUpperCase();
-
-        console.log(str);
-
-        if (str == ""){
-            return;
-        }
-
-        for (let gene_index in this.supertree.forest) {
-            let gene = this.supertree.forest[gene_index];
-
-            if (gene_index < 10){
-                console.log(gene);
-                console.log(str, gene["functions"].some(func => {
-                    return func.toUpperCase() == str;
-                }));
-            }
-
-            if (exact){
-                this.supertree.forest[gene_index].filtered_by_search = gene["functions"].some(func => {
-                    return func.toUpperCase() == str;
-                });               
-            }else{
-                this.supertree.forest[gene_index].filtered_by_search = gene["functions"].some(func => {
-                    return func.toUpperCase().search(str) > -1;
-                });
-            }
-        }             
-
-        let count = 0;
-        this.supertree.lgts.forEach(lgt => {
-            lgt.filtered = lgt.filtered && lgt.genes_array.some(gene => {
-                return this.supertree.forest[gene].filtered_by_search;
-            });
-        });
-        this._updateVisibleLGTsList();  
-        this._listFunctionsFromVisibleEdges();      
-        //this.updateEdgesVisibilityByNumericGeneFilter();               
-    }
-
     _addSearchBox() {
         $('#exact').click(()=> {
             this.search('#search_text');
@@ -1130,5 +1018,81 @@ class SupertreeView {
             
         // sort the labels by frequency
     }
+
+    updateEdgesVisibility(){
+        this.supertree.lgts.forEach((e) => {
+            if (e.filtered){
+                d.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
+                    return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
+                });
+            }else{
+                d.lateralEdgeSprite.sprite.visible = false;
+            }
+        });
+        this._updateVisibleLGTsList();
+        this._listFunctionsFromVisibleEdges();
+    }
+
+    /////  FILTERS ///////
+    resetFilters(){
+        // update data
+        // update view
+        // update sliders
+    }
+
+    filterByNumericEdgeAttribute() {
+        this.supertree.lgts.forEach((e) => {
+            if(e.filtered){
+                for (let name in this.numericalLGTAttributes) {
+                    if (e.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
+                        e.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
+                        e.filtered = false;
+                        break;
+                    }
+                }
+            }
+        });
+        this.updateEdgesVisibility();
+    }
+
+    filterByNumericGeneAttribute() {
+        this.supertree.forest.filter(g => g.filtered).forEach(g => {
+            for (let name in this.numericalGeneAttributes) {
+                if (g.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
+                    g.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
+                    g.filtered = false;
+                    break;
+                }
+            }
+        });
+        this.updateEdgesVisibility();
+    }
+
+        /**
+     * Filter edges by strings writen in the input text box
+     * @param {string} inputID The inputText HTML element' id
+     */
+    search(inputID) {
+        var exact = d3.select("#exact").node().checked;
+        var str = d3.select(inputID).node().value.toUpperCase();
+
+        if (str == ""){
+            return;
+        }
+
+        this.supertree.forest.filter(g => g.filtered).forEach(gene => {
+            if (exact){
+                gene.filtered_by_search = gene.functions.some(func => {
+                    return func.toUpperCase() == str;
+                });               
+            }else{
+                gene.filtered_by_search = gene.functions.some(func => {
+                    return func.toUpperCase().search(str) > -1;
+                });
+            }
+        });   
+        this.updateEdgesVisibility();             
+    }
+
 
 }
