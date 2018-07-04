@@ -164,6 +164,8 @@ class SupertreeView {
 
         svg.select(".legendOrdinal")
             .call(legendOrdinal);
+
+        svg.style("height", 25  *this.supertree.groupsLabels.length + 'px');
     }
 
     _setUpNumericalLGTAttributes(lgts) {
@@ -962,7 +964,7 @@ class SupertreeView {
     }
 
     _updateVisibleLGTsList(){
-        this._visible_lgts = this.supertree.lgts.filter(e => e.filtered);
+        this._visible_lgts = this.supertree.lgts.filter(e => e.lateralEdgeSprite.sprite.visible);
         this._updateVisualStatistics();
         this._updateVisibleGenesSets();
     }
@@ -996,19 +998,22 @@ class SupertreeView {
        
         let elements = functionDiv.selectAll("p").data(functions);
         elements.exit().remove();
-        elements.enter().append("p").text(function(d){return d;});
+        elements.enter().append("p");
+        elements.text(function(d){return d;});
             
         // sort the labels by frequency
     }
 
+    
     updateEdgesVisibility(){
+
         this.supertree.lgts.forEach((e) => {
             if (e.filtered){
-                d.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
+                e.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
                     return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
                 });
             }else{
-                d.lateralEdgeSprite.sprite.visible = false;
+                e.lateralEdgeSprite.sprite.visible = false;
             }
         });
         this._updateVisibleLGTsList();
@@ -1024,21 +1029,21 @@ class SupertreeView {
 
     filterByNumericEdgeAttribute() {
         this.supertree.lgts.forEach((e) => {
-            if(e.filtered){
-                for (let name in this.numericalLGTAttributes) {
-                    if (e.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
-                        e.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
-                        e.filtered = false;
-                        break;
-                    }
+            e.filtered = true;
+            for (let name in this.numericalLGTAttributes) {
+                if (e.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
+                    e.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
+                    e.filtered = false;
+                    break;
                 }
-            }
+            }            
         });
         this.updateEdgesVisibility();
     }
 
     filterByNumericGeneAttribute() {
-        this.supertree.forest.filter(g => g.filtered).forEach(g => {
+        Object.values(this.supertree.forest).forEach(g => {
+            g.filtered = true;
             for (let name in this.numericalGeneAttributes) {
                 if (g.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
                     g.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
@@ -1062,7 +1067,8 @@ class SupertreeView {
             return;
         }
 
-        this.supertree.forest.filter(g => g.filtered).forEach(gene => {
+        Object.values(this.supertree.forest).forEach(gene => {
+            gene.filtered_by_search = true;
             if (exact){
                 gene.filtered_by_search = gene.functions.some(func => {
                     return func.toUpperCase() == str;

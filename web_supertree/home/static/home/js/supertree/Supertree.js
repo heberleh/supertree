@@ -185,7 +185,7 @@ class Supertree {
                 l[e].genes_array = l[e].genes;
                 l[e].genes = new Set(l[e].genes);
                 l[e].supertree = this;
-                l[e].enabled = true;
+                l[e].filtered = true;
                 lgts_nodes.push(l[e]);                
             } else {
                 non_tracked_edges.push(l[e]);
