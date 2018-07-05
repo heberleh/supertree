@@ -847,27 +847,31 @@ class SupertreeView {
         let name_std = "class_Std";
         let name_max_min = "class_MaxMin";
         let name_entropy = "class_Entropy_10";
-
+       
         for (let gene_index in this.supertree.forest) {
             let gene = this.supertree.forest[gene_index];
 
             let distr_values = Object.values(this.supertree.getGroupsDistribution(gene_index));
 
-            let total = distr_values.reduce(function (a, b) {
-                return a + b;
-            });
-
+            // let total = distr_values.reduce(function (a, b) {
+            //     return a + b;
+            // });
+            
             let probs = [];
 
             for (let i = 0; i < distr_values.length; i++) {
-                probs.push(distr_values[i] / total);
+                if(gene_index < 1){
+                    console.log("Total elements on class and on tree: ", distr_values[i],this.supertree.numerOfGenomes, distr_values.length);
+                }
+                probs.push((distr_values[i]+1) / (this.supertree.numerOfGenomes + distr_values.length));
             }
+            
             if (gene_index < 5) {
                 console.log("classes", d3.max(distr_values), d3.min(distr_values));
                 console.log("probs", probs);
             }
 
-            let mean = total / distr_values.length;
+            let mean = this.supertree.numerOfGenomes / distr_values.length;
             values_mean.add(mean);
 
             let max_min = d3.max(distr_values) - d3.min(distr_values);
@@ -902,9 +906,9 @@ class SupertreeView {
 
         console.log(values_entropy, values_max_min, values_mean);
         this._addNumericalGeneAttribute(name_entropy, [...values_entropy]);
-        this._addNumericalGeneAttribute(name_max_min, [...values_max_min]);
-        this._addNumericalGeneAttribute(name_mean, [...values_mean]);
-        this._addNumericalGeneAttribute(name_std, [...values_std]);
+        //this._addNumericalGeneAttribute(name_max_min, [...values_max_min]);
+        //this._addNumericalGeneAttribute(name_mean, [...values_mean]);
+        //this._addNumericalGeneAttribute(name_std, [...values_std]);
     }
 
     listGenes(genes) {
@@ -980,26 +984,32 @@ class SupertreeView {
     }
 
     _listFunctionsFromVisibleEdges(){
-        let current_functions = new Set();
+        let current_functions = {};
         console.log("Visible genes: ", this._visible_genes_set);
 
         this._visible_genes_set.forEach(tree_index =>{
             this.supertree.forest[tree_index].functions.forEach(func => {
-                current_functions.add(func.toUpperCase());
+                let func0 = func.toUpperCase();
+                if (func0 in current_functions){
+                    current_functions[func0].count += 1;
+                    current_functions[func0].genes.push(tree_index);
+                }else{
+                    current_functions[func0] = {"func":func0, "count":1, "genes":[tree_index]};
+                }                
             });  
         });
 
         console.log("Current functions:", current_functions);
         
-        let functions = [...current_functions];
-        functions.sort();
+        let functions = Object.values(current_functions);
+        functions.sort(function(a,b){ return b.count - a.count});
         // for each function... create a label
         let functionDiv = d3.select("#functionList");
        
         let elements = functionDiv.selectAll("p").data(functions);
         elements.exit().remove();
         elements.enter().append("p");
-        elements.text(function(d){return d;});
+        elements.text(function(d){return d.func +": "+d.count;});
             
         // sort the labels by frequency
     }
