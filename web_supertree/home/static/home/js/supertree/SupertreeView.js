@@ -1010,8 +1010,22 @@ class SupertreeView {
         elements.exit().remove();
         elements.enter().append("p");
         elements.text(function(d){return d.func +": "+d.count;});
+        elements.on("click", d => { this.highlightVisibleEdgesByGenes(d.genes) });
             
         // sort the labels by frequency
+    }
+
+    highlightVisibleEdgesByGenes(genes){
+        console.log("clicked", genes);
+        this._visible_lgts.forEach(lgt => {
+            console.log(lgt.genes);
+            if (genes.some(gene => {return lgt.genes.has(gene);})){
+                lgt.lateralEdgeSprite.highlightOn();
+                console.log(lgt);
+            }else{
+                lgt.lateralEdgeSprite.highlightOff();
+            }
+        });
     }
 
     
