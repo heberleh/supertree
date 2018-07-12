@@ -978,9 +978,11 @@ class SupertreeView {
                 
         this._visible_lgts.forEach(e => {
             e.genes.forEach(gene =>{
-                this._visible_genes_set.add(gene);
+                if (this.supertree.forest[gene].filtered){
+                    this._visible_genes_set.add(gene);
+                }                
             });            
-        });
+        });                 
     }
 
     _listFunctionsFromVisibleEdges(){

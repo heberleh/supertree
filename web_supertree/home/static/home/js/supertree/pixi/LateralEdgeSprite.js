@@ -77,13 +77,13 @@ class LateralEdgeSprite {
 
         this.sprite.interactive = true;
         
-        this.sprite.on('mouseover', () => {
-            this.highlightOn();
-        });
+        // this.sprite.on('mouseover', () => {
+        //     this.highlightOn();
+        // });
 
-        this.sprite.on('mouseout', () => {
-            this.highlightOff();
-        });
+        // this.sprite.on('mouseout', () => {
+        //     this.highlightOff();
+        // });
 
         this.sprite.on('mousedown', ()=>{            
             console.log(this.data.genes);

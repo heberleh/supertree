@@ -988,13 +988,107 @@ class SupertreeAppTest(TestCase):
             f.write(json_txt)
             f.close()        
 
-
     def get_gene_functions(self, gene):
         # load gene function from Gene Ontology
         return [random.choice(string.ascii_letters), random.choice(string.ascii_letters)]
 
     def get_gene_name(self, tree_index):
         return None
+
+    def createGraphsFromForestAndSupertree(self):
+        g = nx.DiGraph()
+        vertex_hash = {}
+        i = 0
+
+        for tree in self.forest[1:20]:
+            for node in tree.traverse("preorder"):
+                if not node.is_root():
+                    trg = node.name
+                    src = node.up.name
+
+                    src_idx, trg_idx = 0, 0 #just declaring variables. they will change. 
+                    if not trg in vertex_hash:
+                        vertex_hash[trg] = i
+                        g.add_node(i, n=trg)
+                        trg_idx = i
+                        i += 1
+                    else:
+                        trg_idx = vertex_hash[trg]
+
+                    if not src in vertex_hash:
+                        vertex_hash[src] = i
+                        g.add_node(i, n=src)
+                        src_idx = i
+                        i += 1
+                    else:
+                        src_idx = vertex_hash[src]
+                    
+                    if g.has_edge(src_idx,trg_idx):
+                        g[src_idx][trg_idx]['w']  += 1
+                    else:                        
+                        g.add_edge(src_idx,trg_idx,w=1,)
+
+        g2 = nx.DiGraph()
+        for node in self.supertree.traverse("preorder"):
+            if not node.is_root():
+                type = "internal"
+                if node.is_leaf():                    
+                    trg = node.name
+                    type = "leaf"
+                else:                    
+                    names = node.get_leaf_names()
+                    names.sort()
+                    trg = ','.join(names)
+
+                names = node.up.get_leaf_names()
+                names.sort()
+                src = ','.join(names)
+
+                src_idx, trg_idx = 0, 0
+                if not trg in vertex_hash:
+                    trg_idx = i
+                    vertex_hash[trg] = trg_idx
+                    g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
+                    i += 1                    
+                else:
+                    trg_idx = vertex_hash[trg]
+                    if not g2.has_node(trg_idx):
+                        g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
+                
+                if not src in vertex_hash:
+                    src_idx = i
+                    vertex_hash[src] = src_idx                    
+                    g2.add_node(src_idx, n=src, type=type, tree=node.up)                    
+                    i += 1
+                else:
+                    src_idx = vertex_hash[src]
+                    if not g2.has_node(src_idx):
+                        g2.add_node(src_idx, n=src, type=type, tree=node.up)
+                
+                if g2.has_edge(src_idx,trg_idx):
+                    g2[src_idx][trg_idx]['w']  += 1
+                else:                        
+                    g2.add_edge(src_idx,trg_idx,w=1)
+
+
+
+        G = nx.Graph()
+        
+        G.add_edge(0, 1, weight=0.1, label='edge', graphics={
+            'width': 1.0, 'fill': '"#0000ff"', 'type': '"line"', 'Line': [],
+            'source_arrow': 0, 'target_arrow': 0})
+        
+        nx.set_node_attributes(G, 'graphics', {
+            0: {'x': -85.0, 'y': -97.0, 'w': 20.0, 'h': 20.0,
+                'type': '"ellipse"', 'fill': '"#889999"', 'outline': '"#666666"',
+                'outline_width': 1.0},
+            1: {'x': -16.0, 'y': -1.0, 'w': 40.0, 'h': 40.0,
+                'type': '"ellipse"', 'fill': '"#ff9999"', 'outline': '"#666666"',
+                'outline_width': 1.0}
+            })
+        nx.set_node_attributes(G, 'label', {0: "0", 1: "1"})
+        nx.write_gml(G, 'network.gml')
+
 
     def testSetGraphLGTClusteringByName(self):
         # parameters
@@ -1004,7 +1098,7 @@ class SupertreeAppTest(TestCase):
         vertex_hash = {}
         i = 0
 
-        print("Populating supertree with genes...")
+        print("Populating supertree with genes and names for each (internal) node...")
         self.populateSupertreeGenesAttributes(number_of_trees)
 
         print("Computing Clusters...")
