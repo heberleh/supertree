@@ -996,7 +996,7 @@ class SupertreeAppTest(TestCase):
         return None
 
     def createGraphsFromForestAndSupertree(self):
-        g = nx.DiGraph()
+        graph_forest = nx.DiGraph()
         vertex_hash = {}
         i = 0
 
@@ -1006,10 +1006,10 @@ class SupertreeAppTest(TestCase):
                     trg = node.name
                     src = node.up.name
 
-                    src_idx, trg_idx = 0, 0 #just declaring variables. they will change. 
+                    src_idx, trg_idx = 0, 0 #just declaring variables. they will change.
                     if not trg in vertex_hash:
                         vertex_hash[trg] = i
-                        g.add_node(i, n=trg)
+                        graph_forest.add_node(i, label=trg, type="forest")
                         trg_idx = i
                         i += 1
                     else:
@@ -1017,77 +1017,121 @@ class SupertreeAppTest(TestCase):
 
                     if not src in vertex_hash:
                         vertex_hash[src] = i
-                        g.add_node(i, n=src)
+                        graph_forest.add_node(i, label=src, type="forest")
                         src_idx = i
                         i += 1
                     else:
                         src_idx = vertex_hash[src]
                     
-                    if g.has_edge(src_idx,trg_idx):
-                        g[src_idx][trg_idx]['w']  += 1
+                    if graph_forest.has_edge(src_idx,trg_idx):
+                        graph_forest[src_idx][trg_idx]['w']  += 1
                     else:                        
-                        g.add_edge(src_idx,trg_idx,w=1,)
+                        graph_forest.add_edge(src_idx,trg_idx,w=1,type="forest",graphics={})
 
-        g2 = nx.DiGraph()
+        graph_supertree = nx.DiGraph()
         for node in self.supertree.traverse("preorder"):
             if not node.is_root():
                 type = "internal"
-                if node.is_leaf():                    
-                    trg = node.name
+                if node.is_leaf():
                     type = "leaf"
-                else:                    
-                    names = node.get_leaf_names()
-                    names.sort()
-                    trg = ','.join(names)
 
-                names = node.up.get_leaf_names()
-                names.sort()
-                src = ','.join(names)
+                trg = node.name
+                src = node.up.name
 
                 src_idx, trg_idx = 0, 0
                 if not trg in vertex_hash:
                     trg_idx = i
                     vertex_hash[trg] = trg_idx
-                    g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
+                    graph_supertree.add_node(trg_idx, label=trg, type=type, tree=node)                    
                     i += 1                    
                 else:
                     trg_idx = vertex_hash[trg]
-                    if not g2.has_node(trg_idx):
-                        g2.add_node(trg_idx, n=trg, type=type, tree=node)                    
+                    if not graph_supertree.has_node(trg_idx):
+                        graph_supertree.add_node(trg_idx, label=trg, type=type, tree=node)                    
                 
                 if not src in vertex_hash:
                     src_idx = i
                     vertex_hash[src] = src_idx                    
-                    g2.add_node(src_idx, n=src, type=type, tree=node.up)                    
+                    graph_supertree.add_node(src_idx, label=src, type=type, tree=node.up)                    
                     i += 1
                 else:
                     src_idx = vertex_hash[src]
-                    if not g2.has_node(src_idx):
-                        g2.add_node(src_idx, n=src, type=type, tree=node.up)
+                    if not graph_supertree.has_node(src_idx):
+                        graph_supertree.add_node(src_idx, label=src, type=type, tree=node.up)
                 
-                if g2.has_edge(src_idx,trg_idx):
-                    g2[src_idx][trg_idx]['w']  += 1
+                if graph_supertree.has_edge(src_idx,trg_idx):
+                    graph_supertree[src_idx][trg_idx]['w']  += 1
                 else:                        
-                    g2.add_edge(src_idx,trg_idx,w=1)
+                    graph_supertree.add_edge(src_idx,trg_idx, w=1, type="supertree", graphics={})
+
+        # compute graph with all possible internal nodes and connections
+        graph = graph_supertree.copy()
+        index = len(graph_supertree.nodes)
+        for src, trg in graph_forest.edges_iter():
+            # since these nodes are not in the supertree, they must be internal nodes
+            if not graph.has_node(src):
+                node = graph_forest.node[src]
+                graph.add_node(src, label=node["label"], type="internal", graphics={})
+
+            if not graph.has_node(trg):
+                node = graph_forest.node[trg]
+                graph.add_node(trg, label=node["label"], type="internal", graphics={})
+                graph.node[trg]["graphics"] = {
+
+                }
+
+            if graph_supertree.has_edge(src,trg):
+                graph[src][trg]['w'] = 1 + graph_forest[src][trg]['w']
+                graph[src][trg]['graphics'] = {
+
+                }
+            else:
+                graph.add_edge(src, trg, w=graph_forest[src][trg]['w'], graphics={
+                    'width': 0.7,
+                    'fill': '"#0000ff"',
+                    'type': '"line"',
+                    'Line': [],
+                    'source_arrow': 0,
+                    'target_arrow': 1
+                })
+
+        for idx in graph.nodes:
+            if graph.node[idx]["type"] == "internal":
+                graph.node[idx]["graphics"] = {
+                        'x': 0.0,
+                        'y': 0.0,
+                        'w': 20.0,
+                        'h': 20.0,
+                        'type': '"ellipse"',
+                        'fill': '"#94c2bf"',
+                        'outline': '"#003366"',
+                        'outline_width': 0.7
+                }
+            elif graph.node[idx]["type"] == "forest":
+                graph.node[idx]["graphics"] = {
+                        'x': 0.0,
+                        'y': 0.0,
+                        'w': 10.0,
+                        'h': 10.0,
+                        'type': '"ellipse"',
+                        'fill': '"#dfd4fc"',
+                        'outline': '"#94c2bf"',
+                        'outline_width': 0.1
+                }            
+            else: # if leaf
+                graph.node[idx]["graphics"] = {
+                        'x': 0.0,
+                        'y': 0.0,
+                        'w': 30.0,
+                        'h': 30.0,
+                        'type': '"rectangle"',
+                        'fill': '"#003366"',
+                        'outline': '"#0bd500"',
+                        'outline_width': 1
+                }                
 
 
-
-        G = nx.Graph()
-        
-        G.add_edge(0, 1, weight=0.1, label='edge', graphics={
-            'width': 1.0, 'fill': '"#0000ff"', 'type': '"line"', 'Line': [],
-            'source_arrow': 0, 'target_arrow': 0})
-        
-        nx.set_node_attributes(G, 'graphics', {
-            0: {'x': -85.0, 'y': -97.0, 'w': 20.0, 'h': 20.0,
-                'type': '"ellipse"', 'fill': '"#889999"', 'outline': '"#666666"',
-                'outline_width': 1.0},
-            1: {'x': -16.0, 'y': -1.0, 'w': 40.0, 'h': 40.0,
-                'type': '"ellipse"', 'fill': '"#ff9999"', 'outline': '"#666666"',
-                'outline_width': 1.0}
-            })
-        nx.set_node_attributes(G, 'label', {0: "0", 1: "1"})
-        nx.write_gml(G, 'network.gml')
+        nx.write_gml(graph, 'forest_plus_supertree_network.gml')
 
 
     def testSetGraphLGTClusteringByName(self):
