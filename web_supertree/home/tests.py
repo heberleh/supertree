@@ -1003,7 +1003,7 @@ class SupertreeAppTest(TestCase):
         vertex_hash = {}
         i = 0
 
-        for tree in self.forest[1:25]:
+        for tree in self.forest:#[1:20000]:
             for node in tree.traverse("preorder"):
                 if not node.is_root():
                     trg = self.get_name(node)
@@ -1071,60 +1071,62 @@ class SupertreeAppTest(TestCase):
         print("Forest graph: ", len(graph_forest.nodes), len(graph_forest.edges()))
         print("Supertree graph: ", len(graph_supertree.nodes), len(graph_supertree.edges()))
 
-        # compute graph with all possible internal nodes and connections
-        graph = graph_supertree.copy()
-        for src, trg in graph_forest.edges():
-            # since these nodes are not in the supertree, they must be internal nodes
-            if not graph.has_node(src):
-                node = graph_forest.node[src]
-                graph.add_node(src, name=node["name"], type="internal", graphics={})
+        compute_supertree_forest_network = False
+        if compute_supertree_forest_network:
+            # compute graph with all possible internal nodes and connections
+            graph = graph_supertree.copy()
+            for src, trg in graph_forest.edges():
+                # since these nodes are not in the supertree, they must be internal nodes
+                if not graph.has_node(src):
+                    node = graph_forest.node[src]
+                    graph.add_node(src, name=node["name"], type="internal", graphics={})
 
-            if not graph.has_node(trg):
-                node = graph_forest.node[trg]
-                graph.add_node(trg, name=node["name"], type="internal", graphics={})
+                if not graph.has_node(trg):
+                    node = graph_forest.node[trg]
+                    graph.add_node(trg, name=node["name"], type="internal", graphics={})
 
-            if graph_supertree.has_edge(src,trg):
-                graph[src][trg]['w'] = 1 + graph_forest[src][trg]['w']
-            else:
-                graph.add_edge(src, trg, w=graph_forest[src][trg]['w'])
-        for idx in graph.nodes:
-            if not graph.node[idx]["type"] == "leaf":
-                graph.node[idx]["name"] = ""
+                if graph_supertree.has_edge(src,trg):
+                    graph[src][trg]['w'] = 1 + graph_forest[src][trg]['w']
+                else:
+                    graph.add_edge(src, trg, w=graph_forest[src][trg]['w'])
+            for idx in graph.nodes:
+                if not graph.node[idx]["type"] == "leaf":
+                    graph.node[idx]["name"] = ""
 
-            if graph.node[idx]["type"] == "internal":
-                graph.node[idx]["graphics"] = {
-                        'x': 0.0,
-                        'y': 0.0,
-                        'w': 20.0,
-                        'h': 20.0,
-                        'type': '"ellipse"',
-                        'fill': '"#8a5442"',
-                        'outline': '"#003366"'
-                        #'outline_width': 0.7
-                }
-            elif graph.node[idx]["type"] == "forest":
-                graph.node[idx]["graphics"] = {
-                        'x': 0.0,
-                        'y': 0.0,
-                        'w': 10.0,
-                        'h': 10.0,
-                        'type': '"ellipse"',
-                        'fill': '"#b6afaf"',
-                        'outline': '"#94c2bf"'
-                        #'outline_width': 0.1
-                }            
-            else: # if leaf
-                graph.node[idx]["graphics"] = {
-                        'x': 0.0,
-                        'y': 0.0,
-                        'w': 30.0,
-                        'h': 30.0,
-                        'type': '"rectangle"',
-                        'fill': '"#990000"',
-                        'outline': '"#0bd500"'
-                        # 'outline_width': 1
-                }                
-        nx.write_gml(graph, 'forest_plus_supertree_network.gml')
+                if graph.node[idx]["type"] == "internal":
+                    graph.node[idx]["graphics"] = {
+                            'x': 0.0,
+                            'y': 0.0,
+                            'w': 20.0,
+                            'h': 20.0,
+                            'type': '"ellipse"',
+                            'fill': '"#8a5442"',
+                            'outline': '"#003366"'
+                            #'outline_width': 0.7
+                    }
+                elif graph.node[idx]["type"] == "forest":
+                    graph.node[idx]["graphics"] = {
+                            'x': 0.0,
+                            'y': 0.0,
+                            'w': 10.0,
+                            'h': 10.0,
+                            'type': '"ellipse"',
+                            'fill': '"#b6afaf"',
+                            'outline': '"#94c2bf"'
+                            #'outline_width': 0.1
+                    }            
+                else: # if leaf
+                    graph.node[idx]["graphics"] = {
+                            'x': 0.0,
+                            'y': 0.0,
+                            'w': 30.0,
+                            'h': 30.0,
+                            'type': '"rectangle"',
+                            'fill': '"#990000"',
+                            'outline': '"#0bd500"'
+                            # 'outline_width': 1
+                    }                
+            nx.write_gml(graph, 'forest_plus_supertree_network.gml')
 
         # compute graph with all possible internal nodes and connections
         graph = graph_supertree.copy()
@@ -1135,7 +1137,6 @@ class SupertreeAppTest(TestCase):
                     graph[src][trg]['w'] = 1 + graph_forest[src][trg]['w']
                 else:                
                     graph.add_edge(src, trg, w=graph_forest[src][trg]['w'])
-
         for idx in graph.nodes:
             if not graph.node[idx]["type"] == "leaf":
                 graph.node[idx]["name"] = ""
@@ -1174,6 +1175,8 @@ class SupertreeAppTest(TestCase):
                         # 'outline_width': 1
                 }                
         nx.write_gml(graph, 'supertree_network.gml')
+
+        return graph
 
 
 
