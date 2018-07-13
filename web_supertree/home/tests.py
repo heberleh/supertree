@@ -392,10 +392,13 @@ class SupertreeAppTest(TestCase):
         #     if e[2]['w'] >= second_max:
         #         print(e)
 
-    def get_name(self,tree):
-        names = tree.get_leaf_names()
-        names.sort()
-        return '_#_'.join(names)
+    def get_name(self,tree):    
+        if tree.is_leaf():
+            return tree.name
+        else:
+            names = tree.get_leaf_names()
+            names.sort()
+            return '_#_'.join(names)
 
     def testSetGraphLGT(self):
         g = nx.DiGraph()
@@ -1000,16 +1003,16 @@ class SupertreeAppTest(TestCase):
         vertex_hash = {}
         i = 0
 
-        for tree in self.forest[1:20]:
+        for tree in self.forest[1:25]:
             for node in tree.traverse("preorder"):
                 if not node.is_root():
-                    trg = node.name
-                    src = node.up.name
+                    trg = self.get_name(node)
+                    src = self.get_name(node.up)
 
                     src_idx, trg_idx = 0, 0 #just declaring variables. they will change.
                     if not trg in vertex_hash:
                         vertex_hash[trg] = i
-                        graph_forest.add_node(i, label=trg, type="forest")
+                        graph_forest.add_node(i, name=trg, type="forest")
                         trg_idx = i
                         i += 1
                     else:
@@ -1017,7 +1020,7 @@ class SupertreeAppTest(TestCase):
 
                     if not src in vertex_hash:
                         vertex_hash[src] = i
-                        graph_forest.add_node(i, label=src, type="forest")
+                        graph_forest.add_node(i, name=src, type="forest")
                         src_idx = i
                         i += 1
                     else:
@@ -1035,67 +1038,61 @@ class SupertreeAppTest(TestCase):
                 if node.is_leaf():
                     type = "leaf"
 
-                trg = node.name
-                src = node.up.name
+                trg = self.get_name(node)
+                src = self.get_name(node.up)
 
                 src_idx, trg_idx = 0, 0
                 if not trg in vertex_hash:
                     trg_idx = i
                     vertex_hash[trg] = trg_idx
-                    graph_supertree.add_node(trg_idx, label=trg, type=type, tree=node)                    
+                    graph_supertree.add_node(trg_idx, name=trg, type=type)                    
                     i += 1                    
                 else:
                     trg_idx = vertex_hash[trg]
                     if not graph_supertree.has_node(trg_idx):
-                        graph_supertree.add_node(trg_idx, label=trg, type=type, tree=node)                    
+                        graph_supertree.add_node(trg_idx, name=trg, type=type)                    
                 
                 if not src in vertex_hash:
                     src_idx = i
                     vertex_hash[src] = src_idx                    
-                    graph_supertree.add_node(src_idx, label=src, type=type, tree=node.up)                    
+                    graph_supertree.add_node(src_idx, name=src, type=type)                    
                     i += 1
                 else:
                     src_idx = vertex_hash[src]
                     if not graph_supertree.has_node(src_idx):
-                        graph_supertree.add_node(src_idx, label=src, type=type, tree=node.up)
+                        graph_supertree.add_node(src_idx, name=src, type=type)
                 
                 if graph_supertree.has_edge(src_idx,trg_idx):
                     graph_supertree[src_idx][trg_idx]['w']  += 1
                 else:                        
                     graph_supertree.add_edge(src_idx,trg_idx, w=1, type="supertree", graphics={})
 
+
+        print("Forest graph: ", len(graph_forest.nodes), len(graph_forest.edges()))
+        print("Supertree graph: ", len(graph_supertree.nodes), len(graph_supertree.edges()))
+
         # compute graph with all possible internal nodes and connections
         graph = graph_supertree.copy()
         index = len(graph_supertree.nodes)
-        for src, trg in graph_forest.edges_iter():
+        for src, trg in graph_forest.edges():
             # since these nodes are not in the supertree, they must be internal nodes
             if not graph.has_node(src):
                 node = graph_forest.node[src]
-                graph.add_node(src, label=node["label"], type="internal", graphics={})
+                graph.add_node(src, name=node["name"], type="internal", graphics={})
 
             if not graph.has_node(trg):
                 node = graph_forest.node[trg]
-                graph.add_node(trg, label=node["label"], type="internal", graphics={})
-                graph.node[trg]["graphics"] = {
-
-                }
+                graph.add_node(trg, name=node["name"], type="internal", graphics={})
 
             if graph_supertree.has_edge(src,trg):
                 graph[src][trg]['w'] = 1 + graph_forest[src][trg]['w']
-                graph[src][trg]['graphics'] = {
-
-                }
             else:
-                graph.add_edge(src, trg, w=graph_forest[src][trg]['w'], graphics={
-                    'width': 0.7,
-                    'fill': '"#0000ff"',
-                    'type': '"line"',
-                    'Line': [],
-                    'source_arrow': 0,
-                    'target_arrow': 1
-                })
+                graph.add_edge(src, trg, w=graph_forest[src][trg]['w'])
 
         for idx in graph.nodes:
+            if not graph.node[idx]["type"] == "leaf":
+                graph.node[idx]["name"] = ""
+
             if graph.node[idx]["type"] == "internal":
                 graph.node[idx]["graphics"] = {
                         'x': 0.0,
@@ -1103,9 +1100,9 @@ class SupertreeAppTest(TestCase):
                         'w': 20.0,
                         'h': 20.0,
                         'type': '"ellipse"',
-                        'fill': '"#94c2bf"',
-                        'outline': '"#003366"',
-                        'outline_width': 0.7
+                        'fill': '"#8a5442"',
+                        'outline': '"#003366"'
+                        #'outline_width': 0.7
                 }
             elif graph.node[idx]["type"] == "forest":
                 graph.node[idx]["graphics"] = {
@@ -1114,9 +1111,9 @@ class SupertreeAppTest(TestCase):
                         'w': 10.0,
                         'h': 10.0,
                         'type': '"ellipse"',
-                        'fill': '"#dfd4fc"',
-                        'outline': '"#94c2bf"',
-                        'outline_width': 0.1
+                        'fill': '"#b6afaf"',
+                        'outline': '"#94c2bf"'
+                        #'outline_width': 0.1
                 }            
             else: # if leaf
                 graph.node[idx]["graphics"] = {
@@ -1125,9 +1122,9 @@ class SupertreeAppTest(TestCase):
                         'w': 30.0,
                         'h': 30.0,
                         'type': '"rectangle"',
-                        'fill': '"#003366"',
-                        'outline': '"#0bd500"',
-                        'outline_width': 1
+                        'fill': '"#990000"',
+                        'outline': '"#0bd500"'
+                        # 'outline_width': 1
                 }                
 
 
