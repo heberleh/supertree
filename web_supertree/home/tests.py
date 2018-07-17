@@ -857,8 +857,8 @@ class SupertreeAppTest(TestCase):
         for (src, trg, data) in net.edges(data=True):
 
             lgt = {
-                'source':src,
-                'target':trg,
+                'source':net.node[src]["name"],
+                'target':net.node[trg]["name"],
                 'genes': data['genes'],
                 'attributes':{}
             }
@@ -1071,7 +1071,7 @@ class SupertreeAppTest(TestCase):
                 if not trg in vertex_hash:
                     trg_idx = i
                     vertex_hash[trg] = trg_idx
-                    graph_supertree.add_node(trg_idx, name=trg, type=type, tree=node)                    
+                    graph_supertree.add_node(trg_idx, name=trg, type=type, tree=node)     
                     i += 1                    
                 else:
                     trg_idx = vertex_hash[trg]
@@ -1160,12 +1160,19 @@ class SupertreeAppTest(TestCase):
                     source_node = graph_supertree.node[src]["tree"]
                     target_node = source_node.up
                     graph.add_edge(src, trg, w=len(graph_forest[src][trg]['genes']), genes=graph_forest[src][trg]['genes'], target=target_node, source=source_node)
-        for idx in graph.nodes:
-            if not graph.node[idx]["type"] == "leaf":
-                graph.node[idx]["name"] = ""
+               
+        
+        graph_to_write = graph.copy()
+        for (src,trg) in graph_to_write.edges():
+            graph_to_write[src][trg]['genes'] = ','.join(str(e) for e in graph_to_write[src][trg]['genes'])
+            graph_to_write[src][trg]['source'] = "tree"
+            graph_to_write[src][trg]['target'] = "tree"
+        for idx in graph_to_write.nodes:
+            if not graph_to_write.node[idx]["type"] == "leaf":
+                graph_to_write.node[idx]["name"] = ""
 
-            if graph.node[idx]["type"] == "internal":
-                graph.node[idx]["graphics"] = {
+            if graph_to_write.node[idx]["type"] == "internal":
+                graph_to_write.node[idx]["graphics"] = {
                         'x': 0.0,
                         'y': 0.0,
                         'w': 20.0,
@@ -1175,8 +1182,8 @@ class SupertreeAppTest(TestCase):
                         'outline': '"#003366"'
                         #'outline_width': 0.7
                 }
-            elif graph.node[idx]["type"] == "forest":
-                graph.node[idx]["graphics"] = {
+            elif graph_to_write.node[idx]["type"] == "forest":
+                graph_to_write.node[idx]["graphics"] = {
                         'x': 0.0,
                         'y': 0.0,
                         'w': 10.0,
@@ -1187,7 +1194,7 @@ class SupertreeAppTest(TestCase):
                         #'outline_width': 0.1
                 }            
             else: # if leaf
-                graph.node[idx]["graphics"] = {
+                graph_to_write.node[idx]["graphics"] = {
                         'x': 0.0,
                         'y': 0.0,
                         'w': 30.0,
@@ -1196,13 +1203,7 @@ class SupertreeAppTest(TestCase):
                         'fill': '"#990000"',
                         'outline': '"#0bd500"'
                         # 'outline_width': 1
-                }                
-        
-        graph_to_write = graph.copy()
-        for (src,trg) in graph_to_write.edges():
-            graph_to_write[src][trg]['genes'] = ','.join(str(e) for e in graph_to_write[src][trg]['genes'])
-            graph_to_write[src][trg]['source'] = "tree"
-            graph_to_write[src][trg]['target'] = "tree"
+                } 
 
         for node in graph_to_write.nodes():
             graph_to_write.node[node]["tree"] = "tree"
@@ -1210,7 +1211,6 @@ class SupertreeAppTest(TestCase):
         nx.write_gml(graph_to_write, 'supertree_network.gml')
 
         return graph
-
 
     def testSetGraphLGTClusteringByName(self):
         # parameters
@@ -1246,6 +1246,8 @@ class SupertreeAppTest(TestCase):
         lgts_vector_intersection = self.computeLGTsCandidatesParentIntersecion(number_of_trees)
         lgts_vector_no_parenting = self.computeLGTsCandidatesNoParenting(number_of_trees)
         lgts_vector_network = self.computeLGTsCandidatesNetwork(number_of_trees)
+
+        print("**** lgts network",lgts_vector_network)
 
         # print("Hash groups:")
         # print(self.hash_groups)

@@ -174,8 +174,10 @@ class Supertree {
     }
 
     _setUpLGTs(l) {
+        console.log("Number of LGTs in Data.json...", l.length);
         let lgts_nodes = [];
         let hash = this._supertree_nodes_hash;
+        console.log("Hashed ids: ", this._supertree_nodes_hash);
         var non_tracked_edges = [];
         for (let e in l) {
             if (l[e].source in hash && l[e].target in hash) {
@@ -192,6 +194,7 @@ class Supertree {
             }
         }
         console.log(">> What is going on with these edges?", non_tracked_edges);
+        console.log("Number of LGTs stored in supertree as nodes...", lgts_nodes.length);
         return lgts_nodes;
     }
 
