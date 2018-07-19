@@ -10,6 +10,7 @@ class SupertreeView {
         this.supertree.hierarchy;
 
         this._visible_genes_set = new Set();
+        this._visible_genomes_set = new Set();
 
         console.log("Supertree", this.supertree.hierarchy);
 
@@ -963,16 +964,36 @@ class SupertreeView {
         d3.select("#n_visible_edges").text(this._visible_lgts.length);
     }
 
-    _updateVisualStatistics(){        
-        this._updateStatisticsVisibleEdges();
+    _updateStatisticsVisibleGenes(){
+        let n_genes = 0;
+        d3.select("#n_visible_genes").text(this._visible_genes_set.size);
     }
 
+    _updateStatisticsVisibleGenomes(){       
+        d3.select("#n_visible_genomes").text(this._visible_genomes_set.size);
+    }
+
+    _updateVisualStatistics(){        
+        this._updateStatisticsVisibleEdges();
+        this._updateStatisticsVisibleGenes();
+        this._updateStatisticsVisibleGenomes();
+    }
+
+
+    updateGenomesVisibility(){
+
+        // make genomes transparent
+
+        // make internal edges transparent
+    }
+    
     _updateVisibleLGTsList(){
         this._visible_lgts = this.supertree.lgts.filter(e => e.lateralEdgeSprite.sprite.visible);
         this._updateVisualStatistics();
-        this._updateVisibleGenesSets();
+        this._updateVisibleGenesSets();     
+        this._updateVisibleGenomes();   
+        
     }
-
     _updateVisibleGenesSets(){
         this._visible_genes_set.clear();
                 
@@ -983,6 +1004,23 @@ class SupertreeView {
                 }                
             });            
         });                 
+    }
+
+    _updateVisibleGenomes(){
+        this._visible_genomes_set.clear();
+        this.supertree.hierarchy.leaves().forEach(genome =>{                        
+            let some_gene_is_filtered = [... genome.genes].some(gene => {
+                return this._visible_genes_set.has(gene);
+            });
+            if (some_gene_is_filtered){
+                genome.visible = true;
+                d.graphics.alpha = this.globalGenomeLabelAlpha; 
+                this._visible_genomes_set.add(genome);
+            }else{
+                genome.visible = false;
+                d.graphics.alpha = this.globalGenomeLabelAlpha/3;
+            }            
+        });
     }
 
     _listFunctionsFromVisibleEdges(){
@@ -1029,7 +1067,6 @@ class SupertreeView {
             }
         });
     }
-
     
     updateEdgesVisibility(){
 
