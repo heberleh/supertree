@@ -135,10 +135,10 @@ class SupertreeView {
         // Searching box
         this._addSearchBox();
 
-        this._updateVisibleLGTsList();
-
-        
+        this._updateVisibleLGTsList();        
         this._updateVisibleGenesSets();
+        this._updateVisualStatistics();
+               
 
     }
 
@@ -990,8 +990,8 @@ class SupertreeView {
     _updateVisibleLGTsList(){
         this._visible_lgts = this.supertree.lgts.filter(e => e.lateralEdgeSprite.sprite.visible);
         this._updateVisualStatistics();
-        this._updateVisibleGenesSets();     
-        this._updateVisibleGenomes();   
+        this._updateVisibleGenesSets();
+        this._updateVisibleGenomes();
         
     }
     _updateVisibleGenesSets(){
@@ -1009,16 +1009,16 @@ class SupertreeView {
     _updateVisibleGenomes(){
         this._visible_genomes_set.clear();
         this.supertree.hierarchy.leaves().forEach(genome =>{                        
-            let some_gene_is_filtered = [... genome.genes].some(gene => {
+            let some_gene_is_filtered = [... genome.data.genes].some(gene => {
                 return this._visible_genes_set.has(gene);
             });
             if (some_gene_is_filtered){
                 genome.visible = true;
-                d.graphics.alpha = this.globalGenomeLabelAlpha; 
+                genome.graphics.alpha = this.globalGenomeLabelAlpha; 
                 this._visible_genomes_set.add(genome);
             }else{
                 genome.visible = false;
-                d.graphics.alpha = this.globalGenomeLabelAlpha/3;
+                genome.graphics.alpha = this.globalGenomeLabelAlpha/3;
             }            
         });
     }
