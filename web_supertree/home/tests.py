@@ -851,29 +851,30 @@ class SupertreeAppTest(TestCase):
         return lgts_vector
 
     def computeLGTsCandidatesNetwork(self,number_of_trees):             
-        net = self.createGraphsFromForestAndSupertree(number_of_trees)       
+        (net, supertree_net ) = self.createGraphsFromForestAndSupertree(number_of_trees)       
 
         lgts_vector = []
         for (src, trg, data) in net.edges(data=True):
 
-            lgt = {
-                'source':net.node[src]["name"],
-                'target':net.node[trg]["name"],
-                'genes': data['genes'],
-                'attributes':{}
-            }
-            
-            lgt['attributes']['path_dist'] = {
-                'type': 'numeric',
-                'value': data['source'].get_distance(data['target'], topology_only=True)
-            }
-            
-            lgt['attributes']['n_genes'] = {
-                'type': 'numeric', 
-                'value': len(data['genes'])
-            }
+            if not supertree_net.has_edge(src,trg):
+                lgt = {
+                    'source':net.node[src]["name"],
+                    'target':net.node[trg]["name"],
+                    'genes': data['genes'],
+                    'attributes':{}
+                }
+                
+                lgt['attributes']['path_dist'] = {
+                    'type': 'numeric',
+                    'value': data['source'].get_distance(data['target'], topology_only=True)
+                }
+                
+                lgt['attributes']['n_genes'] = {
+                    'type': 'numeric', 
+                    'value': len(data['genes'])
+                }
 
-            lgts_vector.append(lgt)
+                lgts_vector.append(lgt)
 
         return lgts_vector
                                 
@@ -1024,7 +1025,7 @@ class SupertreeAppTest(TestCase):
     def get_gene_name(self, tree_index):
         return None
 
-    def createGraphsFromForestAndSupertree(self, number_of_trees=20000):
+    def createGraphsFromForestAndSupertree(self, number_of_trees=2000):
         graph_forest = nx.DiGraph()
         vertex_hash = {}
         i = 0
@@ -1076,8 +1077,7 @@ class SupertreeAppTest(TestCase):
                 else:
                     trg_idx = vertex_hash[trg]
                     if not graph_supertree.has_node(trg_idx):
-                        graph_supertree.add_node(trg_idx, name=trg, type=type, tree=node)                    
-                
+                        graph_supertree.add_node(trg_idx, name=trg, type=type, tree=node)                                    
                 if not src in vertex_hash:
                     src_idx = i
                     vertex_hash[src] = src_idx                    
@@ -1093,7 +1093,7 @@ class SupertreeAppTest(TestCase):
         print("Forest graph: ", len(graph_forest.nodes), len(graph_forest.edges()))
         print("Supertree graph: ", len(graph_supertree.nodes), len(graph_supertree.edges()))
 
-        compute_supertree_forest_network = False
+        compute_supertree_forest_network = True
         if compute_supertree_forest_network:
             # compute graph with all possible internal nodes and connections
             graph = graph_supertree.copy()
@@ -1109,14 +1109,20 @@ class SupertreeAppTest(TestCase):
 
                 if graph_supertree.has_edge(src,trg):
                     graph[src][trg]['w'] = 1 + len(graph_forest[src][trg]['genes'])
-                else:
-                    graph.add_edge(src, trg, w=len(graph_forest[src][trg]['genes']))
-            for idx in graph.nodes:
-                if not graph.node[idx]["type"] == "leaf":
-                    graph.node[idx]["name"] = ""
+                else:                                       
+                    graph.add_edge(src, trg, w=len(graph_forest[src][trg]['genes']), genes=graph_forest[src][trg]['genes'])
+              
+            graph_to_write = graph.copy()
+            for (src,trg) in graph_to_write.edges():
+                graph_to_write[src][trg]['genes'] = ','.join(str(e) for e in graph_to_write[src][trg]['genes'])
+                graph_to_write[src][trg]['source'] = "tree"
+                graph_to_write[src][trg]['target'] = "tree"
+            for idx in graph_to_write.nodes:
+                if not graph_to_write.node[idx]["type"] == "leaf":
+                    graph_to_write.node[idx]["name"] = ""
 
-                if graph.node[idx]["type"] == "internal":
-                    graph.node[idx]["graphics"] = {
+                if graph_to_write.node[idx]["type"] == "internal":
+                    graph_to_write.node[idx]["graphics"] = {
                             'x': 0.0,
                             'y': 0.0,
                             'w': 20.0,
@@ -1126,8 +1132,8 @@ class SupertreeAppTest(TestCase):
                             'outline': '"#003366"'
                             #'outline_width': 0.7
                     }
-                elif graph.node[idx]["type"] == "forest":
-                    graph.node[idx]["graphics"] = {
+                elif graph_to_write.node[idx]["type"] == "forest":
+                    graph_to_write.node[idx]["graphics"] = {
                             'x': 0.0,
                             'y': 0.0,
                             'w': 10.0,
@@ -1138,7 +1144,7 @@ class SupertreeAppTest(TestCase):
                             #'outline_width': 0.1
                     }            
                 else: # if leaf
-                    graph.node[idx]["graphics"] = {
+                    graph_to_write.node[idx]["graphics"] = {
                             'x': 0.0,
                             'y': 0.0,
                             'w': 30.0,
@@ -1147,8 +1153,18 @@ class SupertreeAppTest(TestCase):
                             'fill': '"#990000"',
                             'outline': '"#0bd500"'
                             # 'outline_width': 1
-                    }                
-            #nx.write_gml(graph, 'forest_plus_supertree_network.gml')
+                    }
+
+            for node in graph_to_write.nodes():    
+                graph_to_write.node[node]["tree"] = "tree"
+                if graph_supertree.has_node(node):
+                    graph_to_write.node[node]["type"] += "_supertree"
+                else:
+                    graph_to_write.node[node]["type"] += "_forest"
+
+            nx.write_gml(graph_to_write, 'forest_plus_supertree_network.gml')
+
+
 
         graph = graph_supertree.copy()
         for src, trg in graph_forest.edges():
@@ -1207,10 +1223,14 @@ class SupertreeAppTest(TestCase):
 
         for node in graph_to_write.nodes():
             graph_to_write.node[node]["tree"] = "tree"
+            if graph_supertree.has_node(node):
+                graph_to_write.node[node]["type"] += "_supertree"
+            else:
+                graph_to_write.node[node]["type"] += "_forest"
 
         nx.write_gml(graph_to_write, 'supertree_network.gml')
 
-        return graph
+        return (graph, graph_supertree)
 
     def testSetGraphLGTClusteringByName(self):
         # parameters
