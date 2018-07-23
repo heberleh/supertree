@@ -11,6 +11,7 @@ import itertools
 import json
 import string
 import random
+import csv
 
 from home.test_data import TestData
 
@@ -74,12 +75,25 @@ class SupertreeAppTest(TestCase):
             for node in self.supertree:
                 node.name = self.clean(node.name)
 
+            preorder_index = 0
+            self.preorder_index_hash = {}
+            for node in self.supertree.traverse("preorder"):
+                node.preorder_index = preorder_index
+                self.preorder_index_hash[preorder_index] = node                
+                preorder_index += 1
+                
+            self.lgts_matrix = list(csv.reader(TestData.get_lgts()))
+            
             self.forest = []
             for tree_nw in sorted(forest_newicks.split(';'), key=len, reverse=True):
                 tree = Tree(newick=tree_nw+';', format=self.format)
                 for node in tree:
                     node.name = self.clean(node.name)
                 self.forest.append(tree)
+            
+            
+            
+
                 
         #self.forest = sorted(self.forest, key=len)
 
@@ -877,6 +891,60 @@ class SupertreeAppTest(TestCase):
                 lgts_vector.append(lgt)
 
         return lgts_vector
+
+    def computeLGTsFromRSPR(self):       
+
+        lgts_vector = []
+        for i in range(len(self.lgts)):
+            for j in range(len(self.lgts)):
+                if self.lgts[i][j] > 0:
+                    source = self.preorder_index_hash[i]
+                    target = self.preorder_index_hash[j]
+                    weight = self.lgts[i][j]
+                    lgt = {
+                        'source': source["name"],
+                        'target': target["name"],
+                        'genes': source["genes"].intersection(target["genes"]),
+                        'attributes':{}
+                    }
+                    
+                    lgt['attributes']['path_dist'] = {
+                        'type': 'numeric',
+                        'value': source.get_distance(target, topology_only=True)
+                    }
+                    
+                    lgt['attributes']['n_genes'] = {
+                        'type': 'numeric', 
+                        'value': len(lgt['genes'])
+                    }
+
+                    lgts_vector.append(lgt)
+
+
+        
+        for (src, trg, data) in net.edges(data=True):
+
+            if not supertree_net.has_edge(src,trg):
+                lgt = {
+                    'source':net.node[src]["name"],
+                    'target':net.node[trg]["name"],
+                    'genes': data['genes'],
+                    'attributes':{}
+                }
+                
+                lgt['attributes']['path_dist'] = {
+                    'type': 'numeric',
+                    'value': data['source'].get_distance(data['target'], topology_only=True)
+                }
+                
+                lgt['attributes']['n_genes'] = {
+                    'type': 'numeric', 
+                    'value': len(data['genes'])
+                }
+
+                lgts_vector.append(lgt)
+
+        return lgts_vector
                                 
     def populateSupertreeGenesAttributes(self,number_of_trees):
 
@@ -1025,7 +1093,7 @@ class SupertreeAppTest(TestCase):
     def get_gene_name(self, tree_index):
         return None
 
-    def createGraphsFromForestAndSupertree(self, number_of_trees=2000):
+    def createGraphsFromForestAndSupertree(self, number_of_trees=5000):
         graph_forest = nx.DiGraph()
         vertex_hash = {}
         i = 0
@@ -1157,13 +1225,17 @@ class SupertreeAppTest(TestCase):
 
             for node in graph_to_write.nodes():    
                 graph_to_write.node[node]["tree"] = "tree"
+                if graph_to_write.node[node]["name"] in self.hash_groups:
+                    graph_to_write.node[node]["group"] = self.hash_groups[graph_to_write.node[node]["name"]]
+                else:
+                    graph_to_write.node[node]["group"] = "parent"
+                    graph_to_write.node[node]["name"] = ""
                 if graph_supertree.has_node(node):
                     graph_to_write.node[node]["type"] += "_supertree"
                 else:
                     graph_to_write.node[node]["type"] += "_forest"
 
             nx.write_gml(graph_to_write, 'forest_plus_supertree_network.gml')
-
 
 
         graph = graph_supertree.copy()
@@ -1222,7 +1294,12 @@ class SupertreeAppTest(TestCase):
                 } 
 
         for node in graph_to_write.nodes():
-            graph_to_write.node[node]["tree"] = "tree"
+            graph_to_write.node[node]["tree"] = "tree"            
+            if graph_to_write.node[node]["name"] in self.hash_groups:
+                graph_to_write.node[node]["group"] = self.hash_groups[graph_to_write.node[node]["name"]]
+            else:
+                graph_to_write.node[node]["group"] = "parent"
+                graph_to_write.node[node]["name"] = ""
             if graph_supertree.has_node(node):
                 graph_to_write.node[node]["type"] += "_supertree"
             else:
@@ -1266,6 +1343,7 @@ class SupertreeAppTest(TestCase):
         lgts_vector_intersection = self.computeLGTsCandidatesParentIntersecion(number_of_trees)
         lgts_vector_no_parenting = self.computeLGTsCandidatesNoParenting(number_of_trees)
         lgts_vector_network = self.computeLGTsCandidatesNetwork(number_of_trees)
+        lgts_rspr = self.computeLGTsFromRSPR()
 
         print("**** lgts network",lgts_vector_network)
 
