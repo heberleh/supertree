@@ -12,6 +12,7 @@ import json
 import string
 import random
 import csv
+from io import StringIO
 
 from home.test_data import TestData
 
@@ -63,7 +64,6 @@ class SupertreeAppTest(TestCase):
                 self.groups_names.add(group_name)
                 for i in range(1,len(names)):
                     self.hash_groups[self.clean(names[i])] = group_name
-
             
             reference_newick = TestData.get_supertree_spr_mrp_rooting() #get_supertree_spr_aquificae_rooting()
             forest_newicks = TestData.get_mrp_gene_trees()
@@ -82,18 +82,21 @@ class SupertreeAppTest(TestCase):
                 self.preorder_index_hash[preorder_index] = node                
                 preorder_index += 1
                 
-            self.lgts_matrix = list(csv.reader(TestData.get_lgts()))
-            
+            self.lgts_matrix = []       
+            buff = StringIO(TestData.get_lgts())    
+            string_matrix = list(csv.reader(buff))
+            for row in string_matrix:
+                new_row = []               
+                for col in row:                    
+                    new_row.append(int(col))
+                self.lgts_matrix.append(new_row)
+
             self.forest = []
             for tree_nw in sorted(forest_newicks.split(';'), key=len, reverse=True):
                 tree = Tree(newick=tree_nw+';', format=self.format)
                 for node in tree:
                     node.name = self.clean(node.name)
-                self.forest.append(tree)
-            
-            
-            
-
+                self.forest.append(tree)                                    
                 
         #self.forest = sorted(self.forest, key=len)
 
@@ -895,16 +898,16 @@ class SupertreeAppTest(TestCase):
     def computeLGTsFromRSPR(self):       
 
         lgts_vector = []
-        for i in range(len(self.lgts)):
-            for j in range(len(self.lgts)):
-                if self.lgts[i][j] > 0:
+        for i in range(len(self.lgts_matrix)):
+            for j in range(len(self.lgts_matrix)):
+                if self.lgts_matrix[i][j] > 0:
                     source = self.preorder_index_hash[i]
                     target = self.preorder_index_hash[j]
-                    weight = self.lgts[i][j]
+                    weight = self.lgts_matrix[i][j]
                     lgt = {
-                        'source': source["name"],
-                        'target': target["name"],
-                        'genes': source["genes"].intersection(target["genes"]),
+                        'source': source.name,
+                        'target': target.name,
+                        'genes': list(source.genes.intersection(target.genes)),
                         'attributes':{}
                     }
                     
@@ -918,32 +921,13 @@ class SupertreeAppTest(TestCase):
                         'value': len(lgt['genes'])
                     }
 
+                                        
+                    lgt['attributes']['rspr_count'] = {
+                        'type': 'numeric', 
+                        'value': weight
+                    }
+
                     lgts_vector.append(lgt)
-
-
-        
-        for (src, trg, data) in net.edges(data=True):
-
-            if not supertree_net.has_edge(src,trg):
-                lgt = {
-                    'source':net.node[src]["name"],
-                    'target':net.node[trg]["name"],
-                    'genes': data['genes'],
-                    'attributes':{}
-                }
-                
-                lgt['attributes']['path_dist'] = {
-                    'type': 'numeric',
-                    'value': data['source'].get_distance(data['target'], topology_only=True)
-                }
-                
-                lgt['attributes']['n_genes'] = {
-                    'type': 'numeric', 
-                    'value': len(data['genes'])
-                }
-
-                lgts_vector.append(lgt)
-
         return lgts_vector
                                 
     def populateSupertreeGenesAttributes(self,number_of_trees):
@@ -1312,7 +1296,7 @@ class SupertreeAppTest(TestCase):
     def testSetGraphLGTClusteringByName(self):
         # parameters
         number_of_trees = len(self.forest)
-        #number_of_trees = 700          
+        number_of_trees = 20
         
         vertex_hash = {}
         i = 0
@@ -1409,6 +1393,11 @@ class SupertreeAppTest(TestCase):
 
         json_txt += "],\"lgts_3\":["
         for edge in lgts_vector_network:
+            json_txt += json.dumps(edge) +","
+        json_txt = json_txt[:-1]        
+
+        json_txt += "],\"lgts_4\":["
+        for edge in lgts_rspr:
             json_txt += json.dumps(edge) +","
         json_txt = json_txt[:-1]        
 
