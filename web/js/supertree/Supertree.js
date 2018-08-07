@@ -1,8 +1,14 @@
 class Supertree {
 
-    constructor(supertree_newick, nodes_data, lgts_key) {
+    constructor(data) {
         // update data structure
-        this._nodes_data = nodes_data;   
+        
+        this._nodes_data = data;   
+
+        let supertree_newick = data.supertree_newick;
+        let supertree = nodes_data.supertree;
+        let forest = nodes_data.forest;
+        let lgts = nodes_data.lgts;
 
         ///////////////// todo ////////////////////////////////////
         //this._genesNamesVect = [];
@@ -13,7 +19,7 @@ class Supertree {
         // set up supertree       
         this._supertree = null; // hierarchy... or another Tree structure in Javascript. 
         this._simple_hierarchy = parseNewick(supertree_newick);
-        this._d3Hierarchy = this._setUpSupertreeD3Hierarchy();
+        this.hierarchy = this._setUpSupertreeD3Hierarchy();
         
      
         // set up data in the supertree structure
@@ -28,7 +34,7 @@ class Supertree {
         //////////////////////////////
 
         // set up forest
-        this._forest = nodes_data.forest;
+        this._forest = forest;
         console.log("Forest", this._forest);
         for(let i in this._forest){
             let gene = this._forest[i];
@@ -58,8 +64,8 @@ class Supertree {
         this._min_number_of_genes_in_a_genome = min_n_g;
 
         // set up LGTs edges
-        console.log("DEBUG", nodes_data[lgts_key]);
-        this._lgts = this._setUpLGTs(nodes_data[lgts_key]);
+        //console.log("DEBUG", nodes_data[lgts_key]);
+        this._lgts = this._setUpLGTs(lgts);
 
 
         let max_genes = 0;
@@ -170,7 +176,7 @@ class Supertree {
     }
 
     get hierarchy() {
-        return this._d3Hierarchy;
+        return this.hierarchy;
     }
 
     _setUpLGTs(l) {
