@@ -1,3 +1,16 @@
+$(document).ready(function () {
+
+
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+
+
+    } else {
+        alert('The File APIs are not fully supported in this browser. Please try a different web browser or version. Usually Chrome and Firefox work fine.');
+    }
+
+    
+});
+
 /**
  * Handles the "file" parameter of the URL, that is, handles the XGMML network given through URL
  * @param {event} evt The event object
@@ -17,6 +30,7 @@ function handleFileSelect(evt) {
                     json = JSON.parse(e.target.result);
                     alert('json global var has been set to parsed json of this file here it is unevaled = \n' + JSON.stringify(json));
 
+                    createSupertreeApp(json);
 
                 } catch (ex) {
                     alert('ex when trying to parse json = ' + ex);
@@ -27,6 +41,10 @@ function handleFileSelect(evt) {
     }
 }
 
+/**
+ * Creates a Supertree using the Json data and, then, creates the SupertreeView, displaying the supertree using Pixi.js (WebGL when available, otherwise, Canvas).
+ * @param {Json data} json 
+ */
 function createSupertreeApp(json) {
            
             //console.log("lgts from file",nodes_data.lgts1,nodes_data.lgts2);
@@ -95,28 +113,3 @@ function createSupertreeApp(json) {
 
             // set up GUI... and diagrams coordination
 }
-
-
-$(document).ready(function () {
-
-    // read files and load models  -> when loading from django... how it would be?
-
-
-    //let filename = "/static/home/data_all_genes_regular.json";
-    let filename = "dataset/data.json";
-
-    let visdata = null;
-
-
-    if (window.File && window.FileReader && window.FileList && window.Blob) {
-
-
-    } else {
-        alert('The File APIs are not fully supported in this browser. Please try a different web browser or version. Usually Chrome and Firefox work fine.');
-    }
-
-
-
-
-
-});

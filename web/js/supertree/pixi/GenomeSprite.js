@@ -6,13 +6,14 @@ class GenomeSprite extends Sprite {
         super();
         this._node = data;
         this._supertreeView = supertreeView;
+        this._supertree = this._supertreeView.supertree;
         this._canvas = null;
 
         let max_height = 150;
         this.width = 7;
 
         let s = d3.scaleLinear()
-                    .domain([this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes])
+                    .domain([this._supertree.minNgenes,this._supertree.maxNgenes])
                     .range([10, max_height]);
 
         //console.log("Scale genome size: ", [this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes], s(this._node.data.genes.size));
@@ -25,7 +26,7 @@ class GenomeSprite extends Sprite {
         this._setUpGroups();
 
         this._createTexture();
-        this._supertreeView.numerOfGenomes;
+        this._supertreeView.numberOfGenomes;
 
         this.alpha = 0.7;
 
@@ -47,13 +48,13 @@ class GenomeSprite extends Sprite {
 
     _setUpGroups() {
         let groups = {};
-        this._supertreeView.supertree.groupsLabels.forEach(label => {
+        this._supertree.groupsLabels.forEach(label => {
             if (label != "-" && label.length > 0) {
                 groups[label] = 0;
             }
         });
 
-        let groups_data = this._supertreeView.stream.group_sp_distribution;
+        let groups_data = this._supertree.geneGroupsDistribution();
 
         //console.log("groups_data", groups_data);
         this._node.data.genes.forEach(gene => {
@@ -94,7 +95,7 @@ class GenomeSprite extends Sprite {
 
     _setUpGroupsSum() {
         let groups = {};
-        this._supertreeView.supertree.groupsLabels.forEach(label => {
+        this._supertree.groupsLabels.forEach(label => {
             if (label != "-" && label.length > 0) {
                 groups[label] = 0;
             }

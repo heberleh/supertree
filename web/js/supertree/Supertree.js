@@ -1,40 +1,24 @@
 class Supertree {
 
-    constructor(data) {
-        // update data structure
+    constructor(data) {                
+        this._data = data;
+
+        // set up supertree        
+        this._simple_hierarchy = parseNewick(this.data.supertree.newick);
+        this._hierarchy = this._setUpSupertreeD3Hierarchy();
         
-        this._nodes_data = data;   
-
-        let supertree_newick = data.supertree_newick;
-        let supertree = nodes_data.supertree;
-        let forest = nodes_data.forest;
-        let lgts = nodes_data.lgts;
-
-        ///////////////// todo ////////////////////////////////////
-        //this._genesNamesVect = [];
-        //this._genesNamesHash = {};        
-        //this._setUpGenesDict(genes_names) // a list with the genes names (for each tree in forest, in the same order)
-        ///////////////////////////////////////////////////////////
-
-        // set up supertree       
-        this._supertree = null; // hierarchy... or another Tree structure in Javascript. 
-        this._simple_hierarchy = parseNewick(supertree_newick);
-        this.hierarchy = this._setUpSupertreeD3Hierarchy();
-        
-     
         // set up data in the supertree structure
-        this._storeData(this.hierarchy);
+        // set up preorder index - used for hash in next method
+        this._storeData(this.hierarchy, this.data, 0);
+         
+        // creates a hash of supertree nodes by pre-order index
+        this._supertreeNodesHash = this._setUpSupertreeNodesHash();
 
+        // set up groups, sorting
+        this._groupsLabels = this.data.groups_names.sort();
 
-        this._supertree_nodes_hash = this._setUpSupetreeNodesHash();        
-
-
-        // set up groups -> original groups
-        this._groupsLabels = this._setUpTreeGroupsLabels(nodes_data.supertree);
-        //////////////////////////////
-
-        // set up forest
-        this._forest = forest;
+        // set up forest, add some attributes for visualization
+        this._forest = this.data.forest;
         console.log("Forest", this._forest);
         for(let i in this._forest){
             let gene = this._forest[i];
@@ -49,9 +33,9 @@ class Supertree {
             }
         }
         
+        // finding min max number of genes in genomes
         let max_n_g = 0;
-        let min_n_g = Object.values(this._forest).length;
-        
+        let min_n_g = this._forest.length;
         this.hierarchy.leaves().forEach(leaf =>{             
             if(max_n_g < leaf.data.genes.size){
                 max_n_g = leaf.data.genes.size;
@@ -63,88 +47,58 @@ class Supertree {
         this._max_number_of_genes_in_a_genome = max_n_g;
         this._min_number_of_genes_in_a_genome = min_n_g;
 
-        // set up LGTs edges
-        //console.log("DEBUG", nodes_data[lgts_key]);
-        this._lgts = this._setUpLGTs(lgts);
+        // set up LGTs edges       
+        this._lgts = this._setUpLGTs(this.data.transfers);        
 
+        this._totalsInGroups = this._setUpTotalsInGroups();
 
-        let max_genes = 0;
-        this._lgts.forEach(lgt =>{
-            if (lgt.genes.size > max_genes){
-                max_genes = lgt.genes.size;
-            }
-        });      
-        console.log("Max number of genes in edges", max_genes);
-        this._max_number_of_genes_in_edges = max_genes;
-
-        this._totals_in_groups = this._setUpTotalsInGroups();
+        this._setUpGenesGroupsDistribution();
 
     }
 
+    /**
+     * Computes the number of leaves in each group/class.
+     */
     _setUpTotalsInGroups(){
-        let totals_in_groups = {};
+        let totalsInGroups = {};
         this.groupsLabels.forEach(label =>{
-            totals_in_groups[label] = 0;
+            totalsInGroups[label] = 0;
         });
 
         this.hierarchy.leaves().forEach(leaf =>{             
-            totals_in_groups[leaf.data.c] += 1;
+            totalsInGroups[leaf.data.group] += 1;
         });
-        console.log("Number of genomes in each group: ", totals_in_groups)
-        return totals_in_groups;
+        console.log("Number of genomes in each group: ", totalsInGroups)
+        return totalsInGroups;
     }
+    
+    /**
+     * Changes each node from the given tree (D3 hierarchy node), adding new attributes and setting up the related pre-order index. This index is used to configure the LGT/Transfers edges.
+     * @param {D3 hierarchy node} node 
+     * @param {Json data} data 
+     * @param {The starting preorder index} index
+     */
+    _storeData(node, data, index) {
 
-    _updateNodesData() {
+        let st_node_data = this.data.supertree.nodes[index];
+        for (let key in st_node_data){
+            node.data[key] = st_node_data[key];            
+        }
+        node.data.genes = new Set(st_node_data.genes_intersect)
         
-        // this._nodes_data.lgts.forEach(lgt=>{
+        node.preorder_idx = index;
 
-        //     new_genes = new Set();
-        //     lgt.genes.forEach(gene =>{
-        //         new_genes.add()
-        //     });
-        // });      
-    }
+        // TODO if node has not attribute data.name -> create it joining its leaves' names
 
-    _setUpGenesDict() {
+        index += 1;
 
-    }
-
-    // given a ROOT d... of a tree.. store the date in this tree
-    _storeData(d) {
-        //console.log(Object.keys(this._nodes_data.supertree));
-        if (d.data.name == "") {
-            d.data.c = '-';
-            d.data.genes = [];
-        } else {
-            try {
-                var node = this._nodes_data.supertree[d.data.name];
-                d.data.c = node.g;
-                d.data.genes = new Set(node.genes);                
-            } catch (error) {
-                console.log(error);
-                console.log("ERROR");
-                console.log(d.data.name);
-                d.data.c = node.g;
-                d.data.genes = new Set();
-
-                return;
-            }
-
-        }
-        if (d.children) d.children.forEach((d) => this._storeData(d));
-    }
-
-    _setUpTreeGroupsLabels(nodes) {
-        var gs = new Set();
-        var gs_list = [];
-        for (let key in nodes) {
-            if (!gs.has(nodes[key].g)){
-                gs.add(nodes[key].g);
-                gs_list.push(nodes[key].g);
+        if (d.children){
+            for (let i in d.children){
+                let child = d.children[i];
+                index = this._storeData(d, data, index);
             }
         }
-
-        return gs_list.sort();
+        return index;
     }
 
     get groupsLabels() {
@@ -152,38 +106,45 @@ class Supertree {
     }
 
     get hierarchy() {
-        return this._simple_hierarchy;
-    }
-
-    get lgts() {
-        return this._lgts;
+        return this._hierarchy;
     }
 
     get forest() {
         return this._forest;
     }
 
+    /**
+     * Returns the list of edges that may represent LGTs. 
+     * If edges are from RSPR software, they can be of two types:
+     * rspr-moves or shared-genes between supertree nodes from different groups.
+     */
+    get lgts(){
+        return this._lgts;
+    }
+
+
     _setUpSupertreeD3Hierarchy() {
         return d3.hierarchy(this._simple_hierarchy, function (d) {
-                return d.branchset;
+                return d.branchSet;
             })
             .sum(function (d) {
-                return d.branchset ? 0 : 1;
+                return d.branchSet ? 0 : 1;
             })
             .sort(function (a, b) {
                 return (a.value - b.value) || d3.ascending(a.data.length, b.data.length);
             });
     }
 
-    get hierarchy() {
-        return this.hierarchy;
-    }
-
+    /**
+     * Create a new list of LGTs/Transfers edges given the original list of edges. This list create new attributes and change some attributes that before stored just indexes to now store the pointers to the objects. For instance, source was storing index 0, now it is storing supertree.node[0].
+     * TODO Adapt this code to the new Json file from RSPR.
+     * @param {list} l list of original transfers/edges
+     */
     _setUpLGTs(l) {
         console.log("Number of LGTs in Data.json...", l.length);
         let lgts_nodes = [];
-        let hash = this._supertree_nodes_hash;
-        console.log("Hashed ids: ", this._supertree_nodes_hash);
+        let hash = this._supertreeNodesHash;
+        console.log("Hashed ids: ", this._supertreeNodesHash);
         var non_tracked_edges = [];
         for (let e in l) {
             if (l[e].source in hash && l[e].target in hash) {
@@ -204,19 +165,15 @@ class Supertree {
         return lgts_nodes;
     }
 
-    get lgts(){
-        return this._lgts;
-    }
-
-    _setUpSupetreeNodesHash() {
+    _setUpSupertreeNodesHash() {
         var nodes_hash = {};
         this.hierarchy.descendants().forEach(function (d) {
-            nodes_hash[d.data.name] = d;
+            nodes_hash[d.preorder_idx] = d;
         });
         return nodes_hash;
     }
 
-    get numerOfGenomes(){
+    get numberOfGenomes(){
         return this.hierarchy.leaves().length;
     }
 
@@ -224,19 +181,57 @@ class Supertree {
         return this._nodes_data.group_sp_distribution[gene];
     }
 
-    get maxNgenes(){
+    get maxNGenes(){
         return this._max_number_of_genes_in_a_genome;
     }
 
-    get minNgenes(){
+    get minNGenes(){
         return this._min_number_of_genes_in_a_genome;
     }
 
-    get totals_in_groups(){
-        return this._totals_in_groups;
+    get totalsInGroups(){
+        return this._totalsInGroups;
     }
 
-    get max_number_of_genes_in_edges(){
-        return this._max_number_of_genes_in_edges;
+    get maxNumberOfGenesInEdges(){
+        // finding max number of genes in transfers
+        // the set "genes" may represent different sets...
+        // rspr edges has different genes than shared-genes edges.
+        // TODO guarantee that the lgt.genes is set up according to some default choice or that it changes according to user interaction if this method is associated to any visualization attribute.
+        
+        let max_genes = 0;
+        this._lgts.forEach(lgt =>{
+            if (lgt.genes.size > max_genes){
+                max_genes = lgt.genes.size;
+            }
+        });
+        return max_genes;
     }
+
+    /**
+     * Returns the original Json data.
+     */
+    get data(){
+        return this._data;
+    }
+
+    /**
+     * Returns a supertree Node from D3 Hierarchy given its pre-order index.
+     * @param preorder_idx integer
+     */
+    get node(preorder_idx){
+        this._supertreeNodesHash[preorder_idx];
+    }
+
+    get groupName(index){
+        return this._groupsLabels[index];
+    }
+
+    /**
+     * Returns a vector containing 
+     */
+    get geneGroupsDistribution(gene_index){
+        return this.data.forest[gene_index].groups_distribution;
+    }
+
 }
