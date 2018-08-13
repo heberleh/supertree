@@ -154,13 +154,15 @@ class Supertree {
                 l[e].genes_array = l[e].genes;
                 l[e].genes = new Set(l[e].genes);
                 l[e].supertree = this;
-                l[e].filtered = true;
+                l[e].filtered = true;                
                 lgts_nodes.push(l[e]);                
             } else {
                 non_tracked_edges.push(l[e]);
             }
         }
-        console.log(">> What is going on with these edges?", non_tracked_edges);
+        if (non_tracked_edges.length > 0){
+            console.log(">> What is going on with these edges?", non_tracked_edges);
+        }
         console.log("Number of LGTs stored in supertree as nodes...", lgts_nodes.length);
         return lgts_nodes;
     }
@@ -219,18 +221,18 @@ class Supertree {
      * Returns a supertree Node from D3 Hierarchy given its pre-order index.
      * @param preorder_idx integer
      */
-    get node(preorder_idx){
+    getNode(preorder_idx){
         this._supertreeNodesHash[preorder_idx];
     }
 
-    get groupName(index){
+    getGroupName(index){
         return this._groupsLabels[index];
     }
 
     /**
      * Returns a vector containing 
      */
-    get geneGroupsDistribution(gene_index){
+    getGeneGroupsDistribution(gene_index){
         return this.data.forest[gene_index].groups_distribution;
     }
 

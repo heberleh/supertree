@@ -1,8 +1,8 @@
 $(document).ready(function () {
 
-
     if (window.File && window.FileReader && window.FileList && window.Blob) {
 
+        document.getElementById('file').addEventListener('change', handleFileSelect, false);
 
     } else {
         alert('The File APIs are not fully supported in this browser. Please try a different web browser or version. Usually Chrome and Firefox work fine.');
@@ -21,6 +21,7 @@ function handleFileSelect(evt) {
     // files is a FileList of File objects. List some properties.
     var output = [];
     for (var i = 0, f; f = files[i]; i++) {
+        var reader = new FileReader();
         // Closure to capture the file information.
         reader.onload = (function (theFile) {
             return function (e) {
@@ -30,7 +31,7 @@ function handleFileSelect(evt) {
                     json = JSON.parse(e.target.result);
                     alert('json global var has been set to parsed json of this file here it is unevaled = \n' + JSON.stringify(json));
 
-                    createSupertreeApp(json);
+                    //createSupertreeApp(json);
 
                 } catch (ex) {
                     alert('ex when trying to parse json = ' + ex);
@@ -52,6 +53,7 @@ function createSupertreeApp(json) {
             var supertree = new Supertree(json);
             // create diagrams
 
+            return null;
             // for each Gene-tree get the leaves distribution over pre-definded groups
             var streamData = [];
             var labels = supertree.groupsLabels;
@@ -99,17 +101,4 @@ function createSupertreeApp(json) {
             stream["genes"] = genes;
 
             var supertreeView = new SupertreeView(document.getElementById("div_tree"), supertree, stream);
-
-            d3.csv('/static/home/data_stream_test.txt', function (error, data) {
-                if (error) throw error;
-                // console.log(stream.data);
-
-                // stream.data = data;
-                // stream.groupsLabels = ["negative","positive","neutral"]
-
-                // var stream = new Stream();
-                //var streamView = new StreamView(stream);
-            });
-
-            // set up GUI... and diagrams coordination
 }
