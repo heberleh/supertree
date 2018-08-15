@@ -27,14 +27,17 @@ function handleFileSelect(evt) {
             return function (e) {
                 console.log('e readAsText = ', e);
                 console.log('e readAsText target = ', e.target);
-                try {
+                try {                    
                     json = JSON.parse(e.target.result);
-                    alert('json global var has been set to parsed json of this file here it is unevaled = \n' + JSON.stringify(json));
-
-                    //createSupertreeApp(json);
-
+                    console.log("Json was parsed. Now creating vis app...");                    
                 } catch (ex) {
                     alert('ex when trying to parse json = ' + ex);
+                }
+
+                try{
+                    createSupertreeApp(json);
+                }catch(ex){
+                    console.log(ex);
                 }
             }
         })(f);
@@ -51,9 +54,13 @@ function createSupertreeApp(json) {
             //console.log("lgts from file",nodes_data.lgts1,nodes_data.lgts2);
             // create models            
             var supertree = new Supertree(json);
-            // create diagrams
+            
+            // create diagram
+            var supertreeView = new SupertreeView(document.getElementById("div_tree"), supertree);
+            
 
-            return null;
+            return 0;
+
             // for each Gene-tree get the leaves distribution over pre-definded groups
             var streamData = [];
             var labels = supertree.groupsLabels;
@@ -100,5 +107,4 @@ function createSupertreeApp(json) {
             stream["group_sp_distribution"] = nodes_data.group_sp_distribution;
             stream["genes"] = genes;
 
-            var supertreeView = new SupertreeView(document.getElementById("div_tree"), supertree, stream);
 }

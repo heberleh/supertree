@@ -2,23 +2,27 @@ class Supertree {
 
     constructor(data) {                
         this._data = data;
+        console.log("Json for supertree: ", data)
 
         // set up supertree        
-        this._simple_hierarchy = parseNewick(this.data.supertree.newick);
-        this._hierarchy = this._setUpSupertreeD3Hierarchy();
+        this._simple_hierarchy = parseNewick(this._data.supertree.newick);
+        //console.log("Simple supertree: ", this._simple_hierarchy);
+
+        this._hierarchy = this._setUpSupertreeD3Hierarchy(this._simple_hierarchy);
+        console.log("D3 supertree: ", this._hierarchy);
         
         // set up data in the supertree structure
         // set up preorder index - used for hash in next method
-        this._storeData(this.hierarchy, this.data, 0);
+        this._storeData(this._hierarchy, this._data, 0);
          
         // creates a hash of supertree nodes by pre-order index
         this._supertreeNodesHash = this._setUpSupertreeNodesHash();
 
         // set up groups, sorting
-        this._groupsLabels = this.data.groups_names.sort();
+        this._groupsLabels = this._data.groups_names.sort();
 
         // set up forest, add some attributes for visualization
-        this._forest = this.data.forest;
+        this._forest = this._data.forest;
         console.log("Forest", this._forest);
         for(let i in this._forest){
             let gene = this._forest[i];
@@ -52,7 +56,8 @@ class Supertree {
 
         this._totalsInGroups = this._setUpTotalsInGroups();
 
-        this._setUpGenesGroupsDistribution();
+        // TODO if for each tree, the distribution of genomes on groups is not defined... compute it
+        //this._setUpGenesGroupsDistribution();
 
     }
 
@@ -79,10 +84,12 @@ class Supertree {
      * @param {The starting preorder index} index
      */
     _storeData(node, data, index) {
-
+        
         let st_node_data = this.data.supertree.nodes[index];
         for (let key in st_node_data){
-            node.data[key] = st_node_data[key];            
+            if (key != "branchset"){
+                node.data[key] = st_node_data[key];  
+            }
         }
         node.data.genes = new Set(st_node_data.genes_intersect)
         
@@ -90,12 +97,14 @@ class Supertree {
 
         // TODO if node has not attribute data.name -> create it joining its leaves' names
 
+        // TODO list all attributes that are required to work according to rspr tool; or create them with defaults
+
         index += 1;
 
-        if (d.children){
-            for (let i in d.children){
-                let child = d.children[i];
-                index = this._storeData(d, data, index);
+        if (node.children){
+            for (let i in node.children){
+                let child = node.children[i];
+                index = this._storeData(child, data, index);            
             }
         }
         return index;
@@ -123,8 +132,8 @@ class Supertree {
     }
 
 
-    _setUpSupertreeD3Hierarchy() {
-        return d3.hierarchy(this._simple_hierarchy, function (d) {
+    _setUpSupertreeD3Hierarchy(simple_hierarchy) {
+        return d3.hierarchy(simple_hierarchy, function (d) {
                 return d.branchSet;
             })
             .sum(function (d) {
@@ -179,10 +188,6 @@ class Supertree {
         return this.hierarchy.leaves().length;
     }
 
-    getGroupsDistribution(gene){
-        return this._nodes_data.group_sp_distribution[gene];
-    }
-
     get maxNGenes(){
         return this._max_number_of_genes_in_a_genome;
     }
@@ -233,7 +238,11 @@ class Supertree {
      * Returns a vector containing 
      */
     getGeneGroupsDistribution(gene_index){
-        return this.data.forest[gene_index].groups_distribution;
+        return this._forest[gene_index].groups_distribution;
+    }
+
+    getSupertreeGroupsDistribution(){
+        return this._data.supertree.groups_distribution;
     }
 
 }

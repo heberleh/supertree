@@ -2,9 +2,9 @@
 
 class GenomeSprite extends Sprite {
 
-    constructor(container, data, supertreeView) {
+    constructor(container, node, supertreeView) {
         super();
-        this._node = data;
+        this._node = node;
         this._supertreeView = supertreeView;
         this._supertree = this._supertreeView.supertree;
         this._canvas = null;
@@ -13,7 +13,7 @@ class GenomeSprite extends Sprite {
         this.width = 7;
 
         let s = d3.scaleLinear()
-                    .domain([this._supertree.minNgenes,this._supertree.maxNgenes])
+                    .domain([this._supertree.minNGenes,this._supertree.maxNGenes])
                     .range([10, max_height]);
 
         //console.log("Scale genome size: ", [this._supertreeView.supertree.minNgenes,this._supertreeView.supertree.maxNgenes], s(this._node.data.genes.size));
@@ -25,8 +25,7 @@ class GenomeSprite extends Sprite {
 
         this._setUpGroups();
 
-        this._createTexture();
-        this._supertreeView.numberOfGenomes;
+        this._createTexture();        
 
         this.alpha = 0.7;
 
@@ -47,42 +46,35 @@ class GenomeSprite extends Sprite {
     }
 
     _setUpGroups() {
-        let groups = {};
-        this._supertree.groupsLabels.forEach(label => {
-            if (label != "-" && label.length > 0) {
-                groups[label] = 0;
-            }
-        });
+        let groups = [];
+        this._supertree.groupsLabels.forEach(label => groups.push(0));
 
-        let groups_data = this._supertree.geneGroupsDistribution();
-
-        //console.log("groups_data", groups_data);
         this._node.data.genes.forEach(gene => {
-            let group_distr = groups_data[gene];
+            let group_distr = this._supertree.getGeneGroupsDistribution(gene);
             let max_g = 0;
             let selected_g = '';
-            for (let group in group_distr) {
-                if (group_distr[group] > max_g) {
-                    max_g = group_distr[group];
-                    selected_g = group;
+            for (let i in group_distr) {
+                if (group_distr[i] > max_g) {
+                    max_g = group_distr[i];
+                    selected_g = i;
                 }
             }
             groups[selected_g] += 1;
         });
 
 
-        if (this._node.data.genes.size == 0) {
-            console.log("?", this._node.data);
+        if (this._node.data.genes.size == 0) { 
+            console.log("Genome with ZERO genes?", this._node.data);
         } else {
-            for (let group in groups) {
-                groups[group] = groups[group] / this._node.data.genes.size;
+            for (let i in groups) {
+                groups[i] = groups[i] / this._node.data.genes.size;
             }
         }
         let groups_list = [];
-        for (let group in groups) {
+        for (let i in groups) {
             groups_list.push({
-                "name": group,
-                "count": groups[group]
+                "name": this._supertree.groupsLabels[i],
+                "count": groups[i]
             });
         }
         groups_list.sort(function (a, b) {

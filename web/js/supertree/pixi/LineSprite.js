@@ -2,7 +2,7 @@ class LineSprite extends Sprite {
 
     constructor(thickness, color, x1, y1, x2, y2) {
         super();
-        this.texture = LineSprite.getTexture(thickness, color);        
+        this.texture = LineSprite.getTexture(thickness, color);
         this._thickness = thickness;
         this._color = color;
         this.x1 = x1;

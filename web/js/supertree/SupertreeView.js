@@ -1,10 +1,9 @@
 class SupertreeView {
 
-    constructor(diagram_div, supertree, stream) {
+    constructor(diagram_div, supertree) {
         this._outerRadius = 1000 / 2;
         this._innerRadius = this._outerRadius - 170;
-
-        this.stream = stream;
+        
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this.supertree.hierarchy;
@@ -226,8 +225,8 @@ class SupertreeView {
             let e_scores = [];
             //e.genes.forEach(g => {
             e.genes.forEach(g => {
-                let src_v = this.supertree.getGroupsDistribution(g)[e.source.data.c] / this.supertree.totals_in_groups[e.source.data.c];
-                let trg_v = this.supertree.getGroupsDistribution(g)[e.target.data.c] / this.supertree.totals_in_groups[e.target.data.c];
+                let src_v = this.supertree.getGeneGroupsDistribution(g)[e.source.data.group_index] / this.supertree.getSupertreeGroupsDistribution()[e.source.data.group_index];
+                let trg_v = this.supertree.getGeneGroupsDistribution(g)[e.target.data.group_index] / this.supertree.getSupertreeGroupsDistribution()[e.target.data.group_index];
 
                 let value = Math.trunc(Math.abs(src_v - trg_v) * 100);
 
@@ -811,7 +810,7 @@ class SupertreeView {
 
         for (let gene_index in this.supertree.forest) {
             let gene = this.supertree.forest[gene_index];
-            let value = Object.values(this.supertree.getGroupsDistribution(gene_index)).reduce(function (a, b) {
+            let value = Object.values(this.supertree.getGeneGroupsDistribution(gene_index)).reduce(function (a, b) {
                 return a + b;
             });
 
@@ -852,7 +851,7 @@ class SupertreeView {
         for (let gene_index in this.supertree.forest) {
             let gene = this.supertree.forest[gene_index];
 
-            let distr_values = Object.values(this.supertree.getGroupsDistribution(gene_index));
+            let distr_values = Object.values(this.supertree.getGeneGroupsDistribution(gene_index));
 
             // let total = distr_values.reduce(function (a, b) {
             //     return a + b;
@@ -862,9 +861,9 @@ class SupertreeView {
 
             for (let i = 0; i < distr_values.length; i++) {
                 if(gene_index < 1){
-                    console.log("Total elements on class and on tree: ", distr_values[i],this.supertree.numerOfGenomes, distr_values.length);
+                    console.log("Total elements on class and on tree: ", distr_values[i],this.supertree.numberOfGenomes, distr_values.length);
                 }
-                probs.push((distr_values[i]+1) / (this.supertree.numerOfGenomes + distr_values.length));
+                probs.push((distr_values[i]+1) / (this.supertree.numberOfGenomes + distr_values.length));
             }
             
             if (gene_index < 5) {
@@ -872,7 +871,7 @@ class SupertreeView {
                 console.log("probs", probs);
             }
 
-            let mean = this.supertree.numerOfGenomes / distr_values.length;
+            let mean = this.supertree.numberOfGenomes / distr_values.length;
             values_mean.add(mean);
 
             let max_min = d3.max(distr_values) - d3.min(distr_values);

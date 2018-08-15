@@ -6,11 +6,11 @@ function parseNewick(a) {
         switch (n) {
             case "(":
                 var c = {};
-                r.branchset = [c], e.push(r), r = c;
+                r.branchSet = [c], e.push(r), r = c;
                 break;
             case ",":
                 var c = {};
-                e[e.length - 1].branchset.push(c), r = c;
+                e[e.length - 1].branchSet.push(c), r = c;
                 break;
             case ")":
                 r = e.pop();
