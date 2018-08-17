@@ -18,8 +18,10 @@ class Supertree {
         // creates a hash of supertree nodes by pre-order index
         this._supertreeNodesHash = this._setUpSupertreeNodesHash();
 
-        // set up groups, sorting
+        // set up groups
+        // ! if implement sorting, must sort the attributes "groups_distributions"
         this._groupsLabels = this._data.groups_names;
+        
 
         // set up forest, add some attributes for visualization
         this._forest = this._data.forest;
