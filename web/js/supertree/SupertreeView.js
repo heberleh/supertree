@@ -63,6 +63,7 @@ class SupertreeView {
 
         console.log("Groups labels", supertree.groupsLabels);
         this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels, colors);
+
         this._setColor(this.supertree.hierarchy);
         this._treeLayoutCluster = this._setUpTreeLayoutCluster();
         this._treeLayoutCluster(this.supertree.hierarchy);
@@ -444,7 +445,7 @@ class SupertreeView {
 
     // Set the color of each node by recursively inheriting.
     _setColor(d) {
-        d.color = colorToHex(this._treeGroupColorMap(d.data.c));
+        d.color = colorToHex(this._treeGroupColorMap(d.data.group));
         if (d.children) d.children.forEach((d) => this._setColor(d));
     }
 

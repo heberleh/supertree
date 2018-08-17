@@ -19,7 +19,7 @@ class Supertree {
         this._supertreeNodesHash = this._setUpSupertreeNodesHash();
 
         // set up groups, sorting
-        this._groupsLabels = this._data.groups_names.sort();
+        this._groupsLabels = this._data.groups_names;
 
         // set up forest, add some attributes for visualization
         this._forest = this._data.forest;

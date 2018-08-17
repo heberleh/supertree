@@ -53,8 +53,8 @@ class GenomeSprite extends Sprite {
             let group_distr = this._supertree.getGeneGroupsDistribution(gene);
             let max_g = 0;
             let selected_g = '';
-            for (let i in group_distr) {
-                if (group_distr[i] > max_g) {
+            for (let i in group_distr) { // for each group
+                if (group_distr[i] > max_g) { // if |group| is max -> selected_group = group
                     max_g = group_distr[i];
                     selected_g = i;
                 }
@@ -72,10 +72,10 @@ class GenomeSprite extends Sprite {
         }
         let groups_list = [];
         for (let i in groups) {
-            groups_list.push({
+            groups_list.push({                
                 "name": this._supertree.groupsLabels[i],
                 "count": groups[i]
-            });
+            });            
         }
         groups_list.sort(function (a, b) {
             if (a.count > b.count) return true;
@@ -85,52 +85,52 @@ class GenomeSprite extends Sprite {
         this._groups = groups_list;
     }
 
-    _setUpGroupsSum() {
-        let groups = {};
-        this._supertree.groupsLabels.forEach(label => {
-            if (label != "-" && label.length > 0) {
-                groups[label] = 0;
-            }
-        });
+    // _setUpGroupsSum() {
+    //     let groups = {};
+    //     this._supertree.groupsLabels.forEach(label => {
+    //         if (label != "-" && label.length > 0) {
+    //             groups[label] = 0;
+    //         }
+    //     });
 
-        let groups_data = this._supertreeView.stream.group_sp_distribution;
+    //     let groups_data = this._supertreeView.stream.group_sp_distribution;
 
-        //console.log("groups_data", groups_data);
+    //     //console.log("groups_data", groups_data);
 
-        this._node.data.genes.forEach(gene => {
-            let group_distr = groups_data[gene];
-            let selected_g = '';
-            for (let group in group_distr) {
-                groups[group] += group_distr[group];
-            }
-        });
+    //     this._node.data.genes.forEach(gene => {
+    //         let group_distr = groups_data[gene];
+    //         let selected_g = '';
+    //         for (let group in group_distr) {
+    //             groups[group] += group_distr[group];
+    //         }
+    //     });
 
-        let total = 0;
-        for (let group in groups) {
-            total += groups[group];
-        }
-        if (this._node.data.genes.size == 0) {
-            console.log("Why is this node problematic?", this._node.data);
-        } else {
-            for (let group in groups) {
-                groups[group] = groups[group] / total;
-            }
-        }
+    //     let total = 0;
+    //     for (let group in groups) {
+    //         total += groups[group];
+    //     }
+    //     if (this._node.data.genes.size == 0) {
+    //         console.log("Why is this node problematic?", this._node.data);
+    //     } else {
+    //         for (let group in groups) {
+    //             groups[group] = groups[group] / total;
+    //         }
+    //     }
 
-        let groups_list = [];
-        for (let group in groups) {
-            groups_list.push({
-                "name": group,
-                "count": groups[group]
-            });
-        }
-        groups_list.sort(function (a, b) {
-            if (a.count > b.count) return true;
-            else return false;
-        });
+    //     let groups_list = [];
+    //     for (let group in groups) {
+    //         groups_list.push({
+    //             "name": group,
+    //             "count": groups[group]
+    //         });
+    //     }
+    //     groups_list.sort(function (a, b) {
+    //         if (a.count > b.count) return true;
+    //         else return false;
+    //     });
 
-        this._groups = groups_list;
-    }
+    //     this._groups = groups_list;
+    // }
 
     _initCanvas() {
         this._canvas = document.createElement("canvas");
@@ -165,6 +165,7 @@ class GenomeSprite extends Sprite {
             if(this._node.data.name == "Leuconostoc_kimchii_IMSNU_11154"){
                 console.log("from ",k);
             }
+
             let color = this._supertreeView.groupsColorMap(group.name);
             
             gradient.addColorStop(k, color);
@@ -176,6 +177,7 @@ class GenomeSprite extends Sprite {
             }
             last_color = color;
         }
+
         gradient.addColorStop(1, last_color);
 
         context.fillStyle = gradient;
