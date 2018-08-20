@@ -61,6 +61,10 @@ class SupertreeView {
             "#dbdb8d"
         ];
 
+        this._scaleGenomeSize = d3.scaleLinear()
+        .domain([1, this.supertree.maxNumberOfGenesInEdges])
+        .range([1.0, 4.0]);
+
         console.log("Groups labels", supertree.groupsLabels);
         this._treeGroupColorMap = this._updateTreeGroupColors(supertree.groupsLabels, colors);
 
@@ -1145,5 +1149,8 @@ class SupertreeView {
         this.updateEdgesVisibility();             
     }
 
+    get scaleGenomeSize(){
+        return this._scaleGenomeSize;
+    }
 
 }

@@ -148,7 +148,6 @@ class Supertree {
 
     /**
      * Create a new list of LGTs/Transfers edges given the original list of edges. This list create new attributes and change some attributes that before stored just indexes to now store the pointers to the objects. For instance, source was storing index 0, now it is storing supertree.node[0].
-     * TODO Adapt this code to the new Json file from RSPR.
      * @param {list} l list of original transfers/edges
      */
     _setUpLGTs(l) {

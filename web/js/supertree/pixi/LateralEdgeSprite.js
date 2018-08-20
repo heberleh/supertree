@@ -15,10 +15,8 @@ class LateralEdgeSprite {
 
         this.defaultColor = 0x808080;
         
-        let s = d3.scaleLinear()
-                    .domain([1, this.data.supertree.max_number_of_genes_in_edges])
-                    .range([1.0, 4.0]);
-        this.defaultWidth = s(this.data.genes.size);
+
+        this.defaultWidth = this._supertreeView.scaleGenomeSize(this.data.genes.size);
         // this.defaultWidth = 1;
         let p0 = project(d.source.x, d.source.y);
         let p1 = project(d.target.x, d.target.y);        
@@ -88,11 +86,14 @@ class LateralEdgeSprite {
         this.sprite.on('mousedown', ()=>{            
             console.log(this.data.genes);
             this.data.genes.forEach(g => {
-                console.log(this.data.supertree.getGroupsDistribution(g));
-                let src_v = this.data.supertree.getGroupsDistribution(g)[this.data.source.data.c]/this.data.supertree.totals_in_groups[this.data.source.data.c];
-                let trg_v = this.data.supertree.getGroupsDistribution(g)[this.data.target.data.c]/this.data.supertree.totals_in_groups[this.data.target.data.c];
+                console.log(this.data.supertree.getGeneGroupsDistribution(g));
 
-                console.log("values: ", src_v, trg_v, this.data.supertree.totals_in_groups[this.data.source.data.c], this.data.supertree.totals_in_groups[this.data.target.data.c]);
+                let src_v = this.data.supertree.getGeneGroupsDistribution(g)[this.data.source.data.group_index]/this.data.supertree.getSupertreeGroupsDistribution()[this.data.source.data.group_index];
+
+                let trg_v = this.data.supertree.getGeneGroupsDistribution(g)[this.data.target.data.group_index]/this.data.supertree.getSupertreeGroupsDistribution()[this.data.target.data.group_index];
+
+                console.log("values: ", src_v, trg_v, this.data.supertree.getSupertreeGroupsDistribution()[this.data.source.data.group_index], this.data.supertree.getSupertreeGroupsDistribution()[this.data.target.data.group_index]);
+
                 console.log("dif: ", Math.trunc(Math.abs(src_v - trg_v) * 100));
             });
 
