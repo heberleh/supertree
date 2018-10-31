@@ -3,11 +3,12 @@ class SupertreeView {
     constructor(diagram_div, supertree) {
         this._outerRadius = 1000 / 2;
         this._innerRadius = this._outerRadius - 170;
-        
+            
         this._diagram_div = diagram_div;
         this.supertree = supertree;
         this.supertree.hierarchy;
 
+        //TODO explain how this sets work, what are them
         this._visible_genes_set = new Set();
         this._visible_genomes_set = new Set();
 
@@ -112,6 +113,7 @@ class SupertreeView {
 
         // this._setUpInternalNode();
 
+        //TODO review each of the following methods and create the one for filtering edges by type
         // VIEW FILTERS
         this.globalLGTsAlpha = 1;
         this.globalGenomesAlpha = 0.3;
@@ -124,6 +126,11 @@ class SupertreeView {
         this._setUpNumericalLGTAttributes(supertree.lgts);
         this._addAttributeLGTGenesScores();
 
+        this._rsprFilter = false;
+        this._setUpRsprFilterCheckbox();
+        this._differentGroupsFilter = true;
+        this._setUpDifferentGroupsFilterCheckbox();
+        
         // GENE FILTERS
         this.numericalGeneAttributes = {};
         this._addGeneAttributeNumberOfGenomes();
@@ -1015,7 +1022,7 @@ class SupertreeView {
         this.supertree.hierarchy.leaves().forEach(genome =>{                        
             let some_gene_is_filtered = [... genome.data.genes].some(gene => {
                 return this._visible_genes_set.has(gene);
-            });
+            }); 
             if (some_gene_is_filtered){
                 genome.visible = true;
                 genome.graphics.alpha = this.globalGenomeLabelAlpha; 
@@ -1073,16 +1080,29 @@ class SupertreeView {
     }
     
     updateEdgesVisibility(){
-
-        this.supertree.lgts.forEach((e) => {
-            if (e.filtered){
-                e.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
-                    return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
-                });
-            }else{
-                e.lateralEdgeSprite.sprite.visible = false;
-            }
-        });
+        let rspr = !this._rsprFilter;
+        let difg = !this._differentGroupsFilter;
+        if (this._rsprFilter || this._differentGroupsFilter){        
+            this.supertree.lgts.forEach((e) => {
+                if (e.filtered){
+                    e.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
+                        return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search && (rspr || e.attributes.rspr) && (difg || e.attributes.different_groups);
+                    });
+                }else{
+                    e.lateralEdgeSprite.sprite.visible = false;
+                }
+            });
+        }else{
+            this.supertree.lgts.forEach((e) => {
+                if (e.filtered){
+                    e.lateralEdgeSprite.sprite.visible = e.genes_array.some(g => {
+                        return this.supertree.forest[g].filtered && this.supertree.forest[g].filtered_by_search;
+                    });
+                }else{
+                    e.lateralEdgeSprite.sprite.visible = false;
+                }
+            });
+        }
         this._updateVisibleLGTsList();
         this._listFunctionsFromVisibleEdges();
     }
@@ -1103,21 +1123,21 @@ class SupertreeView {
                     e.filtered = false;
                     break;
                 }
-            }            
+            }                        
         });
         this.updateEdgesVisibility();
     }
 
     filterByNumericGeneAttribute() {
-        Object.values(this.supertree.forest).forEach(g => {
-            g.filtered = true;
+        Object.values(this.supertree.forest).forEach(g => {            
+           g.filtered = true;
             for (let name in this.numericalGeneAttributes) {
                 if (g.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
                     g.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
                     g.filtered = false;
                     break;
                 }
-            }
+            }        
         });
         this.updateEdgesVisibility();
     }
@@ -1152,5 +1172,23 @@ class SupertreeView {
     get scaleGenomeSize(){
         return this._scaleGenomeSize;
     }
+    
+    
+    _setUpRsprFilterCheckbox(){    
+        d3.select("#only_rspr_edges").node().checked = this._rsprFilter;
 
+        $('#only_rspr_edges').click(()=> {
+            this._rsprFilter = d3.select("#only_rspr_edges").node().checked;
+            this.updateEdgesVisibility();
+        });
+    }
+
+    _setUpDifferentGroupsFilterCheckbox(){    
+        d3.select("#only_different_groups_edges").node().checked = this._differentGroupsFilter;
+
+        $('#only_different_groups_edges').click(()=> {
+            this._differentGroupsFilter = d3.select("#only_different_groups_edges").node().checked;
+            this.updateEdgesVisibility();
+        });
+    }
 }

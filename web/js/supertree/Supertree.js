@@ -86,8 +86,19 @@ class Supertree {
      * @param {The starting preorder index} index
      */
     _storeData(node, data, index) {
-        
-        let st_node_data = this.data.supertree.nodes[index];
+        let leaf_names = [];        
+        for (let i in node.leaves()){             
+            leaf_names.push(node.leaves()[i].data.name);
+        }
+        leaf_names.sort();
+        console.log(leaf_names);
+        let node_id = leaf_names.join('__');
+
+        console.log(node_id);
+        console.log(data.supertree.nodes);
+        let st_node_data = data.supertree.nodes[node_id];
+        console.log(st_node_data);
+
         for (let key in st_node_data){
             if (key != "branchset"){
                 node.data[key] = st_node_data[key];  
@@ -101,12 +112,13 @@ class Supertree {
 
         // TODO list all attributes that are required to work according to rspr tool; or create them with defaults
 
-        index += 1;
+        index += 1;        
 
         if (node.children){
             for (let i in node.children){
                 let child = node.children[i];
-                index = this._storeData(child, data, index);            
+                console.log("Preorder_d3: ", index);
+                index = this._storeData(child, data, index);
             }
         }
         return index;

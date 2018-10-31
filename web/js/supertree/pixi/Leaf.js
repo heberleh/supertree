@@ -50,7 +50,9 @@ class Leaf extends Text {
             } else {
                 this.setSelected(true);                
                 lgts.forEach(lgt => {
-                    if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                                               
+                    //if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                          
+                    
+                    if(lgt.lateralEdgeSprite != null && (lgt.source.data.name == this._node.data.name || lgt.target.data.name == this._node.data.name)){                   
                         lgt.lateralEdgeSprite.selected = true;
 
                         // lgt.lateralEdgeSprite.sprite.visible = true;
@@ -60,17 +62,6 @@ class Leaf extends Text {
                     }
                 });
 
-
-                //////////////////////////////////////////////////////////////////
-                // HIGHLIGH ALL LGTS OF PATH FROM CLICKED LEAF TO THE ROOT
-                // for (var i in lgts) {
-                //     let lgt = lgts[i];                    
-                //     if (lgt.lateralEdgeSprite != null && 
-                //         (lgt.source.data.name.includes(this.data.data.name) || lgt.target.data.name.includes(this.data.data.name))) {    
-                //         lgt.lateralEdgeSprite.selected = true;                        
-                //     }
-                // }
-                /////////////////////////////////////////////////////////////////
             }
         });
     }
