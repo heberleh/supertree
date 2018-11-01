@@ -145,6 +145,11 @@ class SupertreeView {
 
         // Searching box
         this._addSearchBox();
+        this._searchAttribute = null;
+        this._setUpSearchAttributes();
+
+        this._annotationFrequencyAttribute = null;
+        this._setUpAnnotationsAttributes();
 
         this._updateVisibleLGTsList();        
         this._updateVisibleGenesSets();
@@ -167,7 +172,7 @@ class SupertreeView {
         console.log("group labels", this.supertree.groupsLabels);
         let legendOrdinal = d3.legendColor()
             .shape("path", d3.symbol().type(d3.symbolTriangle).size(150)())
-            .shapePadding(10)
+            .shapePadding(25)
             //use cellFilter to hide the "e" cell
             .cellFilter(function (d) {
                 return d.label !== "e"
@@ -177,7 +182,8 @@ class SupertreeView {
         svg.select(".legendOrdinal")
             .call(legendOrdinal);
 
-        svg.style("height", 25  *this.supertree.groupsLabels.length + 'px');
+        svg.style("height", 30  *this.supertree.groupsLabels.length + 'px');
+        svg.style("width", '200px');
     }
 
     _setUpNumericalLGTAttributes(lgts) {
@@ -1191,4 +1197,37 @@ class SupertreeView {
             this.updateEdgesVisibility();
         });
     }
+
+    _setUpSearchAttributes(){
+        $('#search_attributes').empty();
+        Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
+            $(document).ready(function () {
+                $('#search_attributes').append("<option value=\""+name+"\">"+name+"</option>");
+            });
+        });
+        this._searchAttribute = d3.select("#search_attributes").node().value;
+        $('#search_attributes').click(()=>{
+            this._searchAttribute = d3.select("#search_attributes").node().value;
+        });
+    }
+    // TODO adapt the search function to read the selected attribute
+
+
+    _setUpAnnotationsAttributes(){
+        $('#annotation_frequency_attributes').empty();
+        Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
+            $(document).ready(function () {
+                $('#annotation_frequency_attributes').append("<option value=\""+name+"\">"+name+"</option>");
+            });
+        });
+        this._annotationFrequencyAttribute = d3.select("#annotation_frequency_attributes").node().value;
+        $('#annotation_frequency_attributes').click(()=>{
+            this._annotationFrequencyAttribute = d3.select("#annotation_frequency_attributes").node().value;
+
+            //TODO UPDATE LIST OF VALUES
+        });
+    }
+
+
+    // TODO create table with all annotations and other attributes about genes
 }

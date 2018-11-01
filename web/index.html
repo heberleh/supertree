@@ -323,20 +323,29 @@
                     <div class="card-header">
                         <h4 class="card-title">
                             <a data-toggle="collapse" data-target="#collapseSearch" href="#loading-container" class="collapsed">
-                                Gene Function
+                                Search
                             </a>
                         </h4>
                     </div>
 
                     <div id="collapseSearch" class="card-collapse collapse">
                         <div id="search" class="card-body">
-                            <div class="row">                            
-                                <input type="text" name="" id="search_text">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <p>Attribute:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <select id="search_attributes" style="width: 100%">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <textarea class="center-block" id="search_text" class="input" style="width: 100%" rows="4"></textarea>
                             </div>
 
                             <div class="row">
-                                <button class="col-md-4" id="find" type="button">Filter</button>                               
-                                <button class="col-md-4" id="clear" type="button">Clear</button>
+                                <button class="col-md-6" id="find" type="button">Filter</button>                               
+                                <button class="col-md-6" id="clear" type="button">Clear</button>
                             </div>
                             <div class="row">
                                 <input type="checkbox" name="exact" id="exact">
@@ -410,6 +419,7 @@
             </div>
         </div>
 
+        
         <main class="col-md-8 col-xs-11 p-l-2 p-t-2">
             <div id="diagrams" class="row">
                 <div id="div_tree">
@@ -418,32 +428,50 @@
             </div>
         </main>
 
-        <div class="col-md-2">
-            <div class="row container" id="groups_legend" >
 
-            </div>
-
-             <!-- Functions list -->
-            <div class="row containter">
-                    <div class="card card">
-                            <div class="card-header">
-                                <h4 class="card-title">
-                                    <a data-toggle="collapse" data-target="#collapseFunctionList" href="#loading-container" class="collapsed">
-                                        Gene Function
-                                    </a>
-                                </h4>
-                            </div>
-            
-                            <div id="collapseFunctionList" class="card-collapse collapse">
-                                <div id="functionList" class="card-body">
-            
-                                </div>
-                            </div>
+        <div class="col-md-2 col-xs-1 p-l-0 p-r-0">
+            <div class="list-group panel">
+                <div class="card card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                                <a data-toggle="collapse" data-target="#collapseClassesLegend" href="#loading-container" class="collapsed">
+                                        Classes Legend
+                                </a>
+                        </h4>
                     </div>
-            </div>
-           
-        </div>
-    </div>
+                    
+                    <div id="collapseClassesLegend" class="card-collapse collapse">          
+                        <div id="groups_legend" class="card-body col-xs-11 p-l-2 p-t-2">
+                        </div>
+                    </div>
+                </div>
 
+                <div class="card card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                                <a data-toggle="collapse" data-target="#collapseFunctionList" href="#loading-container" class="collapsed">
+                                        Annotations Frequency
+                                </a>
+                        </h4>
+                    </div>
+                    
+                    <div id="collapseFunctionList" class="card-collapse collapse">  
+                        <div class="row">
+                                <div class="col-md-5">
+                                    <p>Attribute:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <select id="annotation_frequency_attributes" style="width: 100%">
+                                    </select>
+                                </div>
+                        </div>        
+                        <div id="functionList" class="card-body">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+          
+        </div>    
     </div>
 </div>
