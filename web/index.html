@@ -345,7 +345,7 @@
 
                             <div class="row">
                                 <button class="col-md-6" id="find" type="button">Filter</button>                               
-                                <button class="col-md-6" id="clear" type="button">Clear</button>
+                                <button class="col-md-6" id="clearSearch" type="button">Clear</button>
                             </div>
                             <div class="row">
                                 <input type="checkbox" name="exact" id="exact">
@@ -394,8 +394,13 @@
                                 <input type="checkbox" name="different_groups_edges" id="only_different_groups_edges">
                                 <label class=>Show only edges between different groups.</label>
                             </div>
+                            <div class="row">
+                                <input type="checkbox" name="show_path_edges" id="show_path_edges">
+                                <label class=>Show 'path edges' when clicking on Leaf.</label>
+                            </div>
                         </div>
                     </div>
+                    
                 </div>
                 <!-- Graphics Slide Filters -->
                 <div class="card card">
@@ -469,6 +474,31 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card card">
+                    <div class="card-header">
+                        <h4 class="card-title">
+                                <a data-toggle="collapse" data-target="#collapseSelectedGenesFunctionList" href="#loading-container" class="collapsed">
+                                       Filtered Genes' Annotations Frequency
+                                </a>
+                        </h4>
+                    </div>
+                    
+                    <div id="collapseSelectedGenesFunctionList" class="card-collapse collapse">  
+                        <div class="row">
+                                <div class="col-md-5">
+                                    <p>Attribute:</p>
+                                </div>
+                                <div class="col-md-7">
+                                    <select id="filtered_genes_annotation_frequency_attributes" style="width: 100%">
+                                    </select>
+                                </div>
+                        </div>        
+                        <div id="filteredGenesfunctionList" class="card-body">
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
           

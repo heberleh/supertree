@@ -50,15 +50,27 @@ class Leaf extends Text {
             } else {
                 this.setSelected(true);                
                 lgts.forEach(lgt => {
-                    //if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                          
-                    
-                    if(lgt.lateralEdgeSprite != null && (lgt.source.data.name == this._node.data.name || lgt.target.data.name == this._node.data.name)){                   
+                    if (!this.superTreeView._pathEdges){
+                        if(lgt.lateralEdgeSprite != null && (lgt.source.data.name == this._node.data.name || lgt.target.data.name == this._node.data.name)){   
+                                                                
                         lgt.lateralEdgeSprite.selected = true;
 
                         // lgt.lateralEdgeSprite.sprite.visible = true;
-                    } else {
-                        lgt.lateralEdgeSprite.selected = false;
-                        // lgt.lateralEdgeSprite.sprite.visible = false;
+                        } else {
+                            lgt.lateralEdgeSprite.selected = false;
+                            // lgt.lateralEdgeSprite.sprite.visible = false;
+                        }
+
+                    }else{
+                        if (lgt.lateralEdgeSprite != null && (lgt.source.data.name.includes(this._node.data.name) || lgt.target.data.name.includes(this._node.data.name)) && anyIntersection(lgt.genes, this._node.data.genes)) {                          
+                                                            
+                            lgt.lateralEdgeSprite.selected = true;
+
+                            // lgt.lateralEdgeSprite.sprite.visible = true;
+                        } else {
+                            lgt.lateralEdgeSprite.selected = false;
+                            // lgt.lateralEdgeSprite.sprite.visible = false;
+                        }
                     }
                 });
 

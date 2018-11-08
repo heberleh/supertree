@@ -106,7 +106,7 @@ class SupertreeView {
 
         //this.supertree.lgts = this._setUpLGTs(supertree.lgts);
         console.log("number of lgts -> nodes", this.supertree.lgts.length);
-        console.log("lgts", this.supertree.lgts);
+        //console.log("lgts", this.supertree.lgts);
         this._updateLGTS();
 
         this._setUpLinks();
@@ -122,19 +122,27 @@ class SupertreeView {
         this.setUpGenomeAlpha();
         this.setUpGenomeLabelsAlpha();
 
+
         // LGT FILTERS
+        this.numericalLGTAttributes = {};
         this._setUpNumericalLGTAttributes(supertree.lgts);
         this._addAttributeLGTGenesScores();
 
-        this._rsprFilter = false;
+        this._rsprFilter = true;
         this._setUpRsprFilterCheckbox();
         this._differentGroupsFilter = true;
-        this._setUpDifferentGroupsFilterCheckbox();
+        this._setUpDifferentGroupsFilterCheckbox();        
+
+        this._pathEdges = false;
+        this._setUpPathEdgesCheckBox();
         
         // GENE FILTERS
         this.numericalGeneAttributes = {};
-        this._addGeneAttributeNumberOfGenomes();
+        this._setUpNumericalGenesAttributes(supertree.forest);
+        
+        //this._addGeneAttributeNumberOfGenomes();
         this._addAttributeGenesScores();
+
 
         //FILTERS SLIDERS
         this.setUpNumericalSlidersFilters();
@@ -145,31 +153,35 @@ class SupertreeView {
 
         // Searching box
         this._addSearchBox();
+
         this._searchAttribute = null;
         this._setUpSearchAttributes();
 
-        this._annotationFrequencyAttribute = null;
+        this._annotationFrequencyAttribute = this._annotationFrequencyAttribute = Object.keys(this.supertree.forest[0].attributes)[0];
         this._setUpAnnotationsAttributes();
+
+        this._selectedGenesAnnotationFrequencyAttribute = this._annotationFrequencyAttribute = Object.keys(this.supertree.forest[0].attributes)[0];
+        this._setUpSelectedGenesAnnotationsAttributes();
 
         this._updateVisibleLGTsList();        
         this._updateVisibleGenesSets();
         this._updateVisualStatistics();
+        this.updateEdgesVisibility();
                
-
     }
 
     _setUpGroupsLegend() {
 
-        console.log("legenda");
+        //console.log("legenda");
         let svg = d3.select("#groups_legend").append("svg");
         let ordinal = this.groupsColorMap;
-        console.log("ordinal", ordinal);
+        //console.log("ordinal", ordinal);
 
         svg.append("g")
             .attr("class", "legendOrdinal")
             .attr("transform", "translate(20,20)");
 
-        console.log("group labels", this.supertree.groupsLabels);
+        //console.log("group labels", this.supertree.groupsLabels);
         let legendOrdinal = d3.legendColor()
             .shape("path", d3.symbol().type(d3.symbolTriangle).size(150)())
             .shapePadding(25)
@@ -187,13 +199,13 @@ class SupertreeView {
     }
 
     _setUpNumericalLGTAttributes(lgts) {
-        let first = lgts[0];
-        this.numericalLGTAttributes = {};
+        let first = lgts[0];        
         let numericAttributes = [];
         let values = {};
 
         for (let name in first.attributes) {
-            if (first.attributes[name].type == 'numeric') {
+            let myVar = first.attributes[name];
+            if (jQuery.type(first.attributes[name]) == "number"){
                 numericAttributes.push(name);
                 values[name] = new Set();
             }
@@ -202,14 +214,42 @@ class SupertreeView {
         lgts.forEach(function (e) {
             for (let i in numericAttributes) {
                 let name = numericAttributes[i];
-                values[name].add(e.attributes[name].value);
+                values[name].add(e.attributes[name]);
             }
         });
 
+        console.log("LGT ATTRIBUTES",values);
         for (let i in numericAttributes) {
             this._addNumericalLGTAttribute(numericAttributes[i], [...values[numericAttributes[i]]]);
         }
     }
+
+    _setUpNumericalGenesAttributes(genes) {
+        let first = genes[0];        
+        let numericAttributes = [];
+        let values = {};
+
+        console.log("gene attributes:", first.attributes);
+        for (let name in first.attributes) {            
+            if (jQuery.type(first.attributes[name]) == "number"){
+                numericAttributes.push(name);
+                values[name] = new Set();
+            }else{
+                console.log("!!!!!!!!!!!!!!!!!     ",first.attributes[name], "  is not a number  ?");
+            }
+        }
+
+        genes.forEach(function (e) {
+            for (let i in numericAttributes) {
+                let name = numericAttributes[i];
+                values[name].add(e.attributes[name]);
+            }
+        });
+        console.log("NUMERIC ATTRIBUTES:", numericAttributes);
+        for (let i in numericAttributes) {
+            this._addNumericalGeneAttribute(numericAttributes[i], [...values[numericAttributes[i]]]);
+        }
+    }    
 
     _addNumericalLGTAttribute(name, values) {
         let dict = {};
@@ -251,17 +291,12 @@ class SupertreeView {
                 values.add(value);
                 e_scores.push(value);
             });
-            e.attributes[name_max] = {
-                'type': 'numeric',
-                'value': d3.max(e_scores)
-            };
-            e.attributes[name_min] = {
-                'type': 'numeric',
-                'value': d3.min(e_scores)
-            };
+            e.attributes[name_max] =  d3.max(e_scores);
+            e.attributes[name_min] =  d3.min(e_scores);
         });
 
         let values_list = [...values];
+        
         this._addNumericalLGTAttribute(name_max, values_list);
         this._addNumericalLGTAttribute(name_min, values_list);
     }
@@ -293,6 +328,7 @@ class SupertreeView {
         let name_min = "min_gene_score";
         // create attribute
         let values_list = [...values];
+        console.log("@@ VALUES min max scores: ", values );
         this._addNumericalLGTAttribute(name_max, values_list);
         this._addNumericalLGTAttribute(name_min, values_list);
 
@@ -779,7 +815,7 @@ class SupertreeView {
         let count = 0;
         LineSprite.resetCanvas();
         this.supertree.lgts.forEach(function (e) {
-            e.lateralEdgeSprite.color = colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value))));
+            e.lateralEdgeSprite.color = colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name]))));
             // if (count < 10){                
             //     console.log("color ", colorToHex(rgbToHex(colorScale(parseFloat(e.attributes[name].value)))));
             //     count+=1;
@@ -821,26 +857,23 @@ class SupertreeView {
         }
     }
 
-    _addGeneAttributeNumberOfGenomes() {
-        let values = new Set();
+    // _addGeneAttributeNumberOfGenomes() {
+    //     let values = new Set();
 
-        let name = "N_Genomes";
+    //     let name = "N_Genomes";
 
-        for (let gene_index in this.supertree.forest) {
-            let gene = this.supertree.forest[gene_index];
-            let value = Object.values(this.supertree.getGeneGroupsDistribution(gene_index)).reduce(function (a, b) {
-                return a + b;
-            });
+    //     for (let gene_index in this.supertree.forest) {
+    //         let gene = this.supertree.forest[gene_index];
+    //         let value = Object.values(this.supertree.getGeneGroupsDistribution(gene_index)).reduce(function (a, b) {
+    //             return a + b;
+    //         });
 
-            values.add(value);
-            gene.attributes[name] = {
-                'type': 'numeric_list_at_least',
-                'value': value
-            };
-        }
+    //         values.add(value);
+    //         gene.attributes[name] = value;
+    //     }
 
-        this._addNumericalGeneAttribute(name, [...values]);
-    }
+    //     this._addNumericalGeneAttribute(name, [...values]);
+    // }
 
     _entropy(prob_vector) {
         let entropy = 0;
@@ -901,28 +934,16 @@ class SupertreeView {
             let std = d3.deviation(distr_values);
             values_std.add(std);
 
-            gene.attributes[name_mean] = {
-                'type': 'numeric',
-                'value': mean
-            };
+            //gene.attributes[name_mean] = mean;
 
-            gene.attributes[name_max_min] = {
-                'type': 'numeric',
-                'value': max_min
-            };
+            //gene.attributes[name_max_min] = max_min;
 
-            gene.attributes[name_entropy] = {
-                'type': 'numeric',
-                'value': entropy
-            };
+            gene.attributes[name_entropy] = entropy;
 
-            gene.attributes[name_std] = {
-                'type': 'numeric',
-                'value': std
-            };
+            //gene.attributes[name_std] = std;
         }
 
-        console.log(values_entropy, values_max_min, values_mean);
+        //console.log(values_entropy, values_max_min, values_mean);
         this._addNumericalGeneAttribute(name_entropy, [...values_entropy]);
         //this._addNumericalGeneAttribute(name_max_min, [...values_max_min]);
         //this._addNumericalGeneAttribute(name_mean, [...values_mean]);
@@ -973,7 +994,14 @@ class SupertreeView {
             this.search('#search_text')
         });
         // $('#keep').click(keep);
-        // $('#clear').click(function(){clear_visibility(true)});
+        $('#clearSearch').click(()=>{this._resetSearchFilter()});
+    }
+
+    _resetSearchFilter(){
+        Object.values(this.supertree.forest).forEach(gene => {
+            gene.filtered_by_search = true;
+        });
+        this.updateEdgesVisibility();
     }
 
     _updateStatisticsVisibleEdges(){
@@ -1040,36 +1068,109 @@ class SupertreeView {
         });
     }
 
-    _listFunctionsFromVisibleEdges(){
+    _listAnnotationsFromVisibleEdges(){
         let current_functions = {};
-        console.log("Visible genes: ", this._visible_genes_set);
+        //console.log("Visible genes: ", this._visible_genes_set);
 
-        this._visible_genes_set.forEach(tree_index =>{
-            this.supertree.forest[tree_index].functions.forEach(func => {
-                let func0 = func.toUpperCase();
-                if (func0 in current_functions){
-                    current_functions[func0].count += 1;
-                    current_functions[func0].genes.push(tree_index);
+        // if numeric
+        if (this._annotationFrequencyAttribute in this.numericalGeneAttributes){
+            this._visible_genes_set.forEach(tree_index =>{
+                let c_annot = this.supertree.forest[tree_index].attributes[this._annotationFrequencyAttribute];
+                if (c_annot in current_functions){
+                    current_functions[c_annot].count += 1;
+                    current_functions[c_annot].genes.push(tree_index);
                 }else{
-                    current_functions[func0] = {"func":func0, "count":1, "genes":[tree_index]};
-                }                
-            });  
-        });
+                    current_functions[c_annot] = {"func":c_annot, "count":1, "genes":[tree_index]};
+                }
+            });
+        // if string, may be list separated by ;
+        }else{
+            
+            this._visible_genes_set.forEach(tree_index =>{                    
+                this.supertree.forest[tree_index].attributes[this._annotationFrequencyAttribute].split(';').forEach(annot => {
+                    let c_annot = annot.toUpperCase();
+                    if (c_annot in current_functions){
+                        current_functions[c_annot].count += 1;
+                        current_functions[c_annot].genes.push(tree_index);
+                    }else{
+                        current_functions[c_annot] = {"func":annot, "count":1, "genes":[tree_index]};
+                    }                
+                });              
+            });
+           
+        }
 
-        console.log("Current functions:", current_functions);
-        
+        //console.log("Current functions:", current_functions);        
         let functions = Object.values(current_functions);
         functions.sort(function(a,b){ return b.count - a.count});
         // for each function... create a label
         let functionDiv = d3.select("#functionList");
        
-        let elements = functionDiv.selectAll("p").data(functions);
-        elements.exit().remove();
-        elements.enter().append("p");
-        elements.text(function(d){return d.func +": "+d.count;});
-        elements.on("click", d => { this.highlightVisibleEdgesByGenes(d.genes) });
-            
-        // sort the labels by frequency
+        //console.log(functions);
+        functionDiv.selectAll("p").remove();
+        let elements = functionDiv.selectAll("p").data(functions);          
+        elements.enter()
+            .append("p")
+            .text(function(d){ return d.func +": "+d.count;})
+            .on("click", d => { this.highlightVisibleEdgesByGenes(d.genes) });
+
+        
+        
+        // -------------------------------------------------------------------------------
+        // Annotations frequency from FILTERED genes on Visible edges.
+        current_functions = {};
+        //console.log("Visible filtered genes: ", );
+        let filtered_genes = [];
+        this._visible_genes_set.forEach(tree_index => {
+            let gene = this.supertree.forest[tree_index];
+            if (gene.filtered && gene.filtered_by_search){
+                filtered_genes.push(tree_index);
+            }
+        });
+
+
+          // if numeric
+          if (this._annotationFrequencyAttribute in this.numericalGeneAttributes){
+            filtered_genes.forEach(tree_index =>{
+                let c_annot = this.supertree.forest[tree_index].attributes[this._annotationFrequencyAttribute];
+                if (c_annot in current_functions){
+                    current_functions[c_annot].count += 1;
+                    current_functions[c_annot].genes.push(tree_index);
+                }else{
+                    current_functions[c_annot] = {"func":c_annot, "count":1, "genes":[tree_index]};
+                }
+            });
+        // if string, may be list separated by ;
+        }else{
+            filtered_genes.forEach(tree_index =>{                       
+                this.supertree.forest[tree_index].attributes[this._annotationFrequencyAttribute].split(';').forEach(annot => {
+                    let c_annot = annot.toUpperCase();
+                    if (c_annot in current_functions){
+                        current_functions[c_annot].count += 1;
+                        current_functions[c_annot].genes.push(tree_index);
+                    }else{
+                        current_functions[c_annot] = {"func":annot, "count":1, "genes":[tree_index]};
+                    }                
+                });  
+            });
+        }
+
+
+        //console.log("Current functions:", current_functions);
+        
+        functions = Object.values(current_functions);
+        functions.sort(function(a,b){ return b.count - a.count});
+        // for each function... create a label
+        functionDiv = d3.select("#filteredGenesfunctionList");
+       
+        //console.log(functions);
+        functionDiv.selectAll("p").remove();
+        elements = functionDiv.selectAll("p").data(functions);        
+        elements.enter()
+            .append("p")
+            .text(function(d){return d.func +": "+d.count;})
+            .on("click", d => { this.highlightVisibleEdgesByGenes(d.genes) });
+
     }
 
     highlightVisibleEdgesByGenes(genes){
@@ -1110,7 +1211,7 @@ class SupertreeView {
             });
         }
         this._updateVisibleLGTsList();
-        this._listFunctionsFromVisibleEdges();
+        this._listAnnotationsFromVisibleEdges();
     }
 
     /////  FILTERS ///////
@@ -1124,8 +1225,8 @@ class SupertreeView {
         this.supertree.lgts.forEach((e) => {
             e.filtered = true;
             for (let name in this.numericalLGTAttributes) {
-                if (e.attributes[name].value < this.numericalLGTAttributes[name].selMin ||
-                    e.attributes[name].value > this.numericalLGTAttributes[name].selMax) {
+                if (e.attributes[name] < this.numericalLGTAttributes[name].selMin ||
+                    e.attributes[name] > this.numericalLGTAttributes[name].selMax) {
                     e.filtered = false;
                     break;
                 }
@@ -1136,16 +1237,16 @@ class SupertreeView {
 
     filterByNumericGeneAttribute() {
         Object.values(this.supertree.forest).forEach(g => {            
-           g.filtered = true;
+           g.filtered = true;           
             for (let name in this.numericalGeneAttributes) {
-                if (g.attributes[name].value < this.numericalGeneAttributes[name].selMin ||
-                    g.attributes[name].value > this.numericalGeneAttributes[name].selMax) {
+                if (g.attributes[name] < this.numericalGeneAttributes[name].selMin ||
+                    g.attributes[name] > this.numericalGeneAttributes[name].selMax) {
                     g.filtered = false;
                     break;
                 }
             }        
         });
-        this.updateEdgesVisibility();
+        this.updateEdgesVisibility();        
     }
 
         /**
@@ -1155,7 +1256,7 @@ class SupertreeView {
     search(inputID) {
         var exact = d3.select("#exact").node().checked;
         var str = d3.select(inputID).node().value.toUpperCase();
-
+        
         if (str == ""){
             return;
         }
@@ -1163,15 +1264,32 @@ class SupertreeView {
         Object.values(this.supertree.forest).forEach(gene => {
             gene.filtered_by_search = true;
             if (exact){
-                gene.filtered_by_search = gene.functions.some(func => {
-                    return func.toUpperCase() == str;
-                });               
+                if (!this._searchAttribute in this.numericalGeneAttributes){
+                    gene.filtered_by_search = gene.attributes[this._searchAttribute].split(';').some(func => {
+                        return func.toUpperCase() == str;
+                    });               
+                }else{
+                    gene.filtered_by_search = gene.attributes[this._searchAttribute] == parseFloat(str);   
+                }
             }else{
-                gene.filtered_by_search = gene.functions.some(func => {
-                    return func.toUpperCase().search(str) > -1;
-                });
+                console.log("searching:")
+                console.log(gene.attributes);
+                console.log(this._searchAttribute);
+                if (!this._searchAttribute in this.numericalGeneAttributes){
+                    gene.filtered_by_search = gene.attributes[this._searchAttribute].split(';').some(func => {
+                        return func.toUpperCase().search(str) > -1;
+                    });
+                }else{
+                    gene.filtered_by_search = gene.attributes[this._searchAttribute] == parseFloat(str);   
+                }
             }
         });   
+        Object.values(this.supertree.forest).forEach(gene => {
+            if (gene.filtered_by_search){
+                console.log(gene.attributes["Uniprot ID"], gene.attributes['Biological Process (GO)']);
+            }
+            
+        });
         this.updateEdgesVisibility();             
     }
 
@@ -1182,7 +1300,7 @@ class SupertreeView {
     
     _setUpRsprFilterCheckbox(){    
         d3.select("#only_rspr_edges").node().checked = this._rsprFilter;
-
+        
         $('#only_rspr_edges').click(()=> {
             this._rsprFilter = d3.select("#only_rspr_edges").node().checked;
             this.updateEdgesVisibility();
@@ -1198,36 +1316,62 @@ class SupertreeView {
         });
     }
 
-    _setUpSearchAttributes(){
-        $('#search_attributes').empty();
-        Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
-            $(document).ready(function () {
-                $('#search_attributes').append("<option value=\""+name+"\">"+name+"</option>");
-            });
+
+    _setUpPathEdgesCheckBox(){    
+        d3.select("#show_path_edges").node().checked = this._pathEdges;
+
+        $('#show_path_edges').click(()=> {
+            this._pathEdges = d3.select("#show_path_edges").node().checked;            
         });
-        this._searchAttribute = d3.select("#search_attributes").node().value;
-        $('#search_attributes').click(()=>{
-            this._searchAttribute = d3.select("#search_attributes").node().value;
+    }
+
+    _setUpSearchAttributes(){
+        $(document).ready(()=>{
+            $('#search_attributes').empty();
+            Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
+                $('#search_attributes').append("<option value=\""+name+"\">"+name+"</option>");  
+            });        
+            d3.select("#search_attributes").node().value = Object.keys(this.supertree.forest[0].attributes)[0];
+            this._searchAttribute = Object.keys(this.supertree.forest[0].attributes)[0];        
+            $('#search_attributes').click(()=>{
+                this._searchAttribute = d3.select("#search_attributes").node().value;
+            });
         });
     }
     // TODO adapt the search function to read the selected attribute
 
 
     _setUpAnnotationsAttributes(){
-        $('#annotation_frequency_attributes').empty();
-        Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
-            $(document).ready(function () {
+        $(document).ready(() => {
+            $('#annotation_frequency_attributes').empty();
+            Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
                 $('#annotation_frequency_attributes').append("<option value=\""+name+"\">"+name+"</option>");
             });
-        });
-        this._annotationFrequencyAttribute = d3.select("#annotation_frequency_attributes").node().value;
-        $('#annotation_frequency_attributes').click(()=>{
-            this._annotationFrequencyAttribute = d3.select("#annotation_frequency_attributes").node().value;
-
-            //TODO UPDATE LIST OF VALUES
+            this._annotationFrequencyAttribute = Object.keys(this.supertree.forest[0].attributes)[0];
+            d3.select("#annotation_frequency_attributes").node().value = Object.keys(this.supertree.forest[0].attributes)[0];
+        
+            $('#annotation_frequency_attributes').click(()=>{
+                this._annotationFrequencyAttribute = d3.select("#annotation_frequency_attributes").node().value;
+                this._listAnnotationsFromVisibleEdges();
+            });
         });
     }
 
+    _setUpSelectedGenesAnnotationsAttributes(){
+        $(document).ready(() => {
+            $('#filtered_genes_annotation_frequency_attributes').empty();
+            Object.keys(this.supertree.forest[0].attributes).forEach((name)=>{
+                $('#filtered_genes_annotation_frequency_attributes').append("<option value=\""+name+"\">"+name+"</option>");
+            });
+            this._selectedGenesAnnotationFrequencyAttribute = Object.keys(this.supertree.forest[0].attributes)[0];
+            d3.select("#filtered_genes_annotation_frequency_attributes").node().value = Object.keys(this.supertree.forest[0].attributes)[0];
+        
+            $('#filtered_genes_annotation_frequency_attributes').click(()=>{
+                this._selectedGenesAnnotationFrequencyAttribute = d3.select("#filtered_genes_annotation_frequency_attributes").node().value;
+                this._listAnnotationsFromVisibleEdges();
+            });
+        });
+    }
 
     // TODO create table with all annotations and other attributes about genes
 }

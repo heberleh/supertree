@@ -25,7 +25,7 @@ class Supertree {
 
         // set up forest, add some attributes for visualization
         this._forest = this._data.forest;
-        console.log("Forest", this._forest);
+        //console.log("Forest", this._forest);
         for(let i in this._forest){
             let gene = this._forest[i];
             if (typeof(gene.attributes) == 'undefined'){
@@ -91,13 +91,13 @@ class Supertree {
             leaf_names.push(node.leaves()[i].data.name);
         }
         leaf_names.sort();
-        console.log(leaf_names);
+        //console.log(leaf_names);
         let node_id = leaf_names.join('__');
 
-        console.log(node_id);
-        console.log(data.supertree.nodes);
+        //console.log(node_id);
+        //console.log(data.supertree.nodes);
         let st_node_data = data.supertree.nodes[node_id];
-        console.log(st_node_data);
+        //console.log(st_node_data);
 
         for (let key in st_node_data){
             if (key != "branchset"){
@@ -117,7 +117,7 @@ class Supertree {
         if (node.children){
             for (let i in node.children){
                 let child = node.children[i];
-                console.log("Preorder_d3: ", index);
+                //console.log("Preorder_d3: ", index);
                 index = this._storeData(child, data, index);
             }
         }
@@ -166,7 +166,7 @@ class Supertree {
         console.log("Number of LGTs in Data.json...", l.length);
         let lgts_nodes = [];
         let hash = this._supertreeNodesHash;
-        console.log("Hashed ids: ", this._supertreeNodesHash);
+        //console.log("Hashed ids: ", this._supertreeNodesHash);
         var non_tracked_edges = [];
         for (let e in l) {
             if (l[e].source in hash && l[e].target in hash) {
