@@ -13,7 +13,7 @@ class Supertree {
         
         // set up data in the supertree structure
         // set up preorder index - used for hash in next method
-        this._storeData(this._hierarchy, this._data, 0);
+        this._storeData(this._hierarchy, this._data);
          
         // creates a hash of supertree nodes by pre-order index
         this._supertreeNodesHash = this._setUpSupertreeNodesHash();
@@ -85,19 +85,15 @@ class Supertree {
      * @param {Json data} data 
      * @param {The starting preorder index} index
      */
-    _storeData(node, data, index) {
+    _storeData(node, data) {
         let leaf_names = [];        
         for (let i in node.leaves()){             
             leaf_names.push(node.leaves()[i].data.name);
         }
         leaf_names.sort();
-        //console.log(leaf_names);
         let node_id = leaf_names.join('__');
 
-        //console.log(node_id);
-        //console.log(data.supertree.nodes);
         let st_node_data = data.supertree.nodes[node_id];
-        //console.log(st_node_data);
 
         for (let key in st_node_data){
             if (key != "branchset"){
@@ -105,23 +101,15 @@ class Supertree {
             }
         }
         node.data.genes = new Set(st_node_data.genes_intersect)
-        
-        node.preorder_idx = index;
-
-        // TODO if node has not attribute data.name -> create it joining its leaves' names
-
-        // TODO list all attributes that are required to work according to rspr tool; or create them with defaults
-
-        index += 1;        
 
         if (node.children){
             for (let i in node.children){
                 let child = node.children[i];
                 //console.log("Preorder_d3: ", index);
-                index = this._storeData(child, data, index);
+                this._storeData(child, data);
             }
         }
-        return index;
+       
     }
 
     get groupsLabels() {
@@ -168,6 +156,7 @@ class Supertree {
         let hash = this._supertreeNodesHash;
         //console.log("Hashed ids: ", this._supertreeNodesHash);
         var non_tracked_edges = [];
+        console.log("Hash of nodes...", this._supertreeNodesHash);
         for (let e in l) {
             if (l[e].source in hash && l[e].target in hash) {
                 l[e].source = hash[l[e].source];
@@ -191,8 +180,8 @@ class Supertree {
 
     _setUpSupertreeNodesHash() {
         var nodes_hash = {};
-        this.hierarchy.descendants().forEach(function (d) {
-            nodes_hash[d.preorder_idx] = d;
+        this.hierarchy.descendants().forEach(function (d) {            
+            nodes_hash[d.data.preorder_number] = d;
         });
         return nodes_hash;
     }

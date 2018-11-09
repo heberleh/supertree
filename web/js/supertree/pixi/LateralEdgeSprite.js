@@ -83,22 +83,41 @@ class LateralEdgeSprite {
         //     this.highlightOff();
         // });
 
-        this.sprite.on('mousedown', ()=>{            
-            console.log(this.data.genes);
-            this.data.genes.forEach(g => {
-                console.log(this.data.supertree.getGeneGroupsDistribution(g));
+        this.sprite.on('mousedown', ()=>{  
+            console.log("---------- Edge data ---------------------------------------------------");
+            console.log("data: ", this.data);
+            console.log("attributes: ",this.data.attributes);
+            console.log("source: ",this.data.source.data);
+            console.log("target: ",this.data.target.data);
 
-                let src_v = this.data.supertree.getGeneGroupsDistribution(g)[this.data.source.data.group_index]/this.data.supertree.getSupertreeGroupsDistribution()[this.data.source.data.group_index];
-
-                let trg_v = this.data.supertree.getGeneGroupsDistribution(g)[this.data.target.data.group_index]/this.data.supertree.getSupertreeGroupsDistribution()[this.data.target.data.group_index];
-
-                console.log("values: ", src_v, trg_v, this.data.supertree.getSupertreeGroupsDistribution()[this.data.source.data.group_index], this.data.supertree.getSupertreeGroupsDistribution()[this.data.target.data.group_index]);
-
-                console.log("dif: ", Math.trunc(Math.abs(src_v - trg_v) * 100));
+            let counting_bp = {};
+            if ("Biological Process (GO)" in this._supertreeView.supertree.forest[0].attributes){
+                this.data.genes.forEach(g => {
+                    let values = this._supertreeView.supertree.forest[g].attributes["Biological Process (GO)"].split(";");
+                    values.forEach((value)=>{
+                        if (value in counting_bp){
+                            counting_bp[value]+= 1;
+                        }else{
+                            counting_bp[value] = 1;
+                        }
+                    });
+                });    
+            }
+            let bps = [];
+            for(let bp in counting_bp){
+                bps.push({"bp":bp, "count":counting_bp[bp]});
+            }
+            bps.sort(function(a,b){ return b.count - a.count});
+            console.log("\nIntersection of Biological Processes in the intersecting genes:")
+            bps.forEach((d)=>{
+                console.log("Count: ",d.count," - ", d.bp);
             });
+            console.log("\nIntersecting Genes:")
 
-
-            
+            this.data.genes.forEach(g => {
+                console.log("Gene ", g, ": ",this._supertreeView.supertree.forest[g].attributes);
+            });
+            console.log("------------------------------------------------------------------------");
                         
             // this._supertreeView.highlightLeavesFromGenes(this.data.genes);
             // this._supertreeView.filterLGTsFromGenes(this.data.genes);
